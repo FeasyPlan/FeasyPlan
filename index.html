@@ -215,6 +215,7 @@
   <div class="panel" style="display:flex;flex-direction:column;">
     <div class="tabs">
       <button class="tab active" id="tab-search" onclick="switchTab('search')">Buscar</button>
+      <button class="tab" id="tab-templates" onclick="switchTab('templates')">Plantillas</button>
       <button class="tab" id="tab-create" onclick="switchTab('create')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Crear</button>
       <button class="tab" id="tab-plans" onclick="switchTab('plans')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Mis Planes</button>
     </div>
@@ -299,6 +300,7 @@ let state = {
   filterOwn: false,
   customExercises: [],
   savedPlans: [],
+  templates: [],
   newExercise: { name:'', desc:'', zona:'Piernas', tipo:'Fuerza', material:'Ninguno', series:'3', reps:'10', duration:'', img:null },
 };
 
@@ -336,9 +338,21 @@ async function loadExercises() {
   }
 }
 
+async function loadTemplates() {
+  try {
+    const { data } = await sb.from('templates').select('*').eq('active', true).order('id');
+    state.templates = data || [];
+  } catch(e) {
+    console.error('Error cargando plantillas:', e);
+  }
+}
+
 async function init() {
   // Cargar ejercicios desde Supabase
   await loadExercises();
+
+  // Cargar plantillas (acceso público)
+  await loadTemplates();
 
   // Render inmediato para mostrar la UI sin sesión
   render();
@@ -421,6 +435,16 @@ function render() {
   renderPlanHeader();
   renderTab();
   renderSelectedExercises();
+  renderTabLabels();
+}
+
+function renderTabLabels() {
+  const isPremium = state.profile?.is_premium || false;
+  const LOCK = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+  const createBtn = document.getElementById('tab-create');
+  const plansBtn = document.getElementById('tab-plans');
+  if (createBtn) createBtn.innerHTML = (isPremium ? '' : LOCK + ' ') + 'Crear';
+  if (plansBtn) plansBtn.innerHTML = (isPremium ? '' : LOCK + ' ') + 'Mis Planes';
 }
 
 function renderHeader() {
@@ -684,6 +708,13 @@ function renderPlanHeader() {
 // TABS Y EJERCICIOS
 // ============================================
 function switchTab(tab) {
+  if (tab === 'templates') {
+    state.activeTab = tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-templates')?.classList.add('active');
+    renderTab();
+    return;
+  }
   if (!state.user) { showLoginPopup(); return; }
   if (tab !== 'search' && !state.profile?.is_premium) { showPayPopup(); return; }
   state.activeTab = tab;
@@ -696,6 +727,7 @@ function renderTab() {
   const el = document.getElementById('tabContent');
   if (state.activeTab === 'create') { renderCreateTab(); return; }
   if (state.activeTab === 'plans') { renderPlansTab(); return; }
+  if (state.activeTab === 'templates') { renderTemplatesTab(); return; }
   const allExercises = state.filterOwn
     ? state.customExercises
     : [...EXERCISES, ...state.customExercises];
@@ -1687,6 +1719,69 @@ function renderPlansTab() {
           </div>`;
       }).join('')}
     </div>`;
+}
+
+function renderTemplatesTab() {
+  const el = document.getElementById('tabContent');
+  if (!state.templates.length) {
+    el.innerHTML = `<div class="empty-state" style="padding:24px 10px;">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <br><span style="font-size:12px;color:var(--gray-400);">Cargando plantillas...</span>
+    </div>`;
+    return;
+  }
+
+  // Agrupar por categoría
+  const cats = [...new Set(state.templates.map(t => t.category))];
+
+  el.innerHTML = `
+    <div style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:10px;">
+      ${cats.map(cat => `
+        <div>
+          <div style="font-size:10px;font-weight:700;color:var(--blue);letter-spacing:0.6px;text-transform:uppercase;margin-bottom:6px;padding:0 2px;">${cat}</div>
+          ${state.templates.filter(t => t.category === cat).map(t => `
+            <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius);padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:all 0.15s;"
+              onmouseover="this.style.borderColor='var(--blue-mid)';this.style.background='var(--blue-light)'"
+              onmouseout="this.style.borderColor='var(--gray-200)';this.style.background='var(--gray-50)'">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:13px;font-weight:600;color:var(--gray-900);margin-bottom:2px;">${t.name}</div>
+                  <div style="font-size:11px;color:var(--gray-400);line-height:1.4;">${t.description || ''}</div>
+                  <div style="font-size:10px;color:var(--gray-400);margin-top:4px;">${(t.exercises||[]).length} ejercicios</div>
+                </div>
+              </div>
+              <button onclick="loadTemplate(${t.id})" style="margin-top:8px;width:100%;padding:6px;border-radius:7px;border:1px solid var(--blue-mid);background:var(--blue-light);color:var(--blue);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">
+                Usar esta plantilla
+              </button>
+            </div>
+          `).join('')}
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function loadTemplate(id) {
+  const t = state.templates.find(tp => tp.id === id);
+  if (!t) return;
+
+  // Cargar ejercicios de la plantilla con datos actuales de la biblioteca
+  const allEx = [...EXERCISES, ...state.customExercises];
+  state.selectedExercises = (t.exercises || []).map(te => {
+    const found = allEx.find(e => String(e.id) === String(te.id));
+    return {
+      ...(found || te),
+      series: te.series || '3',
+      reps: te.reps || '10',
+      duration: te.duration || '',
+      notes: te.notes || '',
+    };
+  });
+
+  document.getElementById('planNotes').value = t.general_notes || '';
+  renderSelectedExercises();
+  switchTab('search');
+  showToast('Plantilla cargada: ' + t.name + ' ✓');
 }
 
 function showSavePlanPopup() {
