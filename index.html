@@ -1106,7 +1106,8 @@ async function handleAction(type) {
   } else if (type === 'email') {
     sendEmail();
   } else if (type === 'whatsapp') {
-    showToast('WhatsApp — disponible próximamente');
+    sendWhatsApp();
+    return;
   }
 }
 
@@ -1663,6 +1664,72 @@ function doSubscribe() {
 // ============================================
 // EMAIL
 // ============================================
+function sendWhatsApp() {
+  if (!state.patient || !state.patient.phone) {
+    showToast('Añade el móvil del paciente primero');
+    return;
+  }
+  if (!state.selectedExercises.length) {
+    showToast('Añade ejercicios al plan primero');
+    return;
+  }
+
+  var physioName = state.physio.name || 'Tu fisioterapeuta';
+  var patientName = state.patient.name || 'Paciente';
+  var phone = state.patient.phone.replace(/[\s\-\(\)]/g, '');
+  if (!phone.startsWith('+')) phone = '+34' + phone;
+  var notes = document.getElementById('planNotes').value.trim();
+  var msg = 'Hola ' + patientName + ', te comparto tu plan de ejercicios personalizado.';
+  if (notes) msg += ' Indicaciones generales: ' + notes;
+  msg += ' Encontrarás todos los ejercicios detallados en el PDF adjunto.';
+  msg += ' Un saludo, ' + physioName;
+  if (state.physio.clinic) msg += ' (' + state.physio.clinic + ')';
+  var waUrl = 'https://wa.me/' + phone.replace('+','') + '?text=' + encodeURIComponent(msg);
+
+  showPopup(`
+    <div class="popup-icon blue">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </div>
+    <h2>Enviar por WhatsApp</h2>
+    <p style="margin-bottom:14px;">Sigue estos 2 pasos:</p>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px;">
+      <div style="display:flex;align-items:center;gap:12px;background:var(--gray-100);border-radius:10px;padding:12px;">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">1</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--gray-900);">Descarga el PDF</div>
+          <div style="font-size:12px;color:var(--gray-400);">Se guardará en tu carpeta de descargas</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;background:var(--gray-100);border-radius:10px;padding:12px;">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--gray-900);">Abre WhatsApp y adjunta el PDF</div>
+          <div style="font-size:12px;color:var(--gray-400);">El mensaje ya estará escrito, solo adjunta el archivo</div>
+      </div>
+    </div>
+    <div style="background:var(--amber-light);border:1px solid #FDE68A;border-radius:8px;padding:9px 12px;margin-bottom:14px;font-size:11px;color:var(--amber);line-height:1.5;">En PC se abrirá WhatsApp Web — necesitas tenerlo conectado. En móvil se abrirá la app directamente.</div>
+    <div style="display:none;">
+        </div>
+      </div>
+    </div>
+    <div style="background:var(--amber-light);border:1px solid #FDE68A;border-radius:8px;padding:9px 12px;margin-bottom:12px;font-size:11px;color:#92400e;line-height:1.5;">
+      <strong>En PC</strong> se abrirá WhatsApp Web — necesitas tenerlo conectado. <strong>En móvil</strong> se abrirá la app directamente.
+    </div>
+    <div class="popup-btns">
+      <button class="btn-full primary" onclick="doSendWhatsApp('${waUrl}')">Descargar PDF y abrir WhatsApp</button>
+      <button class="btn-full outline" onclick="closePopup()">Cancelar</button>
+    </div>
+  `);
+}
+
+function doSendWhatsApp(url) {
+  closePopup();
+  generatePDF();
+  setTimeout(function() {
+    window.open(url, '_blank');
+  }, 800);
+}
+
 async function sendEmail() {
   if (!state.patient || !state.patient.email) {
     showToast('Añade el email del paciente primero');
