@@ -744,13 +744,24 @@ function renderTab() {
 
 function handleAddExercise(id) {
   if (!state.user) { showLoginPopup('exercise'); return; }
-  const already = state.selectedExercises.some(s=>s.id===id);
+  // Normalizar id — puede ser string o número
+  const numId = isNaN(id) ? id : (typeof id === 'string' ? parseInt(id) : id);
+  const already = state.selectedExercises.some(s => String(s.id) === String(id));
   if (already) {
-    state.selectedExercises = state.selectedExercises.filter(s=>s.id!==id);
+    state.selectedExercises = state.selectedExercises.filter(s => String(s.id) !== String(id));
     showToast('Ejercicio eliminado del plan');
   } else {
-    const ex = EXERCISES.find(e=>e.id===id);
-    state.selectedExercises.push({ ...ex, series:'3', reps:'10', duration:'', notes:'' });
+    // Buscar en biblioteca general y en personalizados
+    const allEx = [...EXERCISES, ...state.customExercises];
+    const ex = allEx.find(e => String(e.id) === String(id));
+    if (!ex) { showToast('Ejercicio no encontrado'); return; }
+    state.selectedExercises.push({
+      ...ex,
+      series: ex.series || '3',
+      reps: ex.reps || '10',
+      duration: ex.duration || '',
+      notes: ''
+    });
     showToast('Ejercicio añadido ✓');
   }
   renderTab();
@@ -929,20 +940,27 @@ async function handleAction(type) {
     showCreditPopup(); return;
   }
 
+  // Consumir crédito para todas las acciones (no premium)
+  async function consumeCredit() {
+    if (!state.profile?.is_premium) {
+      await sb.from('credits').update({
+        daily_used: cr.daily_used + 1,
+        monthly_used: cr.monthly_used + 1
+      }).eq('user_id', state.user.id);
+      state.credits.daily_used++;
+      renderHeader();
+    }
+  }
+
   if (type === 'download') {
     generatePDF();
-    // Consumir crédito
-    await sb.from('credits').update({
-      daily_used: cr.daily_used + 1,
-      monthly_used: cr.monthly_used + 1
-    }).eq('user_id', state.user.id);
-    state.credits.daily_used++;
-    renderHeader();
+    await consumeCredit();
   } else if (type === 'email') {
+    await consumeCredit();
     sendEmail();
   } else if (type === 'whatsapp') {
+    await consumeCredit();
     sendWhatsApp();
-    return;
   }
 }
 
@@ -1132,14 +1150,27 @@ function generatePDFDoc() {
     setColor(C.white);
     doc.text(String(i + 1), marginL + 3.5, y + 4.3, { align: 'center' });
 
-    // Placeholder imagen (rectángulo gris redondeado)
-    // Cuando tengas imágenes reales se sustituirá aquí
-    setFill(C.border);
-    doc.roundedRect(marginL, y + 2, imgW, imgH - 4, 2, 2, 'F');
-    setColor(C.light);
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Ilustración', marginL + imgW / 2, y + imgH / 2, { align: 'center' });
+    // Imagen del ejercicio
+    if (ex.img && ex.img.startsWith('data:')) {
+      try {
+        const fmt = ex.img.includes('image/png') ? 'PNG' : 'JPEG';
+        doc.addImage(ex.img, fmt, marginL, y + 1, imgW, imgH - 2);
+      } catch(e) {
+        setFill(C.border);
+        doc.roundedRect(marginL, y + 2, imgW, imgH - 4, 2, 2, 'F');
+      }
+    } else if (ex.img && ex.img.startsWith('http')) {
+      // Para URLs externas usamos placeholder (jsPDF no puede cargar URLs directas)
+      setFill(C.border);
+      doc.roundedRect(marginL, y + 2, imgW, imgH - 4, 2, 2, 'F');
+      setColor(C.light);
+      doc.setFontSize(6);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Ver imagen', marginL + imgW / 2, y + imgH / 2, { align: 'center' });
+    } else {
+      setFill(C.border);
+      doc.roundedRect(marginL, y + 2, imgW, imgH - 4, 2, 2, 'F');
+    }
 
     // Nombre
     let tyLocal = y + 4;
@@ -1520,11 +1551,40 @@ function renderCreateTab() {
 function handleExerciseImageUpload(input) {
   const file = input.files[0];
   if (!file) return;
-  if (file.size > 5000000) { showToast('La imagen debe pesar menos de 5MB'); return; }
+
+  const validTypes = ['image/jpeg','image/png','image/webp','image/heic','image/heif','image/gif'];
+  if (!validTypes.includes(file.type) && !file.name.match(/\.(heic|heif|jpg|jpeg|png|webp|gif)$/i)) {
+    showToast('Formato no válido. Usa JPG, PNG, WEBP o HEIC');
+    return;
+  }
+  if (file.size > 15000000) {
+    const mb = (file.size / 1000000).toFixed(1);
+    showToast('La imagen pesa ' + mb + 'MB. Máximo 15MB. Comprime la foto e inténtalo de nuevo.');
+    return;
+  }
+
   const reader = new FileReader();
+  reader.onerror = () => showToast('Error al leer el archivo. Inténtalo con otra imagen.');
   reader.onload = (e) => {
-    state.newExercise.img = e.target.result;
-    renderTab();
+    // Redimensionar si es muy grande para no saturar Supabase
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 1200;
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        const ratio = Math.min(MAX/w, MAX/h);
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      state.newExercise.img = canvas.toDataURL('image/jpeg', 0.85);
+      renderTab();
+      showToast('Imagen cargada ✓');
+    };
+    img.onerror = () => showToast('No se pudo cargar la imagen. Prueba con otro formato.');
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
