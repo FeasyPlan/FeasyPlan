@@ -352,20 +352,11 @@ function renderHeader() {
       <div class="avatar" onclick="showProfilePopup()">${state.user.email[0].toUpperCase()}</div>
     `;
   } else {
-    const isMobile = window.innerWidth <= 700;
-    if (isMobile) {
-      el.innerHTML = `
-        <button class="btn btn-ghost" style="padding:6px 10px;font-size:12px;" onclick="showLoginPopup()">Entrar</button>
-        <button class="btn btn-primary" style="padding:6px 10px;font-size:12px;" onclick="showRegisterPopup()">Registro</button>
-        <button class="btn btn-outline" style="padding:6px 10px;font-size:12px;" onclick="handleNewPlan()">+ Plan</button>
-      `;
-    } else {
-      el.innerHTML = `
-        <button class="btn btn-ghost" onclick="showLoginPopup()">Iniciar sesión</button>
-        <button class="btn btn-primary" onclick="showRegisterPopup()">Registrarse gratis</button>
-        <button class="btn btn-outline" onclick="handleNewPlan()">+ Nuevo Plan</button>
-      `;
-    }
+    el.innerHTML = `
+      <button class="btn btn-ghost" onclick="showLoginPopup()">Iniciar sesión</button>
+      <button class="btn btn-primary" onclick="showRegisterPopup()">Registrarse gratis</button>
+      <button class="btn btn-outline" onclick="handleNewPlan()">+ Nuevo Plan</button>
+    `;
   }
 }
 
