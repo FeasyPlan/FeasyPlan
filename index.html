@@ -934,7 +934,10 @@ async function doRegister() {
 }
 
 async function doLogout() {
-  await sb.auth.signOut();
+  // Limpiar estado local primero
+  state.user = null;
+  state.profile = null;
+  state.credits = null;
   state.physio = { name:'', clinic:'' };
   state.physioEditing = false;
   state.selectedExercises = [];
@@ -942,6 +945,8 @@ async function doLogout() {
   closePopup();
   render();
   showToast('Sesión cerrada');
+  // Cerrar sesión en Supabase después
+  await sb.auth.signOut();
 }
 
 // ============================================
