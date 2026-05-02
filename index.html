@@ -610,7 +610,7 @@ async function handleAction(type) {
 // ============================================
 // GENERACIÓN DE PDF
 // ============================================
-function generatePDF() {
+function generatePDFDoc() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const pageW = 210;
@@ -850,9 +850,14 @@ function generatePDF() {
   // Footer última página
   drawFooter(doc, pageW, isPremium);
 
+  return doc;
+}
+
+function generatePDF() {
+  const doc = generatePDFDoc();
   const filename = 'plan-' + (state.patient?.name || 'paciente').replace(/[^a-z0-9]/gi, '-').toLowerCase() + '.pdf';
   doc.save(filename);
-  showToast('📄 PDF descargado ✓');
+  showToast('PDF descargado ✓');
 }
 
 function drawFooter(doc, pageW, isPremium) {
@@ -1111,33 +1116,59 @@ function doSubscribe() {
 // ============================================
 // EMAIL
 // ============================================
-function sendEmail() {
+async function sendEmail() {
   if (!state.patient || !state.patient.email) {
     showToast('Añade el email del paciente primero');
     return;
   }
-  var physioName = state.physio.name || 'Tu fisioterapeuta';
-  var patientName = state.patient.name || 'Paciente';
-  var notes = document.getElementById('planNotes').value.trim();
-  var NL = '%0A';
-  var subject = encodeURIComponent('Plan de ejercicios - ' + patientName);
-  var body = 'Hola ' + patientName + ',' + NL + NL;
-  body += 'Te envio tu plan de ejercicios personalizado.' + NL + NL;
-  if (notes) { body += 'INDICACIONES GENERALES' + NL + encodeURIComponent(notes) + NL + NL; }
-  body += 'EJERCICIOS DEL PLAN' + NL + '------------------------------' + NL + NL;
-  state.selectedExercises.forEach(function(ex, i) {
-    body += encodeURIComponent((i+1) + '. ' + ex.name) + NL;
-    body += encodeURIComponent('   ' + ex.desc) + NL;
-    var params = '   Series: ' + ex.series + ' | Reps: ' + ex.reps;
-    if (ex.duration) params += ' | Duracion: ' + ex.duration + 's';
-    body += encodeURIComponent(params) + NL;
-    if (ex.notes) body += encodeURIComponent('   Nota: ' + ex.notes) + NL;
-    body += NL;
-  });
-  body += NL + encodeURIComponent('Un saludo,') + NL + encodeURIComponent(physioName);
-  if (state.physio.clinic) body += NL + encodeURIComponent(state.physio.clinic);
-  window.location.href = 'mailto:' + state.patient.email + '?subject=' + subject + '&body=' + body;
-  showToast('Abriendo tu cliente de correo...');
+  if (!state.selectedExercises.length) {
+    showToast('Añade ejercicios al plan primero');
+    return;
+  }
+
+  showToast('Generando y enviando PDF...');
+
+  try {
+    // Generar PDF en base64
+    const pdfBase64 = generatePDFBase64();
+
+    // Llamar a la Edge Function
+    const res = await fetch(
+      'https://hqofqaqlhknyxrazgwtc.supabase.co/functions/v1/send-plan-email',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+        },
+        body: JSON.stringify({
+          to: state.patient.email,
+          subject: 'Tu plan de ejercicios - ' + state.patient.name,
+          patientName: state.patient.name,
+          physioName: state.physio.name || 'Tu fisioterapeuta',
+          physioClinic: state.physio.clinic || '',
+          notes: document.getElementById('planNotes').value.trim(),
+          exercises: state.selectedExercises,
+          pdfBase64: pdfBase64,
+        }),
+      }
+    );
+
+    const data = await res.json();
+    if (data.ok) {
+      showToast('Email enviado correctamente a ' + state.patient.email + ' ✓');
+    } else {
+      showToast('Error al enviar: ' + (data.error || 'inténtalo de nuevo'));
+    }
+  } catch(e) {
+    showToast('Error de conexión al enviar el email');
+  }
+}
+
+function generatePDFBase64() {
+  const { jsPDF } = window.jspdf;
+  const doc = generatePDFDoc();
+  return doc.output('datauristring').split(',')[1];
 }
 
 // ============================================
