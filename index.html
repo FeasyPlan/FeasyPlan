@@ -626,7 +626,7 @@ let state = {
   user: null,
   profile: null,
   credits: null,
-  physio: { name:'', clinic:'' },
+  physio: { name:'', clinic:'', phone:'', email:'' },
   physioEditing: false,
   patient: null,
   selectedExercises: [],
@@ -677,6 +677,9 @@ async function loadUserData() {
   if (profile) {
     state.physio.name = profile.name || '';
     state.physio.clinic = profile.clinic || '';
+    state.physio.phone = profile.phone || '';
+    state.physio.email = profile.email || '';
+    state.physio.logo = profile.logo_url || null;
   }
 
   // Cargar créditos
@@ -734,12 +737,16 @@ function renderPhysio() {
         <div style="display:flex;align-items:center;gap:10px;">
           <label style="cursor:pointer;" title="Subir logo">
             ${logoPreview}
-            <input type="file" accept="image/*" style="display:none;" onchange="handleLogoUpload(this)">
+            <input type="file" accept="image/*,.heic,.heif" style="display:none;" onchange="handleLogoUpload(this)">
           </label>
           <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
             <input class="input" style="background:white;" placeholder="Tu nombre completo" value="${state.physio.name}" oninput="state.physio.name=this.value" id="physioNameIn">
             <input class="input" style="background:white;" placeholder="Clínica / Centro" value="${state.physio.clinic}" oninput="state.physio.clinic=this.value">
           </div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <input class="input" style="background:white;flex:1;" placeholder="Teléfono" type="tel" value="${state.physio.phone}" oninput="state.physio.phone=this.value">
+          <input class="input" style="background:white;flex:1;" placeholder="Email de contacto" type="email" value="${state.physio.email}" oninput="state.physio.email=this.value">
         </div>
         <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="savePhysio()">Guardar</button>
       </div>
@@ -755,6 +762,8 @@ function renderPhysio() {
         <div style="flex:1;min-width:0;">
           <div class="physio-name" style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${state.physio.name}</div>
           <div class="physio-clinic" style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${state.physio.clinic || 'Sin clínica'}</div>
+          ${state.physio.phone ? `<div style="font-size:10px;color:var(--gray-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${state.physio.phone}</div>` : ''}
+          ${state.physio.email ? `<div style="font-size:10px;color:var(--gray-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${state.physio.email}</div>` : ''}
         </div>
         <button class="btn-sm" style="font-size:11px;padding:4px 8px;flex-shrink:0;" onclick="state.physioEditing=true;render()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Editar</button>
       </div>
@@ -773,13 +782,98 @@ function startPhysioEdit() {
 function handleLogoUpload(input) {
   const file = input.files[0];
   if (!file) return;
-  if (file.size > 500000) { showToast('⚠️ El logo debe pesar menos de 500KB'); return; }
+
+  // Validaciones
+  const validTypes = ['image/jpeg','image/png','image/webp','image/svg+xml','image/heic','image/heif','image/gif'];
+  if (!validTypes.includes(file.type)) {
+    showToast('Formato no válido. Usa JPG, PNG, WEBP o SVG');
+    return;
+  }
+  if (file.size > 2000000) {
+    showToast('La imagen es demasiado grande. Máximo 2MB');
+    return;
+  }
+
   const reader = new FileReader();
   reader.onload = (e) => {
-    state.physio.logo = e.target.result;
-    renderPhysio();
+    // Mostrar recortador
+    showLogoCropper(e.target.result);
   };
   reader.readAsDataURL(file);
+}
+
+function showLogoCropper(src) {
+  showPopup(`
+    <div style="font-size:15px;font-weight:700;color:var(--gray-900);margin-bottom:6px;">Ajusta tu logo</div>
+    <p style="font-size:13px;color:var(--gray-600);margin-bottom:12px;">Arrastra la imagen para elegir qué parte se verá en tu perfil y en el PDF.</p>
+    <div style="position:relative;width:100%;height:200px;overflow:hidden;border-radius:10px;border:1px solid var(--gray-200);background:var(--gray-100);cursor:grab;margin-bottom:14px;" id="cropBox">
+      <img id="cropImg" src="${src}" style="position:absolute;max-width:none;user-select:none;" draggable="false">
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
+      <span style="font-size:12px;color:var(--gray-600);">Zoom</span>
+      <input type="range" id="cropZoom" min="50" max="200" value="100" style="flex:1;" oninput="updateCropZoom(this.value)">
+    </div>
+    <div class="popup-btns">
+      <button class="btn-full primary" onclick="confirmCrop()">Usar esta zona</button>
+      <button class="btn-full outline" onclick="closePopup()">Cancelar</button>
+    </div>
+  `);
+
+  // Setup drag
+  const box = document.getElementById('cropBox');
+  const img = document.getElementById('cropImg');
+  let dragging = false, startX, startY, imgX = 0, imgY = 0;
+
+  // Center image initially
+  img.onload = () => {
+    const scale = 100 / 100;
+    const iw = img.naturalWidth * scale;
+    const ih = img.naturalHeight * scale;
+    imgX = (200 - iw) / 2;
+    imgY = (200 - ih) / 2;
+    img.style.width = iw + 'px';
+    img.style.left = imgX + 'px';
+    img.style.top = imgY + 'px';
+  };
+
+  box.addEventListener('mousedown', (e) => { dragging=true; startX=e.clientX-imgX; startY=e.clientY-imgY; box.style.cursor='grabbing'; });
+  box.addEventListener('touchstart', (e) => { dragging=true; startX=e.touches[0].clientX-imgX; startY=e.touches[0].clientY-imgY; });
+  document.addEventListener('mousemove', (e) => { if(!dragging) return; imgX=e.clientX-startX; imgY=e.clientY-startY; img.style.left=imgX+'px'; img.style.top=imgY+'px'; });
+  document.addEventListener('touchmove', (e) => { if(!dragging) return; imgX=e.touches[0].clientX-startX; imgY=e.touches[0].clientY-startY; img.style.left=imgX+'px'; img.style.top=imgY+'px'; });
+  document.addEventListener('mouseup', () => { dragging=false; box.style.cursor='grab'; });
+  document.addEventListener('touchend', () => { dragging=false; });
+}
+
+function updateCropZoom(val) {
+  const img = document.getElementById('cropImg');
+  if (!img) return;
+  img.style.width = (img.naturalWidth * val / 100) + 'px';
+}
+
+function confirmCrop() {
+  const box = document.getElementById('cropBox');
+  const img = document.getElementById('cropImg');
+  if (!box || !img) return;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 200;
+  canvas.height = 200;
+  const ctx = canvas.getContext('2d');
+
+  const boxRect = box.getBoundingClientRect();
+  const imgRect = img.getBoundingClientRect();
+  const scaleX = img.naturalWidth / imgRect.width;
+  const scaleY = img.naturalHeight / imgRect.height;
+  const sx = (boxRect.left - imgRect.left) * scaleX;
+  const sy = (boxRect.top - imgRect.top) * scaleY;
+  const sw = boxRect.width * scaleX;
+  const sh = boxRect.height * scaleY;
+
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 200, 200);
+  state.physio.logo = canvas.toDataURL('image/png');
+  closePopup();
+  renderPhysio();
+  showToast('Logo actualizado ✓');
 }
 
 async function savePhysio() {
@@ -790,7 +884,9 @@ async function savePhysio() {
       id: state.user.id,
       name: state.physio.name,
       clinic: state.physio.clinic,
+      phone: state.physio.phone,
       email: state.user.email,
+      logo_url: state.physio.logo || null,
     });
   }
   render();
@@ -878,7 +974,7 @@ function handleAddExercise(id) {
 function renderSelectedExercises() {
   const el = document.getElementById('selectedExercises');
   if (!state.selectedExercises.length) {
-    el.innerHTML = `<div class="empty-state">📋<br>Añade ejercicios desde el buscador</div>`;
+    el.innerHTML = `<div class="empty-state"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg><br>Añade ejercicios desde el buscador</div>`;
     return;
   }
   el.innerHTML = state.selectedExercises.map((ex,i) => `
@@ -1016,8 +1112,16 @@ function generatePDFDoc() {
     }
     if (state.physio.phone) {
       doc.setFontSize(8.5);
+      doc.setFont('helvetica', 'normal');
       setColor(C.light);
       doc.text(state.physio.phone, marginL, y);
+      y += 4;
+    }
+    if (state.physio.email) {
+      doc.setFontSize(8.5);
+      doc.setFont('helvetica', 'normal');
+      setColor(C.light);
+      doc.text(state.physio.email, marginL, y);
       y += 4;
     }
   }
