@@ -262,21 +262,81 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 // EJERCICIOS (base de datos local inicial)
 // ============================================
 const EXERCISES = [
-  { id:1, name:"Estiramiento de pared para pantorrilla", desc:"De pie frente a una pared. Coloque las manos a la altura del pecho. Lleve una pierna hacia atrás manteniendo el talón en el suelo.", tags:["estiramiento","tobillo"], zona:"Piernas", tipo:"Estiramiento", material:"Ninguno" },
-  { id:2, name:"Elevaciones de hombro con banda elástica", desc:"Con una banda elástica bajo sus pies, sujete los extremos con las manos. Levante los brazos lentamente hasta la altura de los hombros.", tags:["fuerza","hombro"], zona:"Hombros", tipo:"Fuerza", material:"Banda elástica" },
-  { id:3, name:"Postura corporal en espejo", desc:"De pie frente a un espejo, adopte una postura correcta: hombros relajados, pecho abierto, cabeza erguida.", tags:["postura","general"], zona:"General", tipo:"Propiocepción", material:"Ninguno" },
-  { id:4, name:"Sentadilla con pelota en pared", desc:"Coloque una pelota entre su espalda baja y la pared. Baje lentamente hasta formar un ángulo de 90 grados en las rodillas.", tags:["fuerza","rodilla"], zona:"Piernas", tipo:"Fuerza", material:"Pelota" },
-  { id:5, name:"Estiramiento de cuádriceps", desc:"De pie, tome su tobillo y lleve el talón hacia el glúteo. Mantenga las rodillas juntas y el cuerpo erguido.", tags:["estiramiento","rodilla"], zona:"Piernas", tipo:"Estiramiento", material:"Ninguno" },
-  { id:6, name:"Rotación de cadera en decúbito", desc:"Acostado boca arriba, con las rodillas dobladas. Deje caer ambas rodillas hacia un lado y luego hacia el otro.", tags:["estiramiento","cadera"], zona:"Cadera", tipo:"Movilidad", material:"Ninguno" },
-  { id:7, name:"Equilibrio sobre una pierna", desc:"De pie, levante una pierna del suelo manteniéndola flexionada. Mantenga el equilibrio durante 30 segundos.", tags:["equilibrio","tobillo"], zona:"Piernas", tipo:"Propiocepción", material:"Ninguno" },
-  { id:8, name:"Puente de glúteos", desc:"Acostado boca arriba con rodillas flexionadas. Eleve las caderas hasta formar una línea recta desde los hombros.", tags:["fuerza","cadera"], zona:"Cadera", tipo:"Fuerza", material:"Ninguno" },
-  { id:9, name:"Movilidad cervical activa", desc:"Sentado erguido, lleve el mentón al pecho lentamente, luego hacia atrás. Realice inclinaciones laterales suaves.", tags:["movilidad","cuello"], zona:"Cuello", tipo:"Movilidad", material:"Ninguno" },
-  { id:10, name:"Plancha sobre codos", desc:"Apóyese sobre los codos y las puntas de los pies, formando una línea recta. Contraiga el abdomen y mantenga.", tags:["fuerza","core"], zona:"Core", tipo:"Fuerza", material:"Ninguno" },
+  {
+    id:1, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(1).png',
+    name:"Plancha Frontal sobre Codos",
+    desc:"En decúbito prono, apóyese sobre los antebrazos y puntas de los pies. Mantenga el cuerpo alineado de cabeza a talones contrayendo abdomen y glúteos. Evite hundir o elevar las caderas.",
+    tags:["core","estabilización","abdomen"], zona:"Core", tipo:"Fuerza", material:"Ninguno",
+    series:"3", reps:"1", duration:"30"
+  },
+  {
+    id:2, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(2).png',
+    name:"Carrera y Marcha Atlética",
+    desc:"Realice carrera suave o marcha atlética manteniendo postura erguida, cadencia regular y movimiento coordinado de brazos y piernas. Ideal como calentamiento cardiovascular o rehabilitación funcional.",
+    tags:["cardio","funcional","miembro inferior"], zona:"Piernas", tipo:"Cardio", material:"Ninguno",
+    series:"1", reps:"1", duration:"600"
+  },
+  {
+    id:3, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(3).png',
+    name:"Flexiones de Brazos (Push-ups)",
+    desc:"En decúbito prono con manos a la anchura de los hombros, baje el pecho hasta casi tocar el suelo manteniendo el cuerpo recto, luego empuje hacia arriba. Controle el descenso de forma lenta.",
+    tags:["pectoral","tríceps","hombro"], zona:"Hombros", tipo:"Fuerza", material:"Ninguno",
+    series:"3", reps:"12", duration:""
+  },
+  {
+    id:4, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(4).png',
+    name:"Puente de Glúteos",
+    desc:"En decúbito supino con rodillas flexionadas y pies apoyados, eleve las caderas contrayendo glúteos hasta alinear hombros, caderas y rodillas. Mantenga 2 segundos arriba y baje de forma controlada.",
+    tags:["glúteos","isquiotibiales","lumbar"], zona:"Cadera", tipo:"Fuerza", material:"Ninguno",
+    series:"3", reps:"15", duration:""
+  },
+  {
+    id:5, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(5).png',
+    name:"Dominadas (Pull-ups)",
+    desc:"Sujete la barra con agarre en pronación a anchura de hombros. Eleve el cuerpo hasta que la barbilla supere la barra activando dorsales y bíceps. Baje de forma controlada con los codos extendidos.",
+    tags:["dorsal","bíceps","hombro"], zona:"Hombros", tipo:"Fuerza", material:"Barra fija",
+    series:"3", reps:"8", duration:""
+  },
+  {
+    id:6, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(6).png',
+    name:"Crunch Abdominal con Rotación",
+    desc:"En decúbito supino con rodillas flexionadas y manos tras la nuca, eleve el tronco girando un codo hacia la rodilla contraria alternando lados. Exhale en el esfuerzo y controle el descenso.",
+    tags:["abdomen","oblicuos","core"], zona:"Core", tipo:"Fuerza", material:"Ninguno",
+    series:"3", reps:"20", duration:""
+  },
+  {
+    id:7, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(7).png',
+    name:"Fondos en Banco (Triceps Dips)",
+    desc:"Con manos apoyadas en el borde de un banco y piernas extendidas, flexione los codos bajando las caderas hacia el suelo y empuje hacia arriba extendiendo los tríceps. Mantenga la espalda cerca del banco.",
+    tags:["tríceps","hombro","pectoral"], zona:"Hombros", tipo:"Fuerza", material:"Banco",
+    series:"3", reps:"12", duration:""
+  },
+  {
+    id:8, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(8).png',
+    name:"Sentadilla (Squat)",
+    desc:"De pie con pies a la anchura de los hombros, descienda flexionando caderas y rodillas hasta 90 grados manteniendo el tronco erguido y las rodillas alineadas con los pies. Empuje desde los talones para subir.",
+    tags:["cuádriceps","glúteos","rodilla"], zona:"Piernas", tipo:"Fuerza", material:"Ninguno",
+    series:"3", reps:"15", duration:""
+  },
+  {
+    id:9, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(9).png',
+    name:"Zancada Frontal (Lunge)",
+    desc:"De pie, dé un paso adelante con una pierna y descienda hasta que ambas rodillas formen 90 grados. La rodilla trasera no debe tocar el suelo. Regrese a la posición inicial y alterne piernas.",
+    tags:["cuádriceps","glúteos","equilibrio"], zona:"Piernas", tipo:"Fuerza", material:"Ninguno",
+    series:"3", reps:"12", duration:""
+  },
+  {
+    id:10, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(10).png',
+    name:"Elevación de Piernas en Decúbito",
+    desc:"En decúbito supino con piernas extendidas, eleve ambas piernas hasta 45-90 grados contrayendo el abdomen bajo. Baje de forma lenta y controlada sin que los pies toquen el suelo entre repeticiones.",
+    tags:["abdomen","flexores cadera","core"], zona:"Core", tipo:"Fuerza", material:"Ninguno",
+    series:"3", reps:"15", duration:""
+  },
 ];
 
 const ZONAS = ["Todas","Piernas","Hombros","Cadera","Core","Cuello","General"];
-const TIPOS = ["Todos","Estiramiento","Fuerza","Movilidad","Propiocepción"];
-const MATERIALES = ["Todos","Ninguno","Banda elástica","Pelota"];
+const TIPOS = ["Todos","Estiramiento","Fuerza","Movilidad","Propiocepción","Cardio"];
+const MATERIALES = ["Todos","Ninguno","Banda elástica","Pelota","Barra fija","Banco"];
 
 // ============================================
 // ESTADO GLOBAL
@@ -509,7 +569,11 @@ function renderTab() {
       ${filtered.length === 0 ? '<div class="empty-state">Sin resultados para esa búsqueda</div>' :
         filtered.map(ex => {
           const added = state.selectedExercises.some(s=>s.id===ex.id);
+          const imgHtml = ex.img
+            ? `<img src="${ex.img}" style="width:52px;height:52px;object-fit:cover;border-radius:7px;flex-shrink:0;background:var(--gray-100);" loading="lazy">`
+            : `<div style="width:52px;height:52px;border-radius:7px;background:var(--gray-100);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;">🏃</div>`;
           return `<div class="exercise-card">
+            ${imgHtml}
             <div style="flex:1;min-width:0;">
               <div class="exercise-name">${ex.name}</div>
               <div class="exercise-desc">${ex.desc}</div>
