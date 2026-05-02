@@ -985,7 +985,7 @@ async function handleAction(type) {
   }
 
   if (type === 'download') {
-    generatePDF();
+    await generatePDF();
     await consumeCredit();
   } else if (type === 'email') {
     await consumeCredit();
@@ -1182,23 +1182,16 @@ function generatePDFDoc() {
     setColor(C.white);
     doc.text(String(i + 1), marginL + 3.5, y + 4.3, { align: 'center' });
 
-    // Imagen del ejercicio
-    if (ex.img && ex.img.startsWith('data:')) {
+    // Imagen del ejercicio — usar base64 precargada o inline
+    const imgSrc = ex.imgBase64 || (ex.img && ex.img.startsWith('data:') ? ex.img : null);
+    if (imgSrc) {
       try {
-        const fmt = ex.img.includes('image/png') ? 'PNG' : 'JPEG';
-        doc.addImage(ex.img, fmt, marginL, y + 1, imgW, imgH - 2);
+        const fmt = imgSrc.includes('image/png') ? 'PNG' : 'JPEG';
+        doc.addImage(imgSrc, fmt, marginL, y + 1, imgW, imgH - 2);
       } catch(e) {
         setFill(C.border);
         doc.roundedRect(marginL, y + 2, imgW, imgH - 4, 2, 2, 'F');
       }
-    } else if (ex.img && ex.img.startsWith('http')) {
-      // Para URLs externas usamos placeholder (jsPDF no puede cargar URLs directas)
-      setFill(C.border);
-      doc.roundedRect(marginL, y + 2, imgW, imgH - 4, 2, 2, 'F');
-      setColor(C.light);
-      doc.setFontSize(6);
-      doc.setFont('helvetica', 'normal');
-      doc.text('Ver imagen', marginL + imgW / 2, y + imgH / 2, { align: 'center' });
     } else {
       setFill(C.border);
       doc.roundedRect(marginL, y + 2, imgW, imgH - 4, 2, 2, 'F');
@@ -1263,7 +1256,31 @@ function generatePDFDoc() {
   return doc;
 }
 
-function generatePDF() {
+async function preloadExerciseImages() {
+  const promises = state.selectedExercises.map(ex => {
+    return new Promise(resolve => {
+      if (!ex.img || ex.img.startsWith('data:')) { resolve(); return; }
+      // URL externa — convertir a base64 via canvas
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width; canvas.height = img.height;
+          canvas.getContext('2d').drawImage(img, 0, 0);
+          ex.imgBase64 = canvas.toDataURL('image/jpeg', 0.85);
+        } catch(e) { /* CORS error, skip */ }
+        resolve();
+      };
+      img.onerror = () => resolve();
+      img.src = ex.img;
+    });
+  });
+  await Promise.all(promises);
+}
+
+async function generatePDF() {
+  await preloadExerciseImages();
   const doc = generatePDFDoc();
   const filename = 'plan-' + (state.patient?.name || 'paciente').replace(/[^a-z0-9]/gi, '-').toLowerCase() + '.pdf';
   doc.save(filename);
@@ -1595,11 +1612,13 @@ function handleExerciseImageUpload(input) {
     return;
   }
 
+  showToast('Procesando imagen...');
   const reader = new FileReader();
   reader.onerror = () => showToast('Error al leer el archivo. Inténtalo con otra imagen.');
   reader.onload = (e) => {
-    // Redimensionar si es muy grande para no saturar Supabase
+    const dataUrl = e.target.result;
     const img = new Image();
+    img.onerror = () => showToast('No se pudo cargar la imagen. Prueba con otro formato.');
     img.onload = () => {
       const MAX = 1200;
       let w = img.width, h = img.height;
@@ -1615,8 +1634,8 @@ function handleExerciseImageUpload(input) {
       renderTab();
       showToast('Imagen cargada ✓');
     };
-    img.onerror = () => showToast('No se pudo cargar la imagen. Prueba con otro formato.');
-    img.src = e.target.result;
+    // Set src AFTER defining onload to avoid race condition
+    img.src = dataUrl;
   };
   reader.readAsDataURL(file);
 }
@@ -1960,7 +1979,7 @@ async function sendEmail() {
 
   try {
     // Generar PDF en base64
-    const pdfBase64 = generatePDFBase64();
+    const pdfBase64 = await generatePDFBase64();
 
     // Llamar a la Edge Function
     const res = await fetch(
@@ -1995,8 +2014,8 @@ async function sendEmail() {
   }
 }
 
-function generatePDFBase64() {
-  const { jsPDF } = window.jspdf;
+async function generatePDFBase64() {
+  await preloadExerciseImages();
   const doc = generatePDFDoc();
   return doc.output('datauristring').split(',')[1];
 }
