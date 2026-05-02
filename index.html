@@ -560,142 +560,257 @@ function generatePDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const pageW = 210;
-  let y = 20;
+  const marginL = 14;
+  const marginR = 14;
+  const contentW = pageW - marginL - marginR;
+  const isPremium = state.profile?.is_premium || false;
 
-  // Header
-  doc.setFillColor(37, 99, 235);
-  doc.rect(0, 0, pageW, 30, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(20);
-  doc.setFont('helvetica', 'bold');
-  doc.text('FeasyPlan', 14, 13);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Plan de Ejercicios', 14, 22);
-  doc.text(new Date().toLocaleDateString('es-ES'), pageW - 14, 22, { align: 'right' });
+  // ── COLORES ──
+  const C = {
+    blue:     [37,  99,  235],
+    blueSoft: [239, 246, 255],
+    dark:     [17,  24,  39],
+    mid:      [75,  85,  99],
+    light:    [156, 163, 175],
+    border:   [228, 232, 240],
+    bg:       [247, 248, 250],
+    white:    [255, 255, 255],
+  };
 
-  y = 42;
-  doc.setTextColor(30, 30, 30);
+  function setFill(c)   { doc.setFillColor(c[0], c[1], c[2]); }
+  function setStroke(c) { doc.setDrawColor(c[0], c[1], c[2]); }
+  function setColor(c)  { doc.setTextColor(c[0], c[1], c[2]); }
 
-  // Datos fisio
+  // ── CABECERA ──
+  // Franja superior azul fina
+  setFill(C.blue);
+  doc.rect(0, 0, pageW, 4, 'F');
+
+  let y = 14;
+
+  // Fisio (izquierda) | Paciente (derecha)
+  const colMid = pageW / 2;
+
+  // Fisio
   if (state.physio.name) {
-    doc.setFontSize(9);
+    doc.setFontSize(7);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(100, 100, 100);
-    doc.text('FISIOTERAPEUTA', 14, y);
-    y += 5;
+    setColor(C.blue);
+    doc.text('FISIOTERAPEUTA', marginL, y);
+    y += 4.5;
     doc.setFontSize(13);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(30, 30, 30);
-    doc.text(state.physio.name, 14, y);
+    setColor(C.dark);
+    doc.text(state.physio.name, marginL, y);
     y += 5;
     if (state.physio.clinic) {
-      doc.setFontSize(10);
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(100, 100, 100);
-      doc.text(state.physio.clinic, 14, y);
-      y += 5;
+      setColor(C.mid);
+      doc.text(state.physio.clinic, marginL, y);
+      y += 4;
     }
-    y += 4;
+    if (state.physio.phone) {
+      doc.setFontSize(8.5);
+      setColor(C.light);
+      doc.text(state.physio.phone, marginL, y);
+      y += 4;
+    }
   }
 
-  // Datos paciente
+  // Paciente (columna derecha, alineado arriba junto al fisio)
   if (state.patient) {
-    doc.setFontSize(9);
+    let yP = 14;
+    doc.setFontSize(7);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(100, 100, 100);
-    doc.text('PACIENTE', 14, y);
-    y += 5;
+    setColor(C.blue);
+    doc.text('PACIENTE', colMid, yP);
+    yP += 4.5;
     doc.setFontSize(13);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(30, 30, 30);
-    doc.text(state.patient.name + (state.patient.age ? ' · ' + state.patient.age + ' años' : ''), 14, y);
-    y += 8;
+    setColor(C.dark);
+    doc.text(state.patient.name, colMid, yP);
+    yP += 5;
+    if (state.patient.age) {
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      setColor(C.mid);
+      doc.text(state.patient.age + ' años', colMid, yP);
+      yP += 4;
+    }
+    if (state.patient.notes) {
+      doc.setFontSize(8.5);
+      setColor(C.light);
+      const pNotes = doc.splitTextToSize(state.patient.notes, contentW / 2 - 4);
+      doc.text(pNotes, colMid, yP);
+    }
   }
 
-  // Línea divisora
-  doc.setDrawColor(228, 232, 240);
-  doc.line(14, y, pageW - 14, y);
-  y += 8;
+  // Fecha arriba a la derecha
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  setColor(C.light);
+  doc.text(new Date().toLocaleDateString('es-ES', {day:'2-digit', month:'long', year:'numeric'}), pageW - marginR, 10, { align: 'right' });
 
-  // Notas generales
-  const notes = document.getElementById('planNotes').value;
-  if (notes) {
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(100, 100, 100);
-    doc.text('NOTAS GENERALES', 14, y);
-    y += 5;
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(60, 60, 60);
-    const lines = doc.splitTextToSize(notes, pageW - 28);
-    doc.text(lines, 14, y);
-    y += lines.length * 5 + 6;
-  }
-
-  // Ejercicios
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(100, 100, 100);
-  doc.text('EJERCICIOS DEL PLAN', 14, y);
+  // Línea separadora cabecera
+  y = Math.max(y, 36) + 4;
+  setStroke(C.border);
+  doc.setLineWidth(0.4);
+  doc.line(marginL, y, pageW - marginR, y);
   y += 6;
 
-  state.selectedExercises.forEach((ex, i) => {
-    if (y > 260) { doc.addPage(); y = 20; }
-
-    // Número
-    doc.setFillColor(239, 246, 255);
-    doc.roundedRect(14, y - 4, 6, 6, 1, 1, 'F');
-    doc.setFontSize(8);
+  // ── NOTAS GENERALES ──
+  const notes = document.getElementById('planNotes').value.trim();
+  if (notes) {
+    doc.setFontSize(7);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(37, 99, 235);
-    doc.text(String(i+1), 17, y, { align: 'center' });
-
-    // Nombre
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(30, 30, 30);
-    doc.text(ex.name, 24, y);
-    y += 5;
-
-    // Descripción
+    setColor(C.blue);
+    doc.text('NOTAS GENERALES', marginL, y);
+    y += 4;
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 100, 100);
-    const descLines = doc.splitTextToSize(ex.desc, pageW - 38);
-    doc.text(descLines, 24, y);
-    y += descLines.length * 4 + 3;
+    setColor(C.mid);
+    const noteLines = doc.splitTextToSize(notes, contentW);
+    doc.text(noteLines, marginL, y);
+    y += noteLines.length * 4.5 + 5;
+    setStroke(C.border);
+    doc.line(marginL, y, pageW - marginR, y);
+    y += 6;
+  }
 
-    // Parámetros
-    doc.setFillColor(247, 248, 250);
-    doc.roundedRect(24, y - 1, pageW - 38, 8, 2, 2, 'F');
-    doc.setFontSize(9);
+  // ── TÍTULO SECCIÓN EJERCICIOS ──
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'bold');
+  setColor(C.blue);
+  doc.text('PLAN DE EJERCICIOS', marginL, y);
+  y += 6;
+
+  // ── CALCULAR ALTURA POR EJERCICIO ──
+  // Layout: imagen 32x32mm a la izquierda, texto a la derecha
+  const imgW = 32;
+  const imgH = 32;
+  const textX = marginL + imgW + 6;
+  const textW = contentW - imgW - 6;
+  const exSpacing = 4; // espacio entre ejercicios
+
+  // ── EJERCICIOS ──
+  state.selectedExercises.forEach((ex, i) => {
+    // Calcular altura dinámica del bloque
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(37, 99, 235);
-    let paramText = `Series: ${ex.series}   Reps: ${ex.reps}`;
-    if (ex.duration) paramText += `   Duración: ${ex.duration}s`;
-    doc.text(paramText, 27, y + 4);
-    y += 11;
+    const nameLines = doc.splitTextToSize(ex.name, textW);
 
-    if (ex.notes) {
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'italic');
-      doc.setTextColor(120, 120, 120);
-      doc.text('Nota: ' + ex.notes, 24, y);
-      y += 5;
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'normal');
+    const descLines = doc.splitTextToSize(ex.desc, textW);
+
+    const blockH = Math.max(imgH, nameLines.length * 5.5 + descLines.length * 4.2 + 14) + 4;
+
+    // Nueva página si no cabe
+    if (y + blockH > 278) {
+      // Footer en página actual
+      drawFooter(doc, pageW, isPremium);
+      doc.addPage();
+      // Franja azul nueva página
+      setFill(C.blue);
+      doc.rect(0, 0, pageW, 4, 'F');
+      y = 14;
     }
 
-    y += 3;
+    // Fondo alterno suave
+    if (i % 2 === 0) {
+      setFill(C.bg);
+      doc.roundedRect(marginL, y - 2, contentW, blockH, 2, 2, 'F');
+    }
+
+    // Número del ejercicio
+    setFill(C.blue);
+    doc.circle(marginL + 3.5, y + 3, 3.5, 'F');
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    setColor(C.white);
+    doc.text(String(i + 1), marginL + 3.5, y + 4.3, { align: 'center' });
+
+    // Placeholder imagen (rectángulo gris redondeado)
+    // Cuando tengas imágenes reales se sustituirá aquí
+    setFill(C.border);
+    doc.roundedRect(marginL, y + 2, imgW, imgH - 4, 2, 2, 'F');
+    setColor(C.light);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Ilustración', marginL + imgW / 2, y + imgH / 2, { align: 'center' });
+
+    // Nombre
+    let tyLocal = y + 4;
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    setColor(C.dark);
+    doc.text(nameLines, textX, tyLocal);
+    tyLocal += nameLines.length * 5.5;
+
+    // Descripción
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'normal');
+    setColor(C.mid);
+    doc.text(descLines, textX, tyLocal);
+    tyLocal += descLines.length * 4.2 + 3;
+
+    // Parámetros — píldoras
+    const params = [];
+    if (ex.series)   params.push('Series: ' + ex.series);
+    if (ex.reps)     params.push('Reps: ' + ex.reps);
+    if (ex.duration) params.push('Dur: ' + ex.duration + 's');
+
+    let px = textX;
+    params.forEach(p => {
+      const pw = doc.getTextWidth(p) + 6;
+      setFill(C.blueSoft);
+      doc.roundedRect(px, tyLocal - 3, pw, 5.5, 1.5, 1.5, 'F');
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'bold');
+      setColor(C.blue);
+      doc.text(p, px + 3, tyLocal + 1);
+      px += pw + 3;
+    });
+    tyLocal += 7;
+
+    // Notas del ejercicio
+    if (ex.notes) {
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'italic');
+      setColor(C.light);
+      doc.text('Nota: ' + ex.notes, textX, tyLocal);
+      tyLocal += 4.5;
+    }
+
+    // Línea separadora entre ejercicios (solo si no es el último)
+    if (i < state.selectedExercises.length - 1) {
+      setStroke(C.border);
+      doc.setLineWidth(0.2);
+      doc.line(marginL, y + blockH - 1, pageW - marginR, y + blockH - 1);
+    }
+
+    y += blockH + exSpacing;
   });
 
-  // Footer PDF
-  doc.setFontSize(8);
-  doc.setTextColor(180, 180, 180);
-  doc.text('Generado con FeasyPlan · feasyplan.com', pageW / 2, 287, { align: 'center' });
+  // Footer última página
+  drawFooter(doc, pageW, isPremium);
 
-  doc.save(`plan-ejercicios-${(state.patient?.name || 'paciente').replace(/\s/g,'-').toLowerCase()}.pdf`);
+  const filename = 'plan-' + (state.patient?.name || 'paciente').replace(/[^a-z0-9]/gi, '-').toLowerCase() + '.pdf';
+  doc.save(filename);
   showToast('📄 PDF descargado ✓');
+}
+
+function drawFooter(doc, pageW, isPremium) {
+  if (!isPremium) {
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(180, 180, 180);
+    doc.text('Generado con FeasyPlan · feasyplan.com', pageW / 2, 290, { align: 'center' });
+  }
+  // Franja azul inferior
+  doc.setFillColor(37, 99, 235);
+  doc.rect(0, 293, pageW, 4, 'F');
 }
 
 // ============================================
