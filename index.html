@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FeasyPlan — Planes de ejercicios para fisioterapeutas</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; }
+    body { font-family: 'DM Sans', sans-serif; background: #F7F8FA; color: #1a1d23; min-height: 100vh; }
+    :root {
+      --blue: #2563EB; --blue-light: #EFF6FF; --blue-mid: #93C5FD;
+      --gray-50: #F7F8FA; --gray-100: #F1F3F7; --gray-200: #E4E8F0;
+      --gray-400: #9CA3AF; --gray-600: #4B5563; --gray-900: #111827;
+      --green: #059669; --green-light: #ECFDF5;
+      --amber: #D97706; --amber-light: #FFFBEB;
+      --red: #DC2626; --red-light: #FEF2F2;
+      --white: #FFFFFF;
+      --radius: 10px; --radius-lg: 14px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 24px rgba(0,0,0,0.11);
+    }
+
+    /* ====== HEADER ====== */
+    .header { background: var(--white); border-bottom: 1px solid var(--gray-200); padding: 0 24px; height: 54px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; box-shadow: var(--shadow); }
+    .logo { font-size: 18px; font-weight: 700; color: var(--blue); letter-spacing: -0.5px; text-decoration: none; }
+    .logo span { color: var(--gray-900); }
+    .header-right { display: flex; align-items: center; gap: 8px; }
+    .btn { display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; font-family: inherit; white-space: nowrap; }
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-outline { background: var(--white); color: var(--gray-600); border: 1px solid var(--gray-200); }
+    .btn-outline:hover { background: var(--gray-100); }
+    .btn-ghost { background: transparent; color: var(--gray-600); border: 1px solid var(--gray-200); }
+    .btn-ghost:hover { background: var(--gray-100); }
+    .credits-badge { display: flex; align-items: center; gap: 5px; background: var(--amber-light); border: 1px solid #FDE68A; border-radius: 8px; padding: 5px 11px; font-size: 12px; font-weight: 600; color: var(--amber); }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--blue); color: #fff; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid var(--blue-mid); transition: opacity 0.15s; }
+    .avatar:hover { opacity: 0.85; }
+
+    /* ====== HERO ====== */
+    .hero { padding: 20px 24px 14px; }
+    .hero h1 { font-size: 22px; font-weight: 700; color: var(--gray-900); letter-spacing: -0.5px; line-height: 1.3; }
+    .hero h1 span { color: var(--blue); }
+
+    /* ====== PANELS ====== */
+    .panels-top { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 24px 12px; }
+    .panel { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: 14px 16px; box-shadow: var(--shadow); }
+    .panel-label { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; color: var(--gray-400); text-transform: uppercase; margin-bottom: 10px; }
+    .physio-row { display: flex; align-items: center; gap: 10px; }
+    .physio-avatar { width: 38px; height: 38px; border-radius: 10px; background: var(--blue-light); border: 1px solid var(--blue-mid); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: var(--blue); flex-shrink: 0; }
+    .physio-name { font-size: 14px; font-weight: 600; color: var(--gray-900); }
+    .physio-clinic { font-size: 12px; color: var(--gray-400); }
+    .btn-sm { background: var(--gray-100); border: none; border-radius: 7px; padding: 5px 10px; font-size: 12px; color: var(--gray-600); cursor: pointer; font-family: inherit; }
+    .btn-sm:hover { background: var(--gray-200); }
+    .input { border: 1px solid var(--gray-200); border-radius: 8px; padding: 8px 11px; font-size: 13px; color: var(--gray-900); background: var(--gray-50); outline: none; font-family: inherit; width: 100%; transition: all 0.15s; }
+    .input:focus { border-color: var(--blue); background: var(--white); box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
+    .premium-lock { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--amber); background: var(--amber-light); border-radius: 6px; padding: 4px 8px; font-weight: 600; border: 1px solid #FDE68A; cursor: pointer; white-space: nowrap; }
+
+    /* ====== MAIN BODY ====== */
+    .main-body { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 24px 12px; }
+    .tabs { display: flex; gap: 2px; background: var(--gray-100); border-radius: 9px; padding: 3px; margin-bottom: 12px; }
+    .tab { flex: 1; padding: 6px 8px; border-radius: 7px; font-size: 12px; font-weight: 500; color: var(--gray-600); cursor: pointer; text-align: center; border: none; background: transparent; transition: all 0.15s; font-family: inherit; }
+    .tab.active { background: var(--white); color: var(--gray-900); box-shadow: var(--shadow); }
+    .filter-sel { border: 1px solid var(--gray-200); border-radius: 7px; padding: 6px 8px; font-size: 12px; color: var(--gray-600); background: var(--white); cursor: pointer; outline: none; flex: 1; font-family: inherit; }
+    .exercise-list { display: flex; flex-direction: column; gap: 6px; max-height: 270px; overflow-y: auto; padding-right: 2px; }
+    .exercise-list::-webkit-scrollbar { width: 4px; }
+    .exercise-list::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 4px; }
+    .exercise-card { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 10px 12px; display: flex; align-items: flex-start; gap: 8px; transition: all 0.15s; }
+    .exercise-card:hover { border-color: var(--blue-mid); background: var(--blue-light); }
+    .exercise-name { font-size: 13px; font-weight: 600; color: var(--gray-900); line-height: 1.3; }
+    .exercise-desc { font-size: 11px; color: var(--gray-400); margin-top: 2px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .tag { font-size: 10px; padding: 2px 6px; border-radius: 5px; font-weight: 500; background: var(--blue-light); color: var(--blue); }
+    .btn-add { width: 28px; height: 28px; border-radius: 8px; background: var(--blue); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; transition: all 0.15s; }
+    .btn-add:hover { background: #1d4ed8; transform: scale(1.05); }
+    .btn-add.added { background: var(--green); }
+
+    /* ====== PLAN PANEL ====== */
+    .plan-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--gray-200); }
+    .plan-icon { width: 34px; height: 34px; background: var(--blue-light); border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+    .plan-title { font-size: 15px; font-weight: 700; color: var(--gray-900); }
+    .plan-subtitle { font-size: 12px; color: var(--gray-400); }
+    .section-label { font-size: 10px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 7px; }
+    .sel-ex-card { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 9px 11px; margin-bottom: 6px; }
+    .sel-ex-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
+    .sel-ex-name { font-size: 12px; font-weight: 600; color: var(--gray-900); }
+    .btn-remove { width: 20px; height: 20px; border-radius: 5px; background: var(--red-light); color: var(--red); border: none; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+    .params-row { display: flex; gap: 5px; flex-wrap: wrap; }
+    .param-field { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 55px; }
+    .param-label { font-size: 9px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; }
+    .param-input { border: 1px solid var(--gray-200); border-radius: 6px; padding: 4px 6px; font-size: 12px; color: var(--gray-900); background: var(--white); outline: none; width: 100%; font-family: inherit; }
+    .param-input:focus { border-color: var(--blue); }
+    .empty-state { text-align: center; padding: 28px 16px; color: var(--gray-400); font-size: 12px; }
+
+    /* ====== FOOTER ====== */
+    .footer { background: var(--white); border-top: 1px solid var(--gray-200); padding: 11px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+    .footer-label { font-size: 11px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.6px; }
+    .btn-action { display: inline-flex; align-items: center; gap: 5px; padding: 7px 13px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--gray-200); background: var(--white); color: var(--gray-600); transition: all 0.15s; font-family: inherit; }
+    .btn-action:hover { background: var(--gray-100); }
+    .btn-action.blue { background: var(--blue-light); color: var(--blue); border-color: var(--blue-mid); }
+    .btn-action.premium { background: var(--amber-light); color: var(--amber); border-color: #FDE68A; }
+
+    /* ====== OVERLAY & POPUP ====== */
+    .overlay { position: fixed; inset: 0; background: rgba(17,24,39,0.5); z-index: 100; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(2px); }
+    .overlay.open { display: flex; }
+    .popup { background: var(--white); border-radius: var(--radius-lg); padding: 26px; max-width: 390px; width: 100%; box-shadow: var(--shadow-md); animation: popIn 0.18s ease; }
+    @keyframes popIn { from { opacity:0; transform:scale(0.96) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+    .popup-icon { width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 14px; }
+    .popup-icon.blue { background: var(--blue-light); }
+    .popup-icon.amber { background: var(--amber-light); }
+    .popup-icon.green { background: var(--green-light); }
+    .popup h2 { font-size: 18px; font-weight: 700; color: var(--gray-900); margin-bottom: 7px; }
+    .popup p { font-size: 13px; color: var(--gray-600); line-height: 1.6; margin-bottom: 16px; }
+    .popup-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+    .form-label { font-size: 12px; font-weight: 600; color: var(--gray-600); margin-bottom: 4px; display: block; }
+    .popup-btns { display: flex; flex-direction: column; gap: 7px; }
+    .btn-full { width: 100%; padding: 11px; border-radius: 9px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; font-family: inherit; }
+    .btn-full.primary { background: var(--blue); color: #fff; }
+    .btn-full.primary:hover { background: #1d4ed8; }
+    .btn-full.amber-btn { background: #F59E0B; color: #fff; }
+    .btn-full.amber-btn:hover { background: #D97706; }
+    .btn-full.outline { background: var(--white); color: var(--gray-600); border: 1px solid var(--gray-200); }
+    .btn-full.outline:hover { background: var(--gray-100); }
+    .popup-link { font-size: 12px; color: var(--gray-400); text-align: center; margin-top: 8px; cursor: pointer; }
+    .popup-link span { color: var(--blue); font-weight: 500; }
+    .plan-feature { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--gray-600); padding: 4px 0; }
+    .plan-feature-icon { color: var(--green); font-size: 14px; font-weight: 700; }
+    .price-badge { background: var(--blue); color: #fff; border-radius: 8px; padding: 4px 11px; font-size: 13px; font-weight: 700; display: inline-block; margin-bottom: 12px; }
+    .divider { height: 1px; background: var(--gray-200); margin: 12px 0; }
+    .error-msg { background: var(--red-light); border: 1px solid #FCA5A5; border-radius: 7px; padding: 8px 11px; font-size: 12px; color: var(--red); margin-bottom: 10px; display: none; }
+
+    /* ====== TOAST ====== */
+    .toast { position: fixed; bottom: 20px; right: 20px; background: var(--gray-900); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 13px; font-weight: 500; z-index: 200; display: none; animation: toastIn 0.2s ease; max-width: 300px; }
+    @keyframes toastIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+    /* ====== LOADING ====== */
+    .loading-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ====== RESPONSIVE ====== */
+    @media (max-width: 700px) {
+      .panels-top, .main-body { grid-template-columns: 1fr; }
+      .hero { padding: 14px 16px 10px; }
+      .hero h1 { font-size: 18px; }
+      .panels-top, .main-body { padding: 0 12px 10px; }
+      .header { padding: 0 14px; }
+      .footer { padding: 10px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <a class="logo" href="#">Feasy<span>Plan</span></a>
+  <div class="header-right" id="headerRight"></div>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <h1>Crea planes de ejercicios<br><span>para tus pacientes</span></h1>
+</div>
+
+<!-- TOP PANELS -->
+<div class="panels-top">
+  <div class="panel">
+    <div class="panel-label">Fisioterapeuta</div>
+    <div id="physioContent"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-label">Paciente</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <input class="input" placeholder="Seleccionar paciente..." id="patientSearch" readonly onclick="handlePatientClick()" style="cursor:pointer;flex:1;">
+      <span class="premium-lock" onclick="handlePatientClick()">⭐ Premium</span>
+      <button class="btn btn-primary" onclick="handleNewPatient()">+ Nuevo</button>
+    </div>
+    <div id="patientDisplay"></div>
+  </div>
+</div>
+
+<!-- MAIN BODY -->
+<div class="main-body">
+  <!-- Library -->
+  <div class="panel" style="display:flex;flex-direction:column;">
+    <div class="tabs">
+      <button class="tab active" id="tab-search" onclick="switchTab('search')">Buscar</button>
+      <button class="tab" id="tab-create" onclick="switchTab('create')">⭐ Crear</button>
+      <button class="tab" id="tab-plans" onclick="switchTab('plans')">⭐ Mis Planes</button>
+    </div>
+    <div id="tabContent" style="flex:1;display:flex;flex-direction:column;overflow:hidden;"></div>
+  </div>
+
+  <!-- Plan -->
+  <div class="panel" style="display:flex;flex-direction:column;">
+    <div class="plan-header">
+      <div class="plan-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </div>
+      <div>
+        <div class="plan-title">Plan de Ejercicios</div>
+        <div class="plan-subtitle" id="planPhysioName">Sin fisioterapeuta</div>
+      </div>
+    </div>
+    <div class="section-label">Notas Generales</div>
+    <textarea class="input" rows="2" placeholder="Recomendaciones, frecuencia, instrucciones..." id="planNotes" style="resize:none;margin-bottom:12px;"></textarea>
+    <div class="section-label">Ejercicios Seleccionados</div>
+    <div id="selectedExercises" style="flex:1;overflow-y:auto;max-height:220px;">
+      <div class="empty-state">📋<br>Añade ejercicios desde el buscador</div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="footer-label">Acciones</div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;">
+    <button class="btn-action blue" onclick="handleAction('email')">📧 Email</button>
+    <button class="btn-action blue" onclick="handleAction('whatsapp')">💬 WhatsApp</button>
+    <button class="btn-action blue" onclick="handleAction('download')">⬇ Descargar PDF</button>
+    <button class="btn-action premium" onclick="handleAction('savePlan')">💾 Guardar Plan</button>
+    <button class="btn-action premium" onclick="handleAction('saveClient')">👤 Guardar Cliente</button>
+  </div>
+</div>
+
+<!-- OVERLAY / POPUP -->
+<div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
+  <div class="popup" id="popup" onclick="event.stopPropagation()"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================
+// SUPABASE INIT
+// ============================================
+const SUPABASE_URL = 'https://hqofqaqlhknyxrazgwtc.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhxb2ZxYXFsaGtueXhyYXpnd3RjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2NzU1NzQsImV4cCI6MjA5MzI1MTU3NH0.31ee9yNUjl_LVQConMxunM3-UwvDVxaVJo88TxJ5f5A'; // <-- Pega aquí tu anon key nueva tras regenerarla
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ============================================
+// EJERCICIOS (base de datos local inicial)
+// ============================================
+const EXERCISES = [
+  { id:1, name:"Estiramiento de pared para pantorrilla", desc:"De pie frente a una pared. Coloque las manos a la altura del pecho. Lleve una pierna hacia atrás manteniendo el talón en el suelo.", tags:["estiramiento","tobillo"], zona:"Piernas", tipo:"Estiramiento", material:"Ninguno" },
+  { id:2, name:"Elevaciones de hombro con banda elástica", desc:"Con una banda elástica bajo sus pies, sujete los extremos con las manos. Levante los brazos lentamente hasta la altura de los hombros.", tags:["fuerza","hombro"], zona:"Hombros", tipo:"Fuerza", material:"Banda elástica" },
+  { id:3, name:"Postura corporal en espejo", desc:"De pie frente a un espejo, adopte una postura correcta: hombros relajados, pecho abierto, cabeza erguida.", tags:["postura","general"], zona:"General", tipo:"Propiocepción", material:"Ninguno" },
+  { id:4, name:"Sentadilla con pelota en pared", desc:"Coloque una pelota entre su espalda baja y la pared. Baje lentamente hasta formar un ángulo de 90 grados en las rodillas.", tags:["fuerza","rodilla"], zona:"Piernas", tipo:"Fuerza", material:"Pelota" },
+  { id:5, name:"Estiramiento de cuádriceps", desc:"De pie, tome su tobillo y lleve el talón hacia el glúteo. Mantenga las rodillas juntas y el cuerpo erguido.", tags:["estiramiento","rodilla"], zona:"Piernas", tipo:"Estiramiento", material:"Ninguno" },
+  { id:6, name:"Rotación de cadera en decúbito", desc:"Acostado boca arriba, con las rodillas dobladas. Deje caer ambas rodillas hacia un lado y luego hacia el otro.", tags:["estiramiento","cadera"], zona:"Cadera", tipo:"Movilidad", material:"Ninguno" },
+  { id:7, name:"Equilibrio sobre una pierna", desc:"De pie, levante una pierna del suelo manteniéndola flexionada. Mantenga el equilibrio durante 30 segundos.", tags:["equilibrio","tobillo"], zona:"Piernas", tipo:"Propiocepción", material:"Ninguno" },
+  { id:8, name:"Puente de glúteos", desc:"Acostado boca arriba con rodillas flexionadas. Eleve las caderas hasta formar una línea recta desde los hombros.", tags:["fuerza","cadera"], zona:"Cadera", tipo:"Fuerza", material:"Ninguno" },
+  { id:9, name:"Movilidad cervical activa", desc:"Sentado erguido, lleve el mentón al pecho lentamente, luego hacia atrás. Realice inclinaciones laterales suaves.", tags:["movilidad","cuello"], zona:"Cuello", tipo:"Movilidad", material:"Ninguno" },
+  { id:10, name:"Plancha sobre codos", desc:"Apóyese sobre los codos y las puntas de los pies, formando una línea recta. Contraiga el abdomen y mantenga.", tags:["fuerza","core"], zona:"Core", tipo:"Fuerza", material:"Ninguno" },
+];
+
+const ZONAS = ["Todas","Piernas","Hombros","Cadera","Core","Cuello","General"];
+const TIPOS = ["Todos","Estiramiento","Fuerza","Movilidad","Propiocepción"];
+const MATERIALES = ["Todos","Ninguno","Banda elástica","Pelota"];
+
+// ============================================
+// ESTADO GLOBAL
+// ============================================
+let state = {
+  user: null,
+  profile: null,
+  credits: null,
+  physio: { name:'', clinic:'' },
+  physioEditing: false,
+  patient: null,
+  selectedExercises: [],
+  activeTab: 'search',
+  searchQuery: '',
+  filterZona: 'Todas',
+  filterTipo: 'Todos',
+  filterMaterial: 'Todos',
+};
+
+// ============================================
+// INIT — escuchar cambios de sesión
+// ============================================
+async function init() {
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (session?.user) {
+      state.user = session.user;
+      await loadUserData();
+    } else {
+      state.user = null;
+      state.profile = null;
+      state.credits = null;
+    }
+    render();
+  });
+}
+
+async function loadUserData() {
+  // Reset créditos si es un día nuevo
+  await sb.rpc('reset_daily_credits_if_needed', { p_user_id: state.user.id });
+
+  // Cargar perfil
+  const { data: profile } = await sb.from('profiles').select('*').eq('id', state.user.id).single();
+  state.profile = profile;
+  if (profile) {
+    state.physio.name = profile.name || '';
+    state.physio.clinic = profile.clinic || '';
+  }
+
+  // Cargar créditos
+  const { data: credits } = await sb.from('credits').select('*').eq('user_id', state.user.id).single();
+  state.credits = credits;
+}
+
+// ============================================
+// RENDER PRINCIPAL
+// ============================================
+function render() {
+  renderHeader();
+  renderPhysio();
+  renderPlanHeader();
+  renderTab();
+  renderSelectedExercises();
+}
+
+function renderHeader() {
+  const el = document.getElementById('headerRight');
+  if (state.user && state.credits) {
+    const remaining = Math.max(0, state.credits.daily_limit - state.credits.daily_used);
+    el.innerHTML = `
+      <div class="credits-badge">⚡ ${remaining}/${state.credits.daily_limit} hoy</div>
+      <button class="btn btn-outline" onclick="handleNewPlan()">+ Nuevo Plan</button>
+      <div class="avatar" onclick="showProfilePopup()" title="Mi perfil">${(state.profile?.name || state.user.email)[0].toUpperCase()}</div>
+    `;
+  } else if (state.user) {
+    el.innerHTML = `
+      <button class="btn btn-outline" onclick="handleNewPlan()">+ Nuevo Plan</button>
+      <div class="avatar" onclick="showProfilePopup()">${state.user.email[0].toUpperCase()}</div>
+    `;
+  } else {
+    el.innerHTML = `
+      <button class="btn btn-ghost" onclick="showLoginPopup()">Iniciar sesión</button>
+      <button class="btn btn-primary" onclick="showRegisterPopup()">Registrarse gratis</button>
+      <button class="btn btn-outline" onclick="handleNewPlan()">+ Nuevo Plan</button>
+    `;
+  }
+}
+
+function renderPhysio() {
+  const el = document.getElementById('physioContent');
+  if (state.physioEditing) {
+    el.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:7px;">
+        <input class="input" style="background:white;" placeholder="Tu nombre completo" value="${state.physio.name}" oninput="state.physio.name=this.value" id="physioNameIn">
+        <input class="input" style="background:white;" placeholder="Clínica / Centro" value="${state.physio.clinic}" oninput="state.physio.clinic=this.value">
+        <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="savePhysio()">Guardar</button>
+      </div>
+    `;
+    setTimeout(() => document.getElementById('physioNameIn')?.focus(), 50);
+  } else if (state.physio.name) {
+    el.innerHTML = `
+      <div class="physio-row">
+        <div class="physio-avatar">${state.physio.name[0].toUpperCase()}</div>
+        <div style="flex:1;">
+          <div class="physio-name">${state.physio.name}</div>
+          <div class="physio-clinic">${state.physio.clinic || 'Sin clínica'}</div>
+        </div>
+        <button class="btn-sm" onclick="state.physioEditing=true;render()">✏️ Editar</button>
+      </div>
+    `;
+  } else {
+    el.innerHTML = `<button class="btn btn-outline" style="width:100%;justify-content:center;" onclick="startPhysioEdit()">+ Añadir mis datos</button>`;
+  }
+}
+
+function startPhysioEdit() {
+  if (!state.user) { showLoginPopup('physio'); return; }
+  state.physioEditing = true;
+  render();
+}
+
+async function savePhysio() {
+  state.physioEditing = false;
+  // Guardar en Supabase si hay sesión
+  if (state.user) {
+    await sb.from('profiles').upsert({
+      id: state.user.id,
+      name: state.physio.name,
+      clinic: state.physio.clinic,
+      email: state.user.email,
+    });
+  }
+  render();
+  showToast('Datos guardados ✓');
+}
+
+function renderPlanHeader() {
+  document.getElementById('planPhysioName').textContent = state.physio.name || 'Sin fisioterapeuta';
+}
+
+// ============================================
+// TABS Y EJERCICIOS
+// ============================================
+function switchTab(tab) {
+  if (tab !== 'search') {
+    if (!state.user) { showLoginPopup(); return; }
+    showPayPopup(); return;
+  }
+  state.activeTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab)?.classList.add('active');
+  renderTab();
+}
+
+function renderTab() {
+  const el = document.getElementById('tabContent');
+  if (state.activeTab !== 'search') {
+    el.innerHTML = `<div class="empty-state" style="padding:30px 10px;">⭐<br><strong style="color:var(--gray-900)">Función Premium</strong><br><span style="font-size:11px;">Actualiza tu plan para acceder</span><br><button class="btn btn-primary" style="margin-top:12px;" onclick="showPayPopup()">Ver Premium</button></div>`;
+    return;
+  }
+  const filtered = EXERCISES.filter(ex => {
+    const q = state.searchQuery.toLowerCase();
+    return (!q || ex.name.toLowerCase().includes(q) || ex.tags.some(t=>t.includes(q)))
+      && (state.filterZona === 'Todas' || ex.zona === state.filterZona)
+      && (state.filterTipo === 'Todos' || ex.tipo === state.filterTipo)
+      && (state.filterMaterial === 'Todos' || ex.material === state.filterMaterial);
+  });
+
+  el.innerHTML = `
+    <div style="position:relative;margin-bottom:8px;">
+      <input class="input" placeholder="Buscar ejercicios..." value="${state.searchQuery}" oninput="state.searchQuery=this.value;renderTab()" style="padding-left:32px;background:white;">
+      <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#9CA3AF;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    </div>
+    <div style="display:flex;gap:5px;margin-bottom:9px;flex-wrap:wrap;">
+      <select class="filter-sel" onchange="state.filterZona=this.value;renderTab()">${ZONAS.map(z=>`<option ${state.filterZona===z?'selected':''}>${z}</option>`).join('')}</select>
+      <select class="filter-sel" onchange="state.filterTipo=this.value;renderTab()">${TIPOS.map(t=>`<option ${state.filterTipo===t?'selected':''}>${t}</option>`).join('')}</select>
+      <select class="filter-sel" onchange="state.filterMaterial=this.value;renderTab()">${MATERIALES.map(m=>`<option ${state.filterMaterial===m?'selected':''}>${m}</option>`).join('')}</select>
+    </div>
+    <div class="exercise-list">
+      ${filtered.length === 0 ? '<div class="empty-state">Sin resultados para esa búsqueda</div>' :
+        filtered.map(ex => {
+          const added = state.selectedExercises.some(s=>s.id===ex.id);
+          return `<div class="exercise-card">
+            <div style="flex:1;min-width:0;">
+              <div class="exercise-name">${ex.name}</div>
+              <div class="exercise-desc">${ex.desc}</div>
+              <div style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap;">${ex.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+            </div>
+            <button class="btn-add ${added?'added':''}" onclick="handleAddExercise(${ex.id})">${added?'✓':'+'}</button>
+          </div>`;
+        }).join('')}
+    </div>
+  `;
+}
+
+function handleAddExercise(id) {
+  if (!state.user) { showLoginPopup('exercise'); return; }
+  const already = state.selectedExercises.some(s=>s.id===id);
+  if (already) {
+    state.selectedExercises = state.selectedExercises.filter(s=>s.id!==id);
+    showToast('Ejercicio eliminado del plan');
+  } else {
+    const ex = EXERCISES.find(e=>e.id===id);
+    state.selectedExercises.push({ ...ex, series:'3', reps:'10', duration:'', notes:'' });
+    showToast('Ejercicio añadido ✓');
+  }
+  renderTab();
+  renderSelectedExercises();
+}
+
+function renderSelectedExercises() {
+  const el = document.getElementById('selectedExercises');
+  if (!state.selectedExercises.length) {
+    el.innerHTML = `<div class="empty-state">📋<br>Añade ejercicios desde el buscador</div>`;
+    return;
+  }
+  el.innerHTML = state.selectedExercises.map((ex,i) => `
+    <div class="sel-ex-card">
+      <div class="sel-ex-top">
+        <div class="sel-ex-name">${ex.name}</div>
+        <button class="btn-remove" onclick="removeExercise(${i})">✕</button>
+      </div>
+      <div class="params-row">
+        <div class="param-field"><div class="param-label">Series</div><input class="param-input" type="number" value="${ex.series}" onchange="state.selectedExercises[${i}].series=this.value" min="1"></div>
+        <div class="param-field"><div class="param-label">Reps</div><input class="param-input" type="number" value="${ex.reps}" onchange="state.selectedExercises[${i}].reps=this.value" min="1"></div>
+        <div class="param-field"><div class="param-label">Seg.</div><input class="param-input" value="${ex.duration}" onchange="state.selectedExercises[${i}].duration=this.value" placeholder="-"></div>
+        <div class="param-field" style="flex:2;min-width:80px;"><div class="param-label">Notas</div><input class="param-input" value="${ex.notes}" onchange="state.selectedExercises[${i}].notes=this.value" placeholder="Opcional"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function removeExercise(i) {
+  state.selectedExercises.splice(i,1);
+  renderTab();
+  renderSelectedExercises();
+}
+
+// ============================================
+// ACCIONES DEL FOOTER
+// ============================================
+function handleNewPlan() {
+  if (!state.user) { showLoginPopup('newplan'); return; }
+  state.selectedExercises = [];
+  state.patient = null;
+  document.getElementById('planNotes').value = '';
+  document.getElementById('patientDisplay').innerHTML = '';
+  renderTab();
+  renderSelectedExercises();
+  showToast('Nuevo plan iniciado ✓');
+}
+
+function handlePatientClick() {
+  if (!state.user) { showLoginPopup(); return; }
+  showPayPopup();
+}
+
+function handleNewPatient() {
+  if (!state.user) { showLoginPopup('patient'); return; }
+  showNewPatientPopup();
+}
+
+async function handleAction(type) {
+  if (!state.user) { showLoginPopup(); return; }
+  if (type === 'savePlan' || type === 'saveClient') { showPayPopup(); return; }
+  if (!state.selectedExercises.length) { showToast('⚠️ Añade ejercicios al plan primero'); return; }
+
+  // Comprobar créditos
+  await sb.rpc('reset_daily_credits_if_needed', { p_user_id: state.user.id });
+  const { data: cr } = await sb.from('credits').select('*').eq('user_id', state.user.id).single();
+  state.credits = cr;
+
+  if (cr.daily_used >= cr.daily_limit && !state.profile?.is_premium) {
+    showCreditPopup(); return;
+  }
+
+  if (type === 'download') {
+    generatePDF();
+    // Consumir crédito
+    await sb.from('credits').update({
+      daily_used: cr.daily_used + 1,
+      monthly_used: cr.monthly_used + 1
+    }).eq('user_id', state.user.id);
+    state.credits.daily_used++;
+    renderHeader();
+  } else if (type === 'email') {
+    showToast('📧 Función de email — disponible próximamente');
+  } else if (type === 'whatsapp') {
+    showToast('💬 Función de WhatsApp — disponible próximamente');
+  }
+}
+
+// ============================================
+// GENERACIÓN DE PDF
+// ============================================
+function generatePDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const pageW = 210;
+  let y = 20;
+
+  // Header
+  doc.setFillColor(37, 99, 235);
+  doc.rect(0, 0, pageW, 30, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(20);
+  doc.setFont('helvetica', 'bold');
+  doc.text('FeasyPlan', 14, 13);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Plan de Ejercicios', 14, 22);
+  doc.text(new Date().toLocaleDateString('es-ES'), pageW - 14, 22, { align: 'right' });
+
+  y = 42;
+  doc.setTextColor(30, 30, 30);
+
+  // Datos fisio
+  if (state.physio.name) {
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(100, 100, 100);
+    doc.text('FISIOTERAPEUTA', 14, y);
+    y += 5;
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 30, 30);
+    doc.text(state.physio.name, 14, y);
+    y += 5;
+    if (state.physio.clinic) {
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 100, 100);
+      doc.text(state.physio.clinic, 14, y);
+      y += 5;
+    }
+    y += 4;
+  }
+
+  // Datos paciente
+  if (state.patient) {
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(100, 100, 100);
+    doc.text('PACIENTE', 14, y);
+    y += 5;
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 30, 30);
+    doc.text(state.patient.name + (state.patient.age ? ' · ' + state.patient.age + ' años' : ''), 14, y);
+    y += 8;
+  }
+
+  // Línea divisora
+  doc.setDrawColor(228, 232, 240);
+  doc.line(14, y, pageW - 14, y);
+  y += 8;
+
+  // Notas generales
+  const notes = document.getElementById('planNotes').value;
+  if (notes) {
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(100, 100, 100);
+    doc.text('NOTAS GENERALES', 14, y);
+    y += 5;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(60, 60, 60);
+    const lines = doc.splitTextToSize(notes, pageW - 28);
+    doc.text(lines, 14, y);
+    y += lines.length * 5 + 6;
+  }
+
+  // Ejercicios
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(100, 100, 100);
+  doc.text('EJERCICIOS DEL PLAN', 14, y);
+  y += 6;
+
+  state.selectedExercises.forEach((ex, i) => {
+    if (y > 260) { doc.addPage(); y = 20; }
+
+    // Número
+    doc.setFillColor(239, 246, 255);
+    doc.roundedRect(14, y - 4, 6, 6, 1, 1, 'F');
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(37, 99, 235);
+    doc.text(String(i+1), 17, y, { align: 'center' });
+
+    // Nombre
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 30, 30);
+    doc.text(ex.name, 24, y);
+    y += 5;
+
+    // Descripción
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    const descLines = doc.splitTextToSize(ex.desc, pageW - 38);
+    doc.text(descLines, 24, y);
+    y += descLines.length * 4 + 3;
+
+    // Parámetros
+    doc.setFillColor(247, 248, 250);
+    doc.roundedRect(24, y - 1, pageW - 38, 8, 2, 2, 'F');
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(37, 99, 235);
+    let paramText = `Series: ${ex.series}   Reps: ${ex.reps}`;
+    if (ex.duration) paramText += `   Duración: ${ex.duration}s`;
+    doc.text(paramText, 27, y + 4);
+    y += 11;
+
+    if (ex.notes) {
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(120, 120, 120);
+      doc.text('Nota: ' + ex.notes, 24, y);
+      y += 5;
+    }
+
+    y += 3;
+  });
+
+  // Footer PDF
+  doc.setFontSize(8);
+  doc.setTextColor(180, 180, 180);
+  doc.text('Generado con FeasyPlan · feasyplan.com', pageW / 2, 287, { align: 'center' });
+
+  doc.save(`plan-ejercicios-${(state.patient?.name || 'paciente').replace(/\s/g,'-').toLowerCase()}.pdf`);
+  showToast('📄 PDF descargado ✓');
+}
+
+// ============================================
+// POPUPS — LOGIN
+// ============================================
+function showLoginPopup(context) {
+  let msg = 'Inicia sesión para continuar y no perder tu trabajo.';
+  if (context === 'physio') msg = 'Inicia sesión para guardar tu perfil de fisioterapeuta.';
+  if (context === 'patient') msg = 'Inicia sesión para añadir pacientes al plan.';
+  if (context === 'exercise') msg = 'Inicia sesión para construir tu plan de ejercicios.';
+
+  showPopup(`
+    <div class="popup-icon blue">🔐</div>
+    <h2>Inicia sesión</h2>
+    <p>${msg}</p>
+    <div class="error-msg" id="loginError"></div>
+    <div class="popup-form">
+      <div><label class="form-label">Email</label><input class="input" type="email" placeholder="tu@email.com" id="loginEmail" style="background:white;"></div>
+      <div><label class="form-label">Contraseña</label><input class="input" type="password" placeholder="••••••••" id="loginPass" style="background:white;" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    </div>
+    <div class="popup-btns">
+      <button class="btn-full primary" id="loginBtn" onclick="doLogin()">Iniciar sesión</button>
+      <button class="btn-full outline" onclick="closePopup()">Cancelar</button>
+    </div>
+    <div class="popup-link" onclick="showRegisterPopup()">¿No tienes cuenta? <span>Regístrate gratis</span></div>
+  `);
+}
+
+function showRegisterPopup() {
+  showPopup(`
+    <div class="popup-icon blue">✨</div>
+    <h2>Crear cuenta gratis</h2>
+    <p>Regístrate y obtén <strong>2 créditos diarios</strong> para generar planes en PDF.</p>
+    <div class="error-msg" id="regError"></div>
+    <div class="popup-form">
+      <div><label class="form-label">Tu nombre</label><input class="input" placeholder="Dr. Juan García" id="regName" style="background:white;"></div>
+      <div><label class="form-label">Email</label><input class="input" type="email" placeholder="tu@email.com" id="regEmail" style="background:white;"></div>
+      <div><label class="form-label">Contraseña</label><input class="input" type="password" placeholder="Mínimo 6 caracteres" id="regPass" style="background:white;" onkeydown="if(event.key==='Enter')doRegister()"></div>
+    </div>
+    <div class="popup-btns">
+      <button class="btn-full primary" id="regBtn" onclick="doRegister()">Crear cuenta gratis</button>
+      <button class="btn-full outline" onclick="closePopup()">Cancelar</button>
+    </div>
+    <div class="popup-link" onclick="showLoginPopup()">¿Ya tienes cuenta? <span>Inicia sesión</span></div>
+  `);
+}
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const btn = document.getElementById('loginBtn');
+  const errEl = document.getElementById('loginError');
+
+  if (!email || !pass) { showError(errEl, 'Completa todos los campos'); return; }
+
+  btn.innerHTML = '<span class="loading-spinner"></span> Entrando...';
+  btn.disabled = true;
+
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+
+  if (error) {
+    btn.innerHTML = 'Iniciar sesión';
+    btn.disabled = false;
+    showError(errEl, 'Email o contraseña incorrectos');
+    return;
+  }
+  closePopup();
+  showToast('¡Bienvenido de nuevo! 👋');
+}
+
+async function doRegister() {
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass = document.getElementById('regPass').value;
+  const btn = document.getElementById('regBtn');
+  const errEl = document.getElementById('regError');
+
+  if (!name || !email || !pass) { showError(errEl, 'Completa todos los campos'); return; }
+  if (pass.length < 6) { showError(errEl, 'La contraseña debe tener al menos 6 caracteres'); return; }
+
+  btn.innerHTML = '<span class="loading-spinner"></span> Creando cuenta...';
+  btn.disabled = true;
+
+  const { error } = await sb.auth.signUp({
+    email, password: pass,
+    options: { data: { name }, emailRedirectTo: window.location.href }
+  });
+
+  if (error) {
+    btn.innerHTML = 'Crear cuenta gratis';
+    btn.disabled = false;
+    showError(errEl, error.message.includes('already') ? 'Este email ya está registrado' : 'Error al crear la cuenta');
+    return;
+  }
+  // Mostrar popup de confirmación de email
+  showPopup(`
+    <div class="popup-icon green">📧</div>
+    <h2>¡Cuenta creada!</h2>
+    <p>Te hemos enviado un email de confirmación a <strong>${email}</strong>.<br><br>Revisa tu bandeja de entrada (y la carpeta de spam) y haz clic en el enlace para activar tu cuenta.</p>
+    <div class="popup-btns">
+      <button class="btn-full primary" onclick="closePopup()">Entendido</button>
+    </div>
+    <div class="popup-link" onclick="showLoginPopup()">¿Ya confirmaste? <span>Inicia sesión</span></div>
+  `);
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  state.physio = { name:'', clinic:'' };
+  state.physioEditing = false;
+  state.selectedExercises = [];
+  state.patient = null;
+  closePopup();
+  render();
+  showToast('Sesión cerrada');
+}
+
+// ============================================
+// POPUPS — PAGO Y CRÉDITOS
+// ============================================
+function showPayPopup() {
+  showPopup(`
+    <div class="popup-icon amber">⭐</div>
+    <h2>Plan Premium</h2>
+    <p>Desbloquea todo el potencial de FeasyPlan.</p>
+    <div class="price-badge">9,99 € / mes</div>
+    <div>
+      <div class="plan-feature"><span class="plan-feature-icon">✓</span> PDFs ilimitados</div>
+      <div class="plan-feature"><span class="plan-feature-icon">✓</span> Guardar y reutilizar planes</div>
+      <div class="plan-feature"><span class="plan-feature-icon">✓</span> Base de datos de pacientes</div>
+      <div class="plan-feature"><span class="plan-feature-icon">✓</span> Crear ejercicios personalizados</div>
+      <div class="plan-feature"><span class="plan-feature-icon">✓</span> Envío automático por email</div>
+    </div>
+    <div class="divider"></div>
+    <div class="popup-btns">
+      <button class="btn-full amber-btn" onclick="doSubscribe()">⭐ Suscribirme ahora</button>
+      <button class="btn-full outline" onclick="closePopup()">Ahora no</button>
+    </div>
+  `);
+}
+
+function showCreditPopup() {
+  showPopup(`
+    <div class="popup-icon amber">⚡</div>
+    <h2>Créditos agotados</h2>
+    <p>Has usado tus <strong>${state.credits?.daily_limit || 2} créditos diarios</strong>. Se recargan automáticamente mañana, o actualiza a Premium para generación ilimitada.</p>
+    <div class="popup-btns">
+      <button class="btn-full amber-btn" onclick="doSubscribe()">⭐ Ir a Premium</button>
+      <button class="btn-full outline" onclick="closePopup()">Esperar a mañana</button>
+    </div>
+  `);
+}
+
+function showProfilePopup() {
+  const remaining = Math.max(0, (state.credits?.daily_limit||2) - (state.credits?.daily_used||0));
+  const name = state.profile?.name || state.user?.email || '';
+  showPopup(`
+    <div class="popup-icon blue">👤</div>
+    <h2>${name}</h2>
+    <p style="margin-bottom:10px;">${state.user?.email}</p>
+    <div style="background:var(--gray-100);border-radius:10px;padding:13px;margin-bottom:14px;">
+      <div style="font-size:11px;color:var(--gray-600);margin-bottom:3px;font-weight:600;">CRÉDITOS HOY</div>
+      <div style="font-size:22px;font-weight:700;color:var(--amber);">${remaining}<span style="font-size:14px;color:var(--gray-400);font-weight:400;"> / ${state.credits?.daily_limit||2}</span></div>
+      <div style="font-size:11px;color:var(--gray-400);margin-top:3px;">Se recargan cada día a las 00:00</div>
+    </div>
+    <div class="popup-btns">
+      <button class="btn-full amber-btn" onclick="showPayPopup()">⭐ Actualizar a Premium</button>
+      <button class="btn-full outline" onclick="doLogout()">Cerrar sesión</button>
+    </div>
+  `);
+}
+
+function showNewPatientPopup() {
+  showPopup(`
+    <div class="popup-icon blue">👤</div>
+    <h2>Nuevo Paciente</h2>
+    <p>Añade los datos del paciente para este plan.</p>
+    <div class="popup-form">
+      <div><label class="form-label">Nombre</label><input class="input" placeholder="Nombre del paciente" id="ptName" style="background:white;"></div>
+      <div><label class="form-label">Edad</label><input class="input" type="number" placeholder="Años" id="ptAge" style="background:white;"></div>
+      <div><label class="form-label">Diagnóstico / Notas</label><input class="input" placeholder="Lesión, observaciones..." id="ptNotes" style="background:white;"></div>
+    </div>
+    <div class="popup-btns">
+      <button class="btn-full primary" onclick="savePatient()">Añadir al plan</button>
+      <button class="btn-full outline" onclick="closePopup()">Cancelar</button>
+    </div>
+  `);
+}
+
+function savePatient() {
+  const name = document.getElementById('ptName').value.trim();
+  if (!name) { showToast('⚠️ Introduce el nombre del paciente'); return; }
+  state.patient = {
+    name,
+    age: document.getElementById('ptAge').value,
+    notes: document.getElementById('ptNotes').value
+  };
+  document.getElementById('patientDisplay').innerHTML = `
+    <div style="background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:8px;padding:8px 11px;display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--blue);">${name}${state.patient.age?' · '+state.patient.age+' años':''}</div>
+        ${state.patient.notes?`<div style="font-size:11px;color:#3B82F6;">${state.patient.notes}</div>`:''}
+      </div>
+      <button class="btn-remove" onclick="state.patient=null;document.getElementById('patientDisplay').innerHTML=''">✕</button>
+    </div>
+  `;
+  closePopup();
+  showToast('Paciente añadido ✓');
+}
+
+function doSubscribe() {
+  closePopup();
+  showToast('💳 Stripe — disponible próximamente');
+}
+
+// ============================================
+// HELPERS
+// ============================================
+function showPopup(html) {
+  document.getElementById('popup').innerHTML = html;
+  document.getElementById('overlay').classList.add('open');
+}
+
+function closePopup() {
+  document.getElementById('overlay').classList.remove('open');
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('overlay')) closePopup();
+}
+
+function showError(el, msg) {
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.style.display = 'none', 3000);
+}
+
+// ============================================
+// ARRANQUE
+// ============================================
+init();
+</script>
+</body>
+</html>
