@@ -378,18 +378,32 @@ function renderHeader() {
 function renderPhysio() {
   const el = document.getElementById('physioContent');
   if (state.physioEditing) {
+    const logoPreview = state.physio.logo
+      ? `<img src="${state.physio.logo}" style="width:48px;height:48px;object-fit:contain;border-radius:8px;border:1px solid var(--gray-200);">`
+      : `<div style="width:48px;height:48px;border-radius:8px;border:2px dashed var(--gray-200);display:flex;align-items:center;justify-content:center;font-size:20px;">🏥</div>`;
     el.innerHTML = `
       <div style="display:flex;flex-direction:column;gap:7px;">
-        <input class="input" style="background:white;" placeholder="Tu nombre completo" value="${state.physio.name}" oninput="state.physio.name=this.value" id="physioNameIn">
-        <input class="input" style="background:white;" placeholder="Clínica / Centro" value="${state.physio.clinic}" oninput="state.physio.clinic=this.value">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <label style="cursor:pointer;" title="Subir logo">
+            ${logoPreview}
+            <input type="file" accept="image/*" style="display:none;" onchange="handleLogoUpload(this)">
+          </label>
+          <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+            <input class="input" style="background:white;" placeholder="Tu nombre completo" value="${state.physio.name}" oninput="state.physio.name=this.value" id="physioNameIn">
+            <input class="input" style="background:white;" placeholder="Clínica / Centro" value="${state.physio.clinic}" oninput="state.physio.clinic=this.value">
+          </div>
+        </div>
         <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="savePhysio()">Guardar</button>
       </div>
     `;
     setTimeout(() => document.getElementById('physioNameIn')?.focus(), 50);
   } else if (state.physio.name) {
+    const avatarHtml = state.physio.logo
+      ? `<img src="${state.physio.logo}" style="width:36px;height:36px;object-fit:contain;border-radius:8px;border:1px solid var(--gray-200);">`
+      : `<div class="physio-avatar" style="width:36px;height:36px;font-size:13px;border-radius:8px;">${state.physio.name[0].toUpperCase()}</div>`;
     el.innerHTML = `
       <div class="physio-row" style="gap:8px;">
-        <div class="physio-avatar" style="width:32px;height:32px;font-size:12px;border-radius:8px;">${state.physio.name[0].toUpperCase()}</div>
+        ${avatarHtml}
         <div style="flex:1;min-width:0;">
           <div class="physio-name" style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${state.physio.name}</div>
           <div class="physio-clinic" style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${state.physio.clinic || 'Sin clínica'}</div>
@@ -406,6 +420,18 @@ function startPhysioEdit() {
   if (!state.user) { showLoginPopup('physio'); return; }
   state.physioEditing = true;
   render();
+}
+
+function handleLogoUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 500000) { showToast('⚠️ El logo debe pesar menos de 500KB'); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    state.physio.logo = e.target.result;
+    renderPhysio();
+  };
+  reader.readAsDataURL(file);
 }
 
 async function savePhysio() {
@@ -573,7 +599,7 @@ async function handleAction(type) {
     state.credits.daily_used++;
     renderHeader();
   } else if (type === 'email') {
-    showToast('📧 Función de email — disponible próximamente');
+    sendEmail();
   } else if (type === 'whatsapp') {
     showToast('💬 Función de WhatsApp — disponible próximamente');
   }
@@ -1033,7 +1059,11 @@ function showNewPatientPopup() {
     <p>Añade los datos del paciente para este plan.</p>
     <div class="popup-form">
       <div><label class="form-label">Nombre</label><input class="input" placeholder="Nombre del paciente" id="ptName" style="background:white;"></div>
-      <div><label class="form-label">Edad</label><input class="input" type="number" placeholder="Años" id="ptAge" style="background:white;"></div>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;"><label class="form-label">Edad</label><input class="input" type="number" placeholder="Años" id="ptAge" style="background:white;"></div>
+        <div style="flex:1;"><label class="form-label">Móvil</label><input class="input" type="tel" placeholder="+34 600 000 000" id="ptPhone" style="background:white;"></div>
+      </div>
+      <div><label class="form-label">Email</label><input class="input" type="email" placeholder="email@paciente.com" id="ptEmail" style="background:white;"></div>
       <div><label class="form-label">Diagnóstico / Notas</label><input class="input" placeholder="Lesión, observaciones..." id="ptNotes" style="background:white;"></div>
     </div>
     <div class="popup-btns">
@@ -1049,13 +1079,18 @@ function savePatient() {
   state.patient = {
     name,
     age: document.getElementById('ptAge').value,
+    phone: document.getElementById('ptPhone').value,
+    email: document.getElementById('ptEmail').value,
     notes: document.getElementById('ptNotes').value
   };
+  const p = state.patient;
   document.getElementById('patientDisplay').innerHTML = `
-    <div style="background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:8px;padding:8px 11px;display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
-      <div>
-        <div style="font-size:13px;font-weight:600;color:var(--blue);">${name}${state.patient.age?' · '+state.patient.age+' años':''}</div>
-        ${state.patient.notes?`<div style="font-size:11px;color:#3B82F6;">${state.patient.notes}</div>`:''}
+    <div style="background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:8px;padding:8px 11px;display:flex;align-items:flex-start;justify-content:space-between;margin-top:8px;">
+      <div style="min-width:0;flex:1;">
+        <div style="font-size:13px;font-weight:600;color:var(--blue);">${p.name}${p.age?' · '+p.age+' años':''}</div>
+        ${p.email?`<div style="font-size:11px;color:#3B82F6;margin-top:2px;">✉ ${p.email}</div>`:''}
+        ${p.phone?`<div style="font-size:11px;color:#3B82F6;margin-top:1px;">📱 ${p.phone}</div>`:''}
+        ${p.notes?`<div style="font-size:11px;color:#60A5FA;margin-top:2px;">${p.notes}</div>`:''}
       </div>
       <button class="btn-remove" onclick="state.patient=null;document.getElementById('patientDisplay').innerHTML=''">✕</button>
     </div>
@@ -1067,6 +1102,38 @@ function savePatient() {
 function doSubscribe() {
   closePopup();
   showToast('💳 Stripe — disponible próximamente');
+}
+
+// ============================================
+// EMAIL
+// ============================================
+function sendEmail() {
+  if (!state.patient || !state.patient.email) {
+    showToast('Añade el email del paciente primero');
+    return;
+  }
+  var physioName = state.physio.name || 'Tu fisioterapeuta';
+  var patientName = state.patient.name || 'Paciente';
+  var notes = document.getElementById('planNotes').value.trim();
+  var NL = '%0A';
+  var subject = encodeURIComponent('Plan de ejercicios - ' + patientName);
+  var body = 'Hola ' + patientName + ',' + NL + NL;
+  body += 'Te envio tu plan de ejercicios personalizado.' + NL + NL;
+  if (notes) { body += 'INDICACIONES GENERALES' + NL + encodeURIComponent(notes) + NL + NL; }
+  body += 'EJERCICIOS DEL PLAN' + NL + '------------------------------' + NL + NL;
+  state.selectedExercises.forEach(function(ex, i) {
+    body += encodeURIComponent((i+1) + '. ' + ex.name) + NL;
+    body += encodeURIComponent('   ' + ex.desc) + NL;
+    var params = '   Series: ' + ex.series + ' | Reps: ' + ex.reps;
+    if (ex.duration) params += ' | Duracion: ' + ex.duration + 's';
+    body += encodeURIComponent(params) + NL;
+    if (ex.notes) body += encodeURIComponent('   Nota: ' + ex.notes) + NL;
+    body += NL;
+  });
+  body += NL + encodeURIComponent('Un saludo,') + NL + encodeURIComponent(physioName);
+  if (state.physio.clinic) body += NL + encodeURIComponent(state.physio.clinic);
+  window.location.href = 'mailto:' + state.patient.email + '?subject=' + subject + '&body=' + body;
+  showToast('Abriendo tu cliente de correo...');
 }
 
 // ============================================
