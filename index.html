@@ -189,7 +189,6 @@
     <div class="panel-label">Paciente</div>
     <div style="display:flex;align-items:center;gap:6px;">
       <input class="input" placeholder="Buscar paciente..." id="patientSearch" readonly onclick="handlePatientClick()" style="cursor:pointer;flex:1;font-size:12px;padding:6px 10px;">
-      <span class="premium-lock" onclick="handlePatientClick()" style="font-size:10px;padding:3px 7px;white-space:nowrap;">⭐ Premium</span>
       <button class="btn btn-primary" onclick="handleNewPatient()" style="padding:6px 11px;font-size:12px;white-space:nowrap;">+ Nuevo</button>
     </div>
     <div id="patientDisplay"></div>
@@ -205,8 +204,8 @@
   <div class="panel" style="display:flex;flex-direction:column;">
     <div class="tabs">
       <button class="tab active" id="tab-search" onclick="switchTab('search')">Buscar</button>
-      <button class="tab" id="tab-create" onclick="switchTab('create')">⭐ Crear</button>
-      <button class="tab" id="tab-plans" onclick="switchTab('plans')">⭐ Mis Planes</button>
+      <button class="tab" id="tab-create" onclick="switchTab('create')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Crear</button>
+      <button class="tab" id="tab-plans" onclick="switchTab('plans')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Mis Planes</button>
     </div>
     <div id="tabContent" style="flex:1;display:flex;flex-direction:column;overflow:hidden;"></div>
   </div>
@@ -226,7 +225,7 @@
     <textarea class="input" rows="2" placeholder="Recomendaciones, frecuencia, instrucciones..." id="planNotes" style="resize:none;margin-bottom:12px;"></textarea>
     <div class="section-label">Ejercicios Seleccionados</div>
     <div id="selectedExercises" style="flex:1;overflow-y:auto;max-height:220px;">
-      <div class="empty-state">📋<br>Añade ejercicios desde el buscador</div>
+      <div class="empty-state"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg><br>Añade ejercicios desde el buscador</div>
     </div>
   </div>
 </div>
@@ -235,10 +234,10 @@
 <div class="footer">
   <div class="footer-label">Acciones</div>
   <div style="display:flex;gap:6px;flex-wrap:wrap;">
-    <button class="btn-action blue" onclick="handleAction('email')">📧 Email</button>
-    <button class="btn-action blue" onclick="handleAction('whatsapp')">💬 WhatsApp</button>
-    <button class="btn-action blue" onclick="handleAction('download')">⬇ Descargar PDF</button>
-    <button class="btn-action premium" onclick="handleAction('savePlan')">💾 Guardar Plan</button>
+    <button class="btn-action blue" onclick="handleAction('email')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Email</button>
+    <button class="btn-action blue" onclick="handleAction('whatsapp')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> WhatsApp</button>
+    <button class="btn-action blue" onclick="handleAction('download')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> PDF</button>
+    <button class="btn-action premium" onclick="handleAction('savePlan')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Guardar Plan</button>
   </div>
 </div>
 
@@ -706,7 +705,7 @@ function renderHeader() {
     el.innerHTML = `
       <div class="credits-badge" onclick="showCreditsInfo()" style="cursor:pointer;flex-direction:column;align-items:flex-start;gap:3px;padding:6px 11px;">
         <div style="display:flex;align-items:center;gap:5px;width:100%;">
-          <span>⚡</span>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
           <span style="font-weight:700;">${remaining}/${state.credits.daily_limit}</span>
           <span style="font-weight:400;color:#92400e;">créditos hoy</span>
         </div>
@@ -736,7 +735,7 @@ function renderPhysio() {
   if (state.physioEditing) {
     const logoPreview = state.physio.logo
       ? `<img src="${state.physio.logo}" style="width:48px;height:48px;object-fit:contain;border-radius:8px;border:1px solid var(--gray-200);">`
-      : `<div style="width:48px;height:48px;border-radius:8px;border:2px dashed var(--gray-200);display:flex;align-items:center;justify-content:center;font-size:20px;">🏥</div>`;
+      : `<div style="width:48px;height:48px;border-radius:8px;border:2px dashed var(--gray-200);display:flex;align-items:center;justify-content:center;font-size:20px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg></div>`;
     el.innerHTML = `
       <div style="display:flex;flex-direction:column;gap:7px;">
         <div style="display:flex;align-items:center;gap:10px;">
@@ -826,7 +825,7 @@ function switchTab(tab) {
 function renderTab() {
   const el = document.getElementById('tabContent');
   if (state.activeTab !== 'search') {
-    el.innerHTML = `<div class="empty-state" style="padding:30px 10px;">⭐<br><strong style="color:var(--gray-900)">Función Premium</strong><br><span style="font-size:11px;">Actualiza tu plan para acceder</span><br><button class="btn btn-primary" style="margin-top:12px;" onclick="showPayPopup()">Ver Premium</button></div>`;
+    el.innerHTML = `<div class="empty-state" style="padding:30px 10px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><br><strong style="color:var(--gray-900)">Función Premium</strong><br><span style="font-size:11px;">Actualiza tu plan para acceder</span><br><button class="btn btn-primary" style="margin-top:12px;" onclick="showPayPopup()">Ver Premium</button></div>`;
     return;
   }
   const filtered = EXERCISES.filter(ex => {
@@ -961,7 +960,7 @@ async function handleAction(type) {
   } else if (type === 'email') {
     sendEmail();
   } else if (type === 'whatsapp') {
-    showToast('💬 Función de WhatsApp — disponible próximamente');
+    showToast('WhatsApp — disponible próximamente');
   }
 }
 
@@ -1240,7 +1239,7 @@ function showLoginPopup(context) {
   if (context === 'exercise') msg = 'Inicia sesión para construir tu plan de ejercicios.';
 
   showPopup(`
-    <div class="popup-icon blue">🔐</div>
+    <div class="popup-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
     <h2>Inicia sesión</h2>
     <p>${msg}</p>
     <div class="error-msg" id="loginError"></div>
@@ -1258,7 +1257,7 @@ function showLoginPopup(context) {
 
 function showRegisterPopup() {
   showPopup(`
-    <div class="popup-icon blue">✨</div>
+    <div class="popup-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
     <h2>Crear cuenta gratis</h2>
     <p>Regístrate y obtén <strong>2 créditos diarios</strong> para generar planes en PDF.</p>
     <div class="error-msg" id="regError"></div>
@@ -1336,7 +1335,7 @@ async function doRegister() {
   }
   // Mostrar popup de confirmación de email
   showPopup(`
-    <div class="popup-icon green">📧</div>
+    <div class="popup-icon green"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
     <h2>¡Cuenta creada!</h2>
     <p>Te hemos enviado un email de confirmación a <strong>${email}</strong>.<br><br>Revisa tu bandeja de entrada (y la carpeta de spam) y haz clic en el enlace para activar tu cuenta.</p>
     <div class="popup-btns">
@@ -1367,7 +1366,7 @@ async function doLogout() {
 // ============================================
 function showPayPopup() {
   showPopup(`
-    <div class="popup-icon amber">⭐</div>
+    <div class="popup-icon amber"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9z"/><path d="M11 3L8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg></div>
     <h2>Plan Premium</h2>
     <p>Desbloquea todo el potencial de FeasyPlan.</p>
     <div class="price-badge">9,99 € / mes</div>
@@ -1380,7 +1379,7 @@ function showPayPopup() {
     </div>
     <div class="divider"></div>
     <div class="popup-btns">
-      <button class="btn-full amber-btn" onclick="doSubscribe()">⭐ Suscribirme ahora</button>
+      <button class="btn-full amber-btn" onclick="doSubscribe()"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Suscribirme ahora</button>
       <button class="btn-full outline" onclick="closePopup()">Ahora no</button>
     </div>
   `);
@@ -1391,7 +1390,7 @@ function showCreditsInfo() {
   const monthlyLeft = Math.max(0, state.credits.monthly_limit - state.credits.monthly_used);
   const used = state.credits.daily_used;
   showPopup(`
-    <div class="popup-icon amber">⚡</div>
+    <div class="popup-icon amber"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
     <h2>Tus créditos</h2>
     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
       <div style="background:var(--gray-100);border-radius:10px;padding:13px;">
@@ -1416,7 +1415,7 @@ function showCreditsInfo() {
     </div>
     <div style="font-size:12px;color:var(--gray-400);text-align:center;margin-bottom:14px;">Cada descarga o envío de PDF consume 1 crédito</div>
     <div class="popup-btns">
-      <button class="btn-full amber-btn" onclick="showPayPopup()">⭐ Premium — créditos ilimitados</button>
+      <button class="btn-full amber-btn" onclick="showPayPopup()"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Premium ilimitado</button>
       <button class="btn-full outline" onclick="closePopup()">Cerrar</button>
     </div>
   `);
@@ -1428,7 +1427,7 @@ function showCreditPopup() {
     <h2>Créditos agotados</h2>
     <p>Has usado tus <strong>${state.credits?.daily_limit || 2} créditos diarios</strong>. Se recargan automáticamente mañana, o actualiza a Premium para generación ilimitada.</p>
     <div class="popup-btns">
-      <button class="btn-full amber-btn" onclick="doSubscribe()">⭐ Ir a Premium</button>
+      <button class="btn-full amber-btn" onclick="doSubscribe()"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Ir a Premium</button>
       <button class="btn-full outline" onclick="closePopup()">Esperar a mañana</button>
     </div>
   `);
@@ -1438,7 +1437,7 @@ function showProfilePopup() {
   const remaining = Math.max(0, (state.credits?.daily_limit||2) - (state.credits?.daily_used||0));
   const name = state.profile?.name || state.user?.email || '';
   showPopup(`
-    <div class="popup-icon blue">👤</div>
+    <div class="popup-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
     <h2>${name}</h2>
     <p style="margin-bottom:10px;">${state.user?.email}</p>
     <div style="background:var(--gray-100);border-radius:10px;padding:13px;margin-bottom:14px;">
@@ -1447,7 +1446,7 @@ function showProfilePopup() {
       <div style="font-size:11px;color:var(--gray-400);margin-top:3px;">Se recargan cada día a las 00:00</div>
     </div>
     <div class="popup-btns">
-      <button class="btn-full amber-btn" onclick="showPayPopup()">⭐ Actualizar a Premium</button>
+      <button class="btn-full amber-btn" onclick="showPayPopup()"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Actualizar a Premium</button>
       <button class="btn-full outline" onclick="doLogout()">Cerrar sesión</button>
     </div>
   `);
@@ -1489,8 +1488,8 @@ function savePatient() {
     <div style="background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:8px;padding:8px 11px;display:flex;align-items:flex-start;justify-content:space-between;margin-top:8px;">
       <div style="min-width:0;flex:1;">
         <div style="font-size:13px;font-weight:600;color:var(--blue);">${p.name}${p.age?' · '+p.age+' años':''}</div>
-        ${p.email?`<div style="font-size:11px;color:#3B82F6;margin-top:2px;">✉ ${p.email}</div>`:''}
-        ${p.phone?`<div style="font-size:11px;color:#3B82F6;margin-top:1px;">📱 ${p.phone}</div>`:''}
+        ${p.email?`<div style="font-size:11px;color:#3B82F6;margin-top:2px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${p.email}</div>`:''}
+        ${p.phone?`<div style="font-size:11px;color:#3B82F6;margin-top:1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.5 19.79 19.79 0 0 1 1.61 4.9 2 2 0 0 1 3.6 2.69h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> ${p.phone}</div>`:''}
         ${p.notes?`<div style="font-size:11px;color:#60A5FA;margin-top:2px;">${p.notes}</div>`:''}
       </div>
       <button class="btn-remove" onclick="state.patient=null;document.getElementById('patientDisplay').innerHTML='';var sb=document.getElementById('saveClientBtn');if(sb)sb.style.display='none';">✕</button>
