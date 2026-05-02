@@ -296,6 +296,9 @@ let state = {
 // INIT — escuchar cambios de sesión
 // ============================================
 async function init() {
+  // Render inmediato para mostrar la UI sin sesión
+  render();
+
   sb.auth.onAuthStateChange(async (event, session) => {
     if (session?.user) {
       state.user = session.user;
