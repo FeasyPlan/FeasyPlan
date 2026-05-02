@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>FeasyPlan — Planes de ejercicios para fisioterapeutas</title>
   <meta name="sb-key" content="{{SUPABASE_KEY}}">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -47,7 +47,7 @@
     .hero h1 span { color: var(--blue); }
 
     /* ====== PANELS ====== */
-    .panels-top { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 24px 12px; }
+    .panels-top { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 24px 10px; }
     .panel { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: 14px 16px; box-shadow: var(--shadow); }
     .panel-label { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; color: var(--gray-400); text-transform: uppercase; margin-bottom: 10px; }
     .physio-row { display: flex; align-items: center; gap: 10px; }
@@ -141,13 +141,24 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ====== RESPONSIVE ====== */
+    html, body { overflow-x: hidden; max-width: 100vw; }
+
     @media (max-width: 700px) {
       .panels-top, .main-body { grid-template-columns: 1fr; }
-      .hero { padding: 14px 16px 10px; }
-      .hero h1 { font-size: 18px; }
-      .panels-top, .main-body { padding: 0 12px 10px; }
-      .header { padding: 0 14px; }
-      .footer { padding: 10px 14px; }
+      .hero { padding: 10px 12px 8px; }
+      .hero h1 { font-size: 17px; }
+      .panels-top, .main-body { padding: 0 10px 8px; }
+      .header { padding: 0 12px; height: 46px; }
+      .footer { padding: 8px 12px; flex-direction: column; align-items: flex-start; gap: 6px; }
+      .footer > div:last-child { display: flex; flex-wrap: wrap; gap: 5px; }
+      .btn-action { font-size: 11px; padding: 6px 9px; }
+      /* Header móvil sin sesión: solo iconos */
+      .header-right { gap: 5px; }
+      .btn-mobile-icon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--gray-200); background: transparent; cursor: pointer; font-size: 13px; }
+      .btn-mobile-text { display: none; }
+      .credits-badge { font-size: 11px; padding: 4px 7px; }
+      .panel { padding: 11px 12px; }
+      .panel-label { margin-bottom: 7px; }
     }
   </style>
 </head>
@@ -166,16 +177,16 @@
 
 <!-- TOP PANELS -->
 <div class="panels-top">
-  <div class="panel">
+  <div class="panel" style="padding:10px 14px;">
     <div class="panel-label">Fisioterapeuta</div>
     <div id="physioContent"></div>
   </div>
-  <div class="panel">
+  <div class="panel" style="padding:10px 14px;">
     <div class="panel-label">Paciente</div>
-    <div style="display:flex;align-items:center;gap:8px;">
-      <input class="input" placeholder="Seleccionar paciente..." id="patientSearch" readonly onclick="handlePatientClick()" style="cursor:pointer;flex:1;">
-      <span class="premium-lock" onclick="handlePatientClick()">⭐ Premium</span>
-      <button class="btn btn-primary" onclick="handleNewPatient()">+ Nuevo</button>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <input class="input" placeholder="Buscar paciente..." id="patientSearch" readonly onclick="handlePatientClick()" style="cursor:pointer;flex:1;font-size:12px;padding:6px 10px;">
+      <span class="premium-lock" onclick="handlePatientClick()" style="font-size:10px;padding:3px 7px;white-space:nowrap;">⭐ Premium</span>
+      <button class="btn btn-primary" onclick="handleNewPatient()" style="padding:6px 11px;font-size:12px;white-space:nowrap;">+ Nuevo</button>
     </div>
     <div id="patientDisplay"></div>
   </div>
@@ -341,11 +352,20 @@ function renderHeader() {
       <div class="avatar" onclick="showProfilePopup()">${state.user.email[0].toUpperCase()}</div>
     `;
   } else {
-    el.innerHTML = `
-      <button class="btn btn-ghost" onclick="showLoginPopup()">Iniciar sesión</button>
-      <button class="btn btn-primary" onclick="showRegisterPopup()">Registrarse gratis</button>
-      <button class="btn btn-outline" onclick="handleNewPlan()">+ Nuevo Plan</button>
-    `;
+    const isMobile = window.innerWidth <= 700;
+    if (isMobile) {
+      el.innerHTML = `
+        <button class="btn btn-ghost" style="padding:6px 10px;font-size:12px;" onclick="showLoginPopup()">Entrar</button>
+        <button class="btn btn-primary" style="padding:6px 10px;font-size:12px;" onclick="showRegisterPopup()">Registro</button>
+        <button class="btn btn-outline" style="padding:6px 10px;font-size:12px;" onclick="handleNewPlan()">+ Plan</button>
+      `;
+    } else {
+      el.innerHTML = `
+        <button class="btn btn-ghost" onclick="showLoginPopup()">Iniciar sesión</button>
+        <button class="btn btn-primary" onclick="showRegisterPopup()">Registrarse gratis</button>
+        <button class="btn btn-outline" onclick="handleNewPlan()">+ Nuevo Plan</button>
+      `;
+    }
   }
 }
 
@@ -362,13 +382,13 @@ function renderPhysio() {
     setTimeout(() => document.getElementById('physioNameIn')?.focus(), 50);
   } else if (state.physio.name) {
     el.innerHTML = `
-      <div class="physio-row">
-        <div class="physio-avatar">${state.physio.name[0].toUpperCase()}</div>
-        <div style="flex:1;">
-          <div class="physio-name">${state.physio.name}</div>
-          <div class="physio-clinic">${state.physio.clinic || 'Sin clínica'}</div>
+      <div class="physio-row" style="gap:8px;">
+        <div class="physio-avatar" style="width:32px;height:32px;font-size:12px;border-radius:8px;">${state.physio.name[0].toUpperCase()}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="physio-name" style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${state.physio.name}</div>
+          <div class="physio-clinic" style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${state.physio.clinic || 'Sin clínica'}</div>
         </div>
-        <button class="btn-sm" onclick="state.physioEditing=true;render()">✏️ Editar</button>
+        <button class="btn-sm" style="font-size:11px;padding:4px 8px;flex-shrink:0;" onclick="state.physioEditing=true;render()">✏️ Editar</button>
       </div>
     `;
   } else {
