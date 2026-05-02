@@ -1952,9 +1952,11 @@ function sendWhatsApp() {
 }
 
 
-function doSendWhatsApp(url) {
+async function doSendWhatsApp(url) {
   closePopup();
-  // Generar PDF como blob para descarga en móvil
+  showToast('Generando PDF...');
+  // Precargar imágenes antes de generar
+  await preloadExerciseImages();
   var doc = generatePDFDoc();
   var filename = 'plan-' + ((state.patient && state.patient.name) ? state.patient.name.replace(/[^a-z0-9]/gi,'-').toLowerCase() : 'paciente') + '.pdf';
   var blob = doc.output('blob');
