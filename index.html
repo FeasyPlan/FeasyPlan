@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FeasyPlan — Planes de ejercicios para fisioterapeutas</title>
+  <meta name="sb-key" content="{{SUPABASE_KEY}}">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -237,7 +238,7 @@
 // SUPABASE INIT
 // ============================================
 const SUPABASE_URL = 'https://hqofqaqlhknyxrazgwtc.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhxb2ZxYXFsaGtueXhyYXpnd3RjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2NzU1NzQsImV4cCI6MjA5MzI1MTU3NH0.31ee9yNUjl_LVQConMxunM3-UwvDVxaVJo88TxJ5f5A'; // <-- Pega aquí tu anon key nueva tras regenerarla
+const SUPABASE_KEY = document.querySelector('meta[name="sb-key"]')?.content || '';
 
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
