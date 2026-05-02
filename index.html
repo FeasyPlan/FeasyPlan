@@ -301,16 +301,26 @@ async function init() {
   // Render inmediato para mostrar la UI sin sesión
   render();
 
+  // Recuperar sesión guardada en el navegador
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    state.user = session.user;
+    await loadUserData();
+    render();
+  }
+
+  // Escuchar cambios futuros de sesión
   sb.auth.onAuthStateChange(async (event, session) => {
-    if (session?.user) {
-      state.user = session.user;
-      await loadUserData();
-    } else {
+    if (event === 'SIGNED_OUT') {
       state.user = null;
       state.profile = null;
       state.credits = null;
+      render();
+    } else if (session?.user && !state.user) {
+      state.user = session.user;
+      await loadUserData();
+      render();
     }
-    render();
   });
 }
 
@@ -885,16 +895,28 @@ async function doLogin() {
   btn.innerHTML = '<span class="loading-spinner"></span> Entrando...';
   btn.disabled = true;
 
-  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
 
-  if (error) {
+    if (error) {
+      btn.innerHTML = 'Iniciar sesión';
+      btn.disabled = false;
+      showError(errEl, 'Email o contraseña incorrectos');
+      return;
+    }
+
+    if (data?.user) {
+      state.user = data.user;
+      await loadUserData();
+      closePopup();
+      render();
+      showToast('¡Bienvenido de nuevo! 👋');
+    }
+  } catch(e) {
     btn.innerHTML = 'Iniciar sesión';
     btn.disabled = false;
-    showError(errEl, 'Email o contraseña incorrectos');
-    return;
+    showError(errEl, 'Error de conexión. Inténtalo de nuevo.');
   }
-  closePopup();
-  showToast('¡Bienvenido de nuevo! 👋');
 }
 
 async function doRegister() {
