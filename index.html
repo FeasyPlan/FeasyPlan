@@ -262,358 +262,7 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 // ============================================
 // EJERCICIOS (base de datos local inicial)
 // ============================================
-const EXERCISES = [
-  {
-    id:1, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(1).png',
-    name:"Plancha sobre codos",
-    desc:"Apóyate en los antebrazos y las puntas de los pies. Mantén el cuerpo recto como una tabla, apretando el abdomen. Evita subir o hundir las caderas.",
-    tags:["core","abdomen","estabilización"], zona:"Core", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"1", duration:"20"
-  },
-  {
-    id:2, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(2).png',
-    name:"Carrera suave o marcha",
-    desc:"Camina o trota a ritmo suave manteniendo la espalda recta y los brazos en movimiento coordinado con las piernas. Ideal como calentamiento o ejercicio cardiovascular ligero.",
-    tags:["cardio","funcional","piernas"], zona:"Piernas", tipo:"Cardio", material:"Ninguno",
-    series:"1", reps:"1", duration:"600"
-  },
-  {
-    id:3, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(3).png',
-    name:"Flexiones de brazos",
-    desc:"Boca abajo, apoya las manos a la anchura de los hombros. Baja el pecho hacia el suelo doblando los codos y vuelve a subir. Mantén el cuerpo recto durante todo el movimiento.",
-    tags:["pecho","tríceps","hombros"], zona:"Hombros", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"10", duration:""
-  },
-  {
-    id:4, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(4).png',
-    name:"Puente de glúteos",
-    desc:"Túmbate boca arriba con las rodillas dobladas y los pies apoyados en el suelo. Sube las caderas apretando los glúteos hasta que el cuerpo forme una línea recta. Aguanta 2 segundos arriba y baja despacio.",
-    tags:["glúteos","isquiotibiales","lumbar"], zona:"Cadera", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"15", duration:""
-  },
-  {
-    id:5, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(5).png',
-    name:"Dominadas en barra",
-    desc:"Agarra la barra con las palmas hacia fuera a la anchura de los hombros. Tira de tu cuerpo hacia arriba hasta que la barbilla pase la barra. Baja despacio con control.",
-    tags:["espalda","bíceps","hombros"], zona:"Hombros", tipo:"Fuerza", material:"Barra fija",
-    series:"3", reps:"6", duration:""
-  },
-  {
-    id:6, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(6).png',
-    name:"Abdominales con giro",
-    desc:"Túmbate boca arriba con las rodillas dobladas y las manos detrás de la cabeza. Sube el tronco girando un codo hacia la rodilla contraria, alternando lados. Suelta el aire al subir.",
-    tags:["abdomen","oblicuos","core"], zona:"Core", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"16", duration:""
-  },
-  {
-    id:7, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(7).png',
-    name:"Fondos en banco",
-    desc:"Apoya las manos en el borde de un banco con las piernas estiradas. Baja el cuerpo doblando los codos y vuelve a subir. Mantén la espalda cerca del banco en todo momento.",
-    tags:["tríceps","hombros","pecho"], zona:"Hombros", tipo:"Fuerza", material:"Banco",
-    series:"3", reps:"12", duration:""
-  },
-  {
-    id:8, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(8).png',
-    name:"Sentadilla",
-    desc:"De pie con los pies a la anchura de los hombros. Baja como si fueras a sentarte en una silla hasta que las rodillas formen 90 grados, mantén la espalda recta y empuja desde los talones para subir.",
-    tags:["cuádriceps","glúteos","rodillas"], zona:"Piernas", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"15", duration:""
-  },
-  {
-    id:9, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(9).png',
-    name:"Zancada frontal",
-    desc:"De pie, da un paso adelante con una pierna y baja hasta que ambas rodillas formen 90 grados. La rodilla de atrás no debe tocar el suelo. Vuelve a la posición inicial y alterna piernas.",
-    tags:["cuádriceps","glúteos","equilibrio"], zona:"Piernas", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"12", duration:""
-  },
-  {
-    id:10, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(10).png',
-    name:"Elevación de piernas tumbado",
-    desc:"Túmbate boca arriba con las piernas estiradas. Sube las dos piernas hasta unos 45 grados apretando el abdomen bajo. Baja despacio sin que los pies lleguen a tocar el suelo.",
-    tags:["abdomen","cadera","core"], zona:"Core", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"12", duration:""
-  },
-  {
-    id:11, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(11).png',
-    name:"Sentadilla búlgara",
-    desc:"Apoya el pie de atrás en un banco y el de delante más adelantado. Baja la rodilla trasera hacia el suelo con la espalda recta. Empuja desde el talón delantero para subir.",
-    tags:["cuádriceps","glúteos","equilibrio"], zona:"Piernas", tipo:"Fuerza", material:"Banco",
-    series:"3", reps:"10", duration:""
-  },
-  {
-    id:12, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(12).png',
-    name:"Patada trasera en cuadrupedia",
-    desc:"A cuatro patas, sube una pierna estirada hacia atrás y arriba hasta la altura de la cadera apretando el glúteo. Mantén la espalda recta y alterna piernas.",
-    tags:["glúteos","isquiotibiales","lumbar"], zona:"Cadera", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"15", duration:""
-  },
-  {
-    id:13, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(13).png',
-    name:"Movilidad de columna en cuadrupedia",
-    desc:"A cuatro patas, arquea la espalda hacia arriba llevando la barbilla al pecho, luego bájala hundiéndola y levantando la cabeza. Hazlo despacio y sin forzar.",
-    tags:["columna","espalda","movilidad"], zona:"General", tipo:"Movilidad", material:"Ninguno",
-    series:"2", reps:"10", duration:""
-  },
-  {
-    id:14, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(14).png',
-    name:"Flexiones adaptadas",
-    desc:"Boca abajo con manos a la anchura de los hombros, baja el pecho hacia el suelo y vuelve a subir. Versión más accesible que trabaja el pecho, los tríceps y el abdomen.",
-    tags:["pecho","tríceps","hombros"], zona:"Hombros", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"10", duration:""
-  },
-  {
-    id:15, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(15).png',
-    name:"Zancada con mancuernas y banco",
-    desc:"Con el pie de atrás apoyado en un banco y una mancuerna en cada mano, baja la rodilla trasera hacia el suelo. Mantén la espalda recta y empuja desde el talón de delante para subir.",
-    tags:["cuádriceps","glúteos","mancuernas"], zona:"Piernas", tipo:"Fuerza", material:"Mancuernas",
-    series:"3", reps:"10", duration:""
-  },
-  {
-    id:16, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(16).png',
-    name:"Press de pecho con mancuernas en el suelo",
-    desc:"Túmbate boca arriba con las rodillas dobladas y una mancuerna en cada mano a la altura del pecho. Sube los brazos hacia arriba estirándolos y baja despacio hasta que los codos toquen el suelo.",
-    tags:["pecho","tríceps","mancuernas"], zona:"Hombros", tipo:"Fuerza", material:"Mancuernas",
-    series:"3", reps:"12", duration:""
-  },
-  {
-    id:17, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(17).png',
-    name:"Plancha lateral",
-    desc:"Apóyate de lado sobre el antebrazo y el borde del pie. Sube la cadera hasta que el cuerpo forme una línea recta. Aprieta el abdomen lateral y mantén la posición. Repite con el otro lado.",
-    tags:["oblicuos","core","estabilización"], zona:"Core", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"1", duration:"20"
-  },
-  {
-    id:18, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(18).png',
-    name:"Peso muerto a una pierna",
-    desc:"De pie sobre una pierna, inclínate hacia delante llevando el tronco horizontal y la pierna libre estirada hacia atrás, manteniendo la espalda recta. Vuelve a la posición inicial apretando el glúteo.",
-    tags:["glúteos","isquiotibiales","equilibrio"], zona:"Cadera", tipo:"Propiocepción", material:"Ninguno",
-    series:"3", reps:"10", duration:""
-  },
-  {
-    id:19, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(19).png',
-    name:"Plancha con extensión de brazo y pierna",
-    desc:"En posición de plancha sobre las manos, estira a la vez el brazo derecho y la pierna izquierda manteniéndolos a la altura del cuerpo. Aprieta el abdomen y alterna lados.",
-    tags:["core","estabilización","equilibrio"], zona:"Core", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"10", duration:""
-  },
-  {
-    id:20, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(20).png',
-    name:"Posición en V (barco)",
-    desc:"Sentado en el suelo, levanta las piernas y el tronco a la vez formando una V. Estira los brazos hacia delante paralelos al suelo. Aprieta el abdomen y aguanta el equilibrio.",
-    tags:["abdomen","cadera","equilibrio"], zona:"Core", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"8", duration:"3"
-  },
-  {
-    id:21, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(21).png',
-    name:"Flexión con pierna levantada",
-    desc:"En posición de flexión, levanta una pierna estirada a la altura de la cadera antes de hacer el movimiento. Baja el pecho al suelo y vuelve a subir. Alterna la pierna entre series.",
-    tags:["pecho","tríceps","glúteos"], zona:"Hombros", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"8", duration:""
-  },
-  {
-    id:22, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(22).png',
-    name:"Inclinación de tronco hacia delante",
-    desc:"De pie con las piernas estiradas, inclínate hacia delante intentando tocar el suelo con las manos sin doblar las rodillas. Aguanta la posición y vuelve despacio.",
-    tags:["isquiotibiales","espalda baja","estiramiento"], zona:"Piernas", tipo:"Estiramiento", material:"Ninguno",
-    series:"3", reps:"1", duration:"30"
-  },
-  {
-    id:23, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(23).png',
-    name:"Sentadilla con salto",
-    desc:"Desde una posición baja con las manos cerca de los pies, salta hacia arriba estirando todo el cuerpo. Aterriza suavemente con las rodillas un poco dobladas.",
-    tags:["cuádriceps","glúteos","explosividad"], zona:"Piernas", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"10", duration:""
-  },
-  {
-    id:24, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(24).png',
-    name:"Extensión de piernas sentado",
-    desc:"Sentado con las manos apoyadas detrás, lleva las piernas hacia el pecho y vuélvelas a estirar hacia delante. Trabaja la movilidad de cadera y el control del abdomen.",
-    tags:["cadera","abdomen","movilidad"], zona:"Cadera", tipo:"Movilidad", material:"Ninguno",
-    series:"3", reps:"12", duration:""
-  },
-  {
-    id:25, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(25).png',
-    name:"Postura del perro boca abajo",
-    desc:"Desde cuatro patas, sube las caderas hacia arriba y atrás formando una V invertida. Mantén los brazos y las piernas estirados e intenta apoyar los talones en el suelo. Relaja la cabeza entre los brazos.",
-    tags:["isquiotibiales","hombros","estiramiento"], zona:"General", tipo:"Estiramiento", material:"Ninguno",
-    series:"3", reps:"1", duration:"30"
-  },
-  {
-    id:26, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(26).png',
-    name:"Plancha sobre codos con pies elevados",
-    desc:"Igual que la plancha normal sobre codos, pero con los pies apoyados en un banco. Al estar más elevado, el esfuerzo en los hombros y la parte alta del abdomen es mayor.",
-    tags:["core","hombros","estabilización"], zona:"Core", tipo:"Fuerza", material:"Banco",
-    series:"3", reps:"1", duration:"30"
-  },
-  {
-    id:27, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(27).png',
-    name:"Plancha lateral con bajada de cadera",
-    desc:"En plancha lateral sobre el antebrazo, baja la cadera hasta casi tocar el suelo y súbela de nuevo. Trabaja el lateral del abdomen y la estabilidad de la zona lumbar.",
-    tags:["oblicuos","core","lumbar"], zona:"Core", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"12", duration:""
-  },
-  {
-    id:28, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(28).png',
-    name:"Burpee",
-    desc:"De pie, baja al suelo a cuatro patas, lleva los pies atrás a posición de plancha, haz una flexión, recoge los pies y salta hacia arriba con los brazos estirados. Ejercicio completo de alta intensidad.",
-    tags:["cardio","cuerpo completo","resistencia"], zona:"General", tipo:"Cardio", material:"Ninguno",
-    series:"3", reps:"8", duration:""
-  },
-  {
-    id:29, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(29).png',
-    name:"Escalador (mountain climber)",
-    desc:"En posición de plancha sobre las manos, lleva las rodillas hacia el pecho de forma alternada y a buen ritmo. Mantén las caderas estables y el abdomen apretado.",
-    tags:["cardio","core","resistencia"], zona:"Core", tipo:"Cardio", material:"Ninguno",
-    series:"3", reps:"20", duration:""
-  },
-  {
-    id:30, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(30).png',
-    name:"Bajada con zancada desde step",
-    desc:"De pie sobre un escalón, baja un pie hacia atrás hasta apoyar la rodilla en el suelo en posición de zancada. Empuja desde el talón de delante para volver arriba.",
-    tags:["cuádriceps","glúteos","equilibrio"], zona:"Piernas", tipo:"Fuerza", material:"Step",
-    series:"3", reps:"10", duration:""
-  },
-  {
-    id:31, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(31).png',
-    name:"Puente de glúteos en el suelo",
-    desc:"Túmbate boca arriba con las rodillas dobladas y los brazos a los lados. Sube las caderas apretando los glúteos hasta que el cuerpo quede recto. Aguanta 2 segundos y baja despacio.",
-    tags:["glúteos","isquiotibiales","lumbar"], zona:"Cadera", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"15", duration:""
-  },
-  {
-    id:32, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(32).png',
-    name:"Zancada hacia atrás",
-    desc:"De pie, da un paso hacia atrás con una pierna y baja hasta que ambas rodillas formen 90 grados. Empuja desde el talón de delante para volver y alterna piernas.",
-    tags:["cuádriceps","glúteos","equilibrio"], zona:"Piernas", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"12", duration:""
-  },
-  {
-    id:33, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(33).png',
-    name:"Patada de glúteo a cuatro patas",
-    desc:"A cuatro patas, sube la rodilla doblada hacia atrás y arriba apretando el glúteo. Mantén la espalda recta y alterna piernas. No arquees la zona lumbar.",
-    tags:["glúteos","isquiotibiales","espalda baja"], zona:"Cadera", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"15", duration:""
-  },
-  {
-    id:34, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(34).png',
-    name:"Puente con pierna levantada",
-    desc:"Desde la posición de puente con las caderas arriba, estira una pierna hacia el techo sin dejar caer la cadera. Mantén el glúteo apretado. Alterna piernas entre series.",
-    tags:["glúteos","core","isquiotibiales"], zona:"Cadera", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"10", duration:""
-  },
-  {
-    id:35, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(35).png',
-    name:"Remo a cuatro patas con mancuerna",
-    desc:"A cuatro patas con una mancuerna en una mano, sube el codo hacia atrás pegado al cuerpo. Mantén la cadera quieta y alterna brazos. Trabaja la espalda y los hombros.",
-    tags:["espalda","hombros","mancuernas"], zona:"Hombros", tipo:"Fuerza", material:"Mancuernas",
-    series:"3", reps:"12", duration:""
-  },
-  {
-    id:36, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(36).png',
-    name:"Zancada lateral",
-    desc:"De pie con los pies juntos, da un paso amplio hacia un lado doblando la rodilla de ese lado hasta 90 grados mientras la otra pierna queda estirada. Vuelve al centro y alterna lados.",
-    tags:["aductores","glúteos","cuádriceps"], zona:"Piernas", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"12", duration:""
-  },
-  {
-    id:37, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(37).png',
-    name:"Zancada con giro de tronco",
-    desc:"En posición de zancada, gira el tronco hacia el lado de la pierna delantera con las manos detrás de la cabeza. Mantén la cadera quieta y el abdomen apretado.",
-    tags:["oblicuos","cuádriceps","movilidad"], zona:"Core", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"10", duration:""
-  },
-  {
-    id:38, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(38).png',
-    name:"Salto de sentadilla",
-    desc:"Desde de pie, baja a media sentadilla y salta hacia arriba con fuerza. Aterriza suavemente con las rodillas un poco dobladas absorbiendo el impacto. Ejercicio de alta intensidad.",
-    tags:["cuádriceps","glúteos","explosividad"], zona:"Piernas", tipo:"Cardio", material:"Ninguno",
-    series:"3", reps:"12", duration:""
-  },
-  {
-    id:39, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(39).png',
-    name:"Rodillas arriba (marcha rápida)",
-    desc:"De pie, sube las rodillas alternadamente hasta la altura de las caderas a buen ritmo, coordinando con el movimiento de los brazos. Muy bueno para el corazón y la coordinación.",
-    tags:["cardio","coordinación","cadera"], zona:"Piernas", tipo:"Cardio", material:"Ninguno",
-    series:"3", reps:"1", duration:"30"
-  },
-  {
-    id:40, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(40).png',
-    name:"Plancha con pierna al lado",
-    desc:"En posición de plancha sobre las manos, levanta una pierna estirada hacia el lado a la altura de la cadera. Mantén el abdomen apretado y no dejes caer la cadera. Alterna piernas.",
-    tags:["glúteos","core","estabilización"], zona:"Core", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"10", duration:""
-  },
-  {
-    id:41, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(41).png',
-    name:"Plancha deslizante hacia delante",
-    desc:"En posición de plancha sobre las manos, acerca los pies hacia las manos doblando las caderas y vuelve a estirarlos. Mantén el abdomen activo durante todo el recorrido.",
-    tags:["core","hombros","estabilización"], zona:"Core", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"10", duration:""
-  },
-  {
-    id:42, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(42).png',
-    name:"Plancha con giro de cadera",
-    desc:"En plancha sobre los codos, baja la cadera hacia un lado casi tocando el suelo y súbela. Repite hacia el otro lado. Trabaja los laterales del abdomen de forma dinámica.",
-    tags:["oblicuos","core","espalda baja"], zona:"Core", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"14", duration:""
-  },
-  {
-    id:43, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(43).png',
-    name:"Escalador lento (rodilla al pecho)",
-    desc:"En plancha sobre las manos, lleva una rodilla hacia el pecho despacio y aguanta 1 segundo antes de estirarla. Alterna piernas activando el abdomen y la cadera.",
-    tags:["core","cadera","funcional"], zona:"Core", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"10", duration:""
-  },
-  {
-    id:44, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(44).png',
-    name:"Zancada con press de hombro",
-    desc:"Con una mancuerna en la mano, haz una zancada y al subir estira el brazo hacia arriba. Trabaja piernas, glúteos y hombros a la vez en un movimiento combinado.",
-    tags:["cuádriceps","glúteos","hombros"], zona:"Piernas", tipo:"Fuerza", material:"Mancuernas",
-    series:"3", reps:"8", duration:""
-  },
-  {
-    id:45, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(45).png',
-    name:"Elevación de pierna tumbado de lado",
-    desc:"Túmbate de lado con el cuerpo alineado. Levanta la pierna de arriba hacia el techo y bájala despacio sin que llegue a apoyarse. Trabaja la parte exterior de la cadera.",
-    tags:["glúteos","cadera","abductores"], zona:"Cadera", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"15", duration:""
-  },
-  {
-    id:46, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(46).png',
-    name:"Buenos días (estiramiento de isquios)",
-    desc:"De pie con los brazos estirados hacia arriba, inclínate hacia delante desde las caderas manteniendo la espalda recta hasta quedar casi horizontal. Vuelve despacio. Estira la parte trasera de los muslos.",
-    tags:["isquiotibiales","espalda baja","movilidad"], zona:"Piernas", tipo:"Estiramiento", material:"Ninguno",
-    series:"3", reps:"10", duration:""
-  },
-  {
-    id:47, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(47).png',
-    name:"Zancada con disco deslizante",
-    desc:"Con un disco bajo un pie, desliza ese pie hacia atrás mientras bajas en zancada con la pierna de apoyo. Vuelve deslizando el pie. Trabaja muslos, glúteos y la parte interna de la pierna.",
-    tags:["cuádriceps","glúteos","aductores"], zona:"Piernas", tipo:"Fuerza", material:"Disco deslizante",
-    series:"3", reps:"10", duration:""
-  },
-  {
-    id:48, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(48).png',
-    name:"Zancada lateral con disco",
-    desc:"Con un disco bajo un pie, desliza esa pierna hacia el lado mientras doblas la otra. Vuelve deslizando el pie. Trabaja la parte interna de los muslos, glúteos y cuádriceps.",
-    tags:["aductores","glúteos","cuádriceps"], zona:"Piernas", tipo:"Fuerza", material:"Disco deslizante",
-    series:"3", reps:"10", duration:""
-  },
-  {
-    id:49, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(49).png',
-    name:"Gusano (caminata de manos)",
-    desc:"De pie, inclínate y apoya las manos en el suelo. Camina con las manos hacia delante hasta la posición de plancha. Aguanta 1 segundo y vuelve caminando con las manos hacia los pies.",
-    tags:["hombros","isquiotibiales","funcional"], zona:"General", tipo:"Movilidad", material:"Ninguno",
-    series:"3", reps:"6", duration:""
-  },
-  {
-    id:50, img:'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(50).png',
-    name:"Plancha lateral con pierna levantada",
-    desc:"En plancha lateral sobre el antebrazo, levanta la pierna de arriba hacia el techo manteniéndola estirada. Mantén la cadera arriba y el abdomen apretado. Alterna lados entre series.",
-    tags:["oblicuos","glúteos","abductores"], zona:"Core", tipo:"Fuerza", material:"Ninguno",
-    series:"3", reps:"10", duration:""
-  },
-];
+let EXERCISES = [];
 
 const ZONAS = ["Todas","Piernas","Hombros","Cadera","Core","Cuello","General"];
 const TIPOS = ["Todos","Estiramiento","Fuerza","Movilidad","Propiocepción","Cardio"];
@@ -640,7 +289,41 @@ let state = {
 // ============================================
 // INIT — escuchar cambios de sesión
 // ============================================
+async function loadExercises() {
+  try {
+    const { data, error } = await sb
+      .from('exercises')
+      .select('*')
+      .eq('active', true)
+      .order('id', { ascending: true });
+
+    if (error) throw error;
+
+    EXERCISES = data.map(ex => ({
+      id: ex.id,
+      img: ex.img_url || '',
+      name: ex.name,
+      desc: ex.description || '',
+      tags: ex.tags || [],
+      zona: ex.zona || 'General',
+      tipo: ex.tipo || 'Fuerza',
+      material: ex.material || 'Ninguno',
+      series: ex.default_series || '3',
+      reps: ex.default_reps || '10',
+      duration: ex.default_duration || '',
+    }));
+
+    console.log('Ejercicios cargados:', EXERCISES.length);
+  } catch(e) {
+    console.error('Error cargando ejercicios:', e);
+    showToast('Error cargando la biblioteca de ejercicios');
+  }
+}
+
 async function init() {
+  // Cargar ejercicios desde Supabase
+  await loadExercises();
+
   // Render inmediato para mostrar la UI sin sesión
   render();
 
