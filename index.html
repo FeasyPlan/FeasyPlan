@@ -851,12 +851,13 @@ function handlePatientSearch(query) {
   if (!matches.length) {
     dropdown.innerHTML = '<div style="padding:10px 12px;font-size:12px;color:var(--gray-400);">Sin resultados</div>';
   } else {
-    dropdown.innerHTML = matches.map(p => `
-      <div onmousedown="event.preventDefault();selectPatient(${p.id})" style="padding:9px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--gray-100);display:flex;flex-direction:column;gap:2px;" onmouseover="this.style.background='var(--blue-light)'" onmouseout="this.style.background=''">
+    dropdown.innerHTML = matches.map(p => {
+      const idx = state.patients.indexOf(p);
+      return `<div onmousedown="event.preventDefault();selectPatient(${idx})" style="padding:9px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--gray-100);display:flex;flex-direction:column;gap:2px;" onmouseover="this.style.background='var(--blue-light)'" onmouseout="this.style.background=''">
         <span style="font-weight:600;color:var(--gray-900);">${p.name}${p.age ? ' · '+p.age+' años' : ''}</span>
         ${p.notes ? `<span style="font-size:11px;color:var(--gray-400);">${p.notes}</span>` : ''}
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
   }
   dropdown.style.display = 'block';
 }
@@ -865,8 +866,8 @@ function handlePatientSearchFocus() {
   if (!state.user) { showLoginPopup(); return; }
   if (state.patients.length > 0) {
     const dropdown = document.getElementById('patientDropdown');
-    dropdown.innerHTML = state.patients.map(p => `
-      <div onmousedown="event.preventDefault();selectPatient(${p.id})" style="padding:9px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--gray-100);display:flex;flex-direction:column;gap:2px;" onmouseover="this.style.background='var(--blue-light)'" onmouseout="this.style.background=''">
+    dropdown.innerHTML = state.patients.map((p, idx) => `
+      <div onmousedown="event.preventDefault();selectPatient(${idx})" style="padding:9px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--gray-100);display:flex;flex-direction:column;gap:2px;" onmouseover="this.style.background='var(--blue-light)'" onmouseout="this.style.background=''">
         <span style="font-weight:600;color:var(--gray-900);">${p.name}${p.age ? ' · '+p.age+' años' : ''}</span>
         ${p.notes ? `<span style="font-size:11px;color:var(--gray-400);">${p.notes}</span>` : ''}
       </div>
@@ -875,8 +876,8 @@ function handlePatientSearchFocus() {
   }
 }
 
-function selectPatient(id) {
-  const p = state.patients.find(pt => pt.id === id);
+function selectPatient(idx) {
+  const p = state.patients[idx];
   if (!p) return;
   state.patient = { name: p.name, age: p.age || '', phone: p.phone || '', email: p.email || '', notes: p.notes || '', dbId: p.id };
   document.getElementById('patientSearch').value = p.name;
