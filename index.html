@@ -358,8 +358,20 @@ function renderHeader() {
   const el = document.getElementById('headerRight');
   if (state.user && state.credits) {
     const remaining = Math.max(0, state.credits.daily_limit - state.credits.daily_used);
+    const monthlyLeft = Math.max(0, state.credits.monthly_limit - state.credits.monthly_used);
+    const pct = Math.round((remaining / state.credits.daily_limit) * 100);
+    const barColor = remaining === 0 ? '#DC2626' : remaining === 1 ? '#D97706' : '#059669';
     el.innerHTML = `
-      <div class="credits-badge">⚡ ${remaining}/${state.credits.daily_limit} hoy</div>
+      <div class="credits-badge" onclick="showCreditsInfo()" style="cursor:pointer;flex-direction:column;align-items:flex-start;gap:3px;padding:6px 11px;">
+        <div style="display:flex;align-items:center;gap:5px;width:100%;">
+          <span>⚡</span>
+          <span style="font-weight:700;">${remaining}/${state.credits.daily_limit}</span>
+          <span style="font-weight:400;color:#92400e;">créditos hoy</span>
+        </div>
+        <div style="width:100%;height:3px;background:#FDE68A;border-radius:2px;">
+          <div style="width:${pct}%;height:3px;background:${barColor};border-radius:2px;transition:width 0.3s;"></div>
+        </div>
+      </div>
       <button class="btn btn-outline" onclick="handleNewPlan()">+ Nuevo Plan</button>
       <div class="avatar" onclick="showProfilePopup()" title="Mi perfil">${(state.profile?.name || state.user.email)[0].toUpperCase()}</div>
     `;
@@ -1024,6 +1036,42 @@ function showPayPopup() {
     <div class="popup-btns">
       <button class="btn-full amber-btn" onclick="doSubscribe()">⭐ Suscribirme ahora</button>
       <button class="btn-full outline" onclick="closePopup()">Ahora no</button>
+    </div>
+  `);
+}
+
+function showCreditsInfo() {
+  const remaining = Math.max(0, state.credits.daily_limit - state.credits.daily_used);
+  const monthlyLeft = Math.max(0, state.credits.monthly_limit - state.credits.monthly_used);
+  const used = state.credits.daily_used;
+  showPopup(`
+    <div class="popup-icon amber">⚡</div>
+    <h2>Tus créditos</h2>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+      <div style="background:var(--gray-100);border-radius:10px;padding:13px;">
+        <div style="font-size:11px;font-weight:700;color:var(--gray-400);letter-spacing:0.6px;margin-bottom:6px;">HOY</div>
+        <div style="display:flex;align-items:baseline;gap:6px;">
+          <span style="font-size:26px;font-weight:700;color:var(--amber);">${remaining}</span>
+          <span style="font-size:13px;color:var(--gray-400);">de ${state.credits.daily_limit} créditos disponibles</span>
+        </div>
+        <div style="margin-top:8px;height:5px;background:#FDE68A;border-radius:3px;">
+          <div style="width:${Math.round(remaining/state.credits.daily_limit*100)}%;height:5px;background:${remaining===0?'#DC2626':remaining===1?'#D97706':'#059669'};border-radius:3px;"></div>
+        </div>
+        <div style="font-size:11px;color:var(--gray-400);margin-top:6px;">Se recargan automáticamente mañana a las 00:00</div>
+      </div>
+      <div style="background:var(--gray-100);border-radius:10px;padding:13px;">
+        <div style="font-size:11px;font-weight:700;color:var(--gray-400);letter-spacing:0.6px;margin-bottom:6px;">ESTE MES</div>
+        <div style="display:flex;align-items:baseline;gap:6px;">
+          <span style="font-size:26px;font-weight:700;color:var(--gray-900);">${monthlyLeft}</span>
+          <span style="font-size:13px;color:var(--gray-400);">de ${state.credits.monthly_limit} créditos restantes</span>
+        </div>
+        <div style="font-size:11px;color:var(--gray-400);margin-top:4px;">Máximo ${state.credits.monthly_limit} créditos al mes en el plan gratuito</div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--gray-400);text-align:center;margin-bottom:14px;">Cada descarga o envío de PDF consume 1 crédito</div>
+    <div class="popup-btns">
+      <button class="btn-full amber-btn" onclick="showPayPopup()">⭐ Premium — créditos ilimitados</button>
+      <button class="btn-full outline" onclick="closePopup()">Cerrar</button>
     </div>
   `);
 }
