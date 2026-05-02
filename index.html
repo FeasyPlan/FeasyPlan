@@ -803,51 +803,107 @@ function handleLogoUpload(input) {
 }
 
 function showLogoCropper(src) {
+  // Bloquear scroll del fondo
+  document.body.style.overflow = 'hidden';
+
   showPopup(`
-    <div style="font-size:15px;font-weight:700;color:var(--gray-900);margin-bottom:6px;">Ajusta tu logo</div>
-    <p style="font-size:13px;color:var(--gray-600);margin-bottom:12px;">Arrastra la imagen para elegir qué parte se verá en tu perfil y en el PDF.</p>
-    <div style="position:relative;width:100%;height:200px;overflow:hidden;border-radius:10px;border:1px solid var(--gray-200);background:var(--gray-100);cursor:grab;margin-bottom:14px;" id="cropBox">
-      <img id="cropImg" src="${src}" style="position:absolute;max-width:none;user-select:none;" draggable="false">
+    <div style="font-size:15px;font-weight:700;color:var(--gray-900);margin-bottom:4px;">Ajusta tu logo</div>
+    <p style="font-size:12px;color:var(--gray-600);margin-bottom:10px;">Arrastra para reencuadrar. El cuadrado es lo que se guardará.</p>
+    <div style="position:relative;width:240px;height:240px;margin:0 auto 12px;flex-shrink:0;" id="cropWrap">
+      <div style="width:240px;height:240px;overflow:hidden;border-radius:10px;border:2px solid var(--blue);background:#111;touch-action:none;" id="cropBox">
+        <img id="cropImg" src="${src}" style="position:absolute;max-width:none;user-select:none;transform-origin:0 0;" draggable="false">
+      </div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
-      <span style="font-size:12px;color:var(--gray-600);">Zoom</span>
-      <input type="range" id="cropZoom" min="50" max="200" value="100" style="flex:1;" oninput="updateCropZoom(this.value)">
+      <span style="font-size:11px;color:var(--gray-600);white-space:nowrap;">Zoom</span>
+      <input type="range" id="cropZoom" min="10" max="300" value="100" style="flex:1;accent-color:var(--blue);" oninput="updateCropZoom(this.value)">
     </div>
     <div class="popup-btns">
       <button class="btn-full primary" onclick="confirmCrop()">Usar esta zona</button>
-      <button class="btn-full outline" onclick="closePopup()">Cancelar</button>
+      <button class="btn-full outline" onclick="cancelCrop()">Cancelar</button>
     </div>
   `);
 
-  // Setup drag
   const box = document.getElementById('cropBox');
   const img = document.getElementById('cropImg');
-  let dragging = false, startX, startY, imgX = 0, imgY = 0;
+  const SIZE = 240;
+  let imgX = 0, imgY = 0, zoom = 1;
+  let dragging = false, lastX, lastY;
 
-  // Center image initially
-  img.onload = () => {
-    const scale = 100 / 100;
-    const iw = img.naturalWidth * scale;
-    const ih = img.naturalHeight * scale;
-    imgX = (200 - iw) / 2;
-    imgY = (200 - ih) / 2;
-    img.style.width = iw + 'px';
+  function applyTransform() {
     img.style.left = imgX + 'px';
     img.style.top = imgY + 'px';
+  }
+
+  img.onload = () => {
+    // Escalar para que llene el cuadrado manteniendo proporciones
+    const nw = img.naturalWidth;
+    const nh = img.naturalHeight;
+    const scale = Math.max(SIZE / nw, SIZE / nh);
+    zoom = scale * 100;
+    document.getElementById('cropZoom').value = zoom;
+    img.style.width = (nw * scale) + 'px';
+    img.style.height = (nh * scale) + 'px';
+    imgX = (SIZE - nw * scale) / 2;
+    imgY = (SIZE - nh * scale) / 2;
+    applyTransform();
   };
 
-  box.addEventListener('mousedown', (e) => { dragging=true; startX=e.clientX-imgX; startY=e.clientY-imgY; box.style.cursor='grabbing'; });
-  box.addEventListener('touchstart', (e) => { dragging=true; startX=e.touches[0].clientX-imgX; startY=e.touches[0].clientY-imgY; });
-  document.addEventListener('mousemove', (e) => { if(!dragging) return; imgX=e.clientX-startX; imgY=e.clientY-startY; img.style.left=imgX+'px'; img.style.top=imgY+'px'; });
-  document.addEventListener('touchmove', (e) => { if(!dragging) return; imgX=e.touches[0].clientX-startX; imgY=e.touches[0].clientY-startY; img.style.left=imgX+'px'; img.style.top=imgY+'px'; });
-  document.addEventListener('mouseup', () => { dragging=false; box.style.cursor='grab'; });
-  document.addEventListener('touchend', () => { dragging=false; });
+  // Mouse
+  box.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    dragging = true; lastX = e.clientX; lastY = e.clientY;
+    box.style.cursor = 'grabbing';
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    imgX += e.clientX - lastX; imgY += e.clientY - lastY;
+    lastX = e.clientX; lastY = e.clientY;
+    applyTransform();
+  });
+  document.addEventListener('mouseup', () => { dragging = false; box.style.cursor = 'grab'; });
+
+  // Touch — sin propagar al body
+  box.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    dragging = true; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+  }, { passive: false });
+  box.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    if (!dragging) return;
+    imgX += e.touches[0].clientX - lastX; imgY += e.touches[0].clientY - lastY;
+    lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+    applyTransform();
+  }, { passive: false });
+  box.addEventListener('touchend', () => { dragging = false; });
+}
+
+function cancelCrop() {
+  document.body.style.overflow = '';
+  closePopup();
 }
 
 function updateCropZoom(val) {
   const img = document.getElementById('cropImg');
   if (!img) return;
-  img.style.width = (img.naturalWidth * val / 100) + 'px';
+  const nw = img.naturalWidth;
+  const nh = img.naturalHeight;
+  const scale = val / 100;
+  const prevW = parseFloat(img.style.width) || nw;
+  const newW = nw * scale;
+  const newH = nh * scale;
+  // Mantener centro al hacer zoom
+  const cx = 240 / 2;
+  const cy = 240 / 2;
+  const oldLeft = parseFloat(img.style.left) || 0;
+  const oldTop = parseFloat(img.style.top) || 0;
+  const ratioX = (cx - oldLeft) / prevW;
+  const newLeft = cx - ratioX * newW;
+  const newTop = cy - ((cy - oldTop) / prevW) * newW;
+  img.style.width = newW + 'px';
+  img.style.height = newH + 'px';
+  img.style.left = newLeft + 'px';
+  img.style.top = newTop + 'px';
 }
 
 function confirmCrop() {
@@ -856,21 +912,22 @@ function confirmCrop() {
   if (!box || !img) return;
 
   const canvas = document.createElement('canvas');
-  canvas.width = 200;
-  canvas.height = 200;
+  canvas.width = 400;
+  canvas.height = 400;
   const ctx = canvas.getContext('2d');
 
   const boxRect = box.getBoundingClientRect();
   const imgRect = img.getBoundingClientRect();
   const scaleX = img.naturalWidth / imgRect.width;
   const scaleY = img.naturalHeight / imgRect.height;
-  const sx = (boxRect.left - imgRect.left) * scaleX;
-  const sy = (boxRect.top - imgRect.top) * scaleY;
-  const sw = boxRect.width * scaleX;
-  const sh = boxRect.height * scaleY;
+  const sx = Math.max(0, (boxRect.left - imgRect.left) * scaleX);
+  const sy = Math.max(0, (boxRect.top - imgRect.top) * scaleY);
+  const sw = Math.min(boxRect.width * scaleX, img.naturalWidth - sx);
+  const sh = Math.min(boxRect.height * scaleY, img.naturalHeight - sy);
 
-  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 200, 200);
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 400, 400);
   state.physio.logo = canvas.toDataURL('image/png');
+  document.body.style.overflow = '';
   closePopup();
   renderPhysio();
   showToast('Logo actualizado ✓');
