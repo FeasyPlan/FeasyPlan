@@ -1117,11 +1117,11 @@ function generatePDFDoc() {
     }
   }
 
-  // Fecha arriba a la derecha
-  doc.setFontSize(8);
+  // Fecha dentro de la franja azul (blanco sobre azul, derecha)
+  doc.setFontSize(7.5);
   doc.setFont('helvetica', 'normal');
-  setColor(C.light);
-  doc.text(new Date().toLocaleDateString('es-ES', {day:'2-digit', month:'long', year:'numeric'}), pageW - marginR, 10, { align: 'right' });
+  doc.setTextColor(255, 255, 255);
+  doc.text(new Date().toLocaleDateString('es-ES', {day:'2-digit', month:'long', year:'numeric'}), pageW - marginR, 2.8, { align: 'right', baseline: 'top' });
 
   // Línea separadora cabecera
   y = Math.max(y, 36) + 4;
