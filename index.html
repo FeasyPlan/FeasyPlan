@@ -187,13 +187,24 @@
   </div>
   <div class="panel" style="padding:10px 14px;">
     <div class="panel-label">Paciente</div>
-    <div style="display:flex;align-items:center;gap:6px;">
-      <input class="input" placeholder="Buscar paciente..." id="patientSearch" readonly onclick="handlePatientClick()" style="cursor:pointer;flex:1;font-size:12px;padding:6px 10px;">
-      <button class="btn btn-primary" onclick="handleNewPatient()" style="padding:6px 11px;font-size:12px;white-space:nowrap;">+ Nuevo</button>
-    </div>
-    <div id="patientDisplay"></div>
-    <div id="saveClientBtn" style="display:none;margin-top:8px;">
-      <button class="btn-action premium" style="width:100%;justify-content:center;font-size:12px;" onclick="handleAction('saveClient')">💾 Guardar Cliente</button>
+    <div style="position:relative;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div style="position:relative;flex:1;">
+          <input class="input" placeholder="Buscar paciente..." id="patientSearch" autocomplete="off"
+            oninput="handlePatientSearch(this.value)"
+            onfocus="handlePatientSearchFocus()"
+            style="font-size:12px;padding:6px 10px;width:100%;">
+          <div id="patientDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid var(--gray-200);border-radius:9px;box-shadow:var(--shadow-md);z-index:60;max-height:180px;overflow-y:auto;margin-top:3px;"></div>
+        </div>
+        <button class="btn btn-primary" onclick="handleNewPatient()" style="padding:6px 11px;font-size:12px;white-space:nowrap;">+ Nuevo</button>
+      </div>
+      <div id="patientDisplay"></div>
+      <div id="saveClientBtn" style="display:none;margin-top:8px;">
+        <button class="btn-action premium" style="width:100%;justify-content:center;font-size:12px;" onclick="doSaveClient()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Guardar Cliente
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -278,6 +289,7 @@ let state = {
   physio: { name:'', clinic:'', phone:'', email:'' },
   physioEditing: false,
   patient: null,
+  patients: [], // lista cargada desde Supabase
   selectedExercises: [],
   activeTab: 'search',
   searchQuery: '',
@@ -368,6 +380,10 @@ async function loadUserData() {
   // Cargar créditos
   const { data: credits } = await sb.from('credits').select('*').eq('user_id', state.user.id).single();
   state.credits = credits;
+
+  // Cargar pacientes
+  const { data: patients } = await sb.from('patients').select('*').eq('user_id', state.user.id).order('name', { ascending: true });
+  state.patients = patients || [];
 }
 
 // ============================================
@@ -753,19 +769,122 @@ function handleNewPlan() {
   showToast('Nuevo plan iniciado ✓');
 }
 
-function handlePatientClick() {
+function handlePatientSearch(query) {
   if (!state.user) { showLoginPopup(); return; }
-  showPayPopup();
+  const dropdown = document.getElementById('patientDropdown');
+  if (!query.trim()) { dropdown.style.display = 'none'; return; }
+  const q = query.toLowerCase();
+  const matches = state.patients.filter(p => p.name.toLowerCase().includes(q));
+  if (!matches.length) {
+    dropdown.innerHTML = '<div style="padding:10px 12px;font-size:12px;color:var(--gray-400);">Sin resultados</div>';
+  } else {
+    dropdown.innerHTML = matches.map(p => `
+      <div onclick="selectPatient(${p.id})" style="padding:9px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--gray-100);display:flex;flex-direction:column;gap:2px;" onmouseover="this.style.background='var(--blue-light)'" onmouseout="this.style.background=''">
+        <span style="font-weight:600;color:var(--gray-900);">${p.name}${p.age ? ' · '+p.age+' años' : ''}</span>
+        ${p.notes ? `<span style="font-size:11px;color:var(--gray-400);">${p.notes}</span>` : ''}
+      </div>
+    `).join('');
+  }
+  dropdown.style.display = 'block';
 }
+
+function handlePatientSearchFocus() {
+  if (!state.user) { showLoginPopup(); return; }
+  if (state.patients.length > 0) {
+    const dropdown = document.getElementById('patientDropdown');
+    dropdown.innerHTML = state.patients.map(p => `
+      <div onclick="selectPatient(${p.id})" style="padding:9px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--gray-100);display:flex;flex-direction:column;gap:2px;" onmouseover="this.style.background='var(--blue-light)'" onmouseout="this.style.background=''">
+        <span style="font-weight:600;color:var(--gray-900);">${p.name}${p.age ? ' · '+p.age+' años' : ''}</span>
+        ${p.notes ? `<span style="font-size:11px;color:var(--gray-400);">${p.notes}</span>` : ''}
+      </div>
+    `).join('');
+    dropdown.style.display = 'block';
+  }
+}
+
+function selectPatient(id) {
+  const p = state.patients.find(pt => pt.id === id);
+  if (!p) return;
+  state.patient = { name: p.name, age: p.age || '', phone: p.phone || '', email: p.email || '', notes: p.notes || '', dbId: p.id };
+  document.getElementById('patientSearch').value = p.name;
+  document.getElementById('patientDropdown').style.display = 'none';
+  renderPatientDisplay();
+}
+
+// Cerrar dropdown al hacer clic fuera
+document.addEventListener('click', function(e) {
+  const dd = document.getElementById('patientDropdown');
+  const input = document.getElementById('patientSearch');
+  if (dd && input && !input.contains(e.target) && !dd.contains(e.target)) {
+    dd.style.display = 'none';
+  }
+});
 
 function handleNewPatient() {
   if (!state.user) { showLoginPopup('patient'); return; }
   showNewPatientPopup();
 }
 
+function renderPatientDisplay() {
+  const p = state.patient;
+  if (!p) return;
+  document.getElementById('patientDisplay').innerHTML = `
+    <div style="background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:8px;padding:8px 11px;display:flex;align-items:flex-start;justify-content:space-between;margin-top:8px;">
+      <div style="min-width:0;flex:1;">
+        <div style="font-size:13px;font-weight:600;color:var(--blue);">${p.name}${p.age?' · '+p.age+' años':''}</div>
+        ${p.email?`<div style="font-size:11px;color:#3B82F6;margin-top:2px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${p.email}</div>`:''}
+        ${p.phone?`<div style="font-size:11px;color:#3B82F6;margin-top:1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.5 19.79 19.79 0 0 1 1.61 4.9 2 2 0 0 1 3.6 2.69h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> ${p.phone}</div>`:''}
+        ${p.notes?`<div style="font-size:11px;color:#60A5FA;margin-top:2px;">${p.notes}</div>`:''}
+      </div>
+      <button class="btn-remove" onclick="clearPatient()">✕</button>
+    </div>
+  `;
+  var saveBtn = document.getElementById('saveClientBtn');
+  if (saveBtn) saveBtn.style.display = 'block';
+}
+
+function clearPatient() {
+  state.patient = null;
+  document.getElementById('patientDisplay').innerHTML = '';
+  document.getElementById('patientSearch').value = '';
+  var sb2 = document.getElementById('saveClientBtn');
+  if (sb2) sb2.style.display = 'none';
+}
+
+async function doSaveClient() {
+  if (!state.user) { showLoginPopup(); return; }
+  if (!state.patient) return;
+  try {
+    const payload = {
+      user_id: state.user.id,
+      name: state.patient.name,
+      age: state.patient.age ? parseInt(state.patient.age) : null,
+      phone: state.patient.phone || null,
+      email: state.patient.email || null,
+      notes: state.patient.notes || null,
+    };
+    let result;
+    if (state.patient.dbId) {
+      result = await sb.from('patients').update(payload).eq('id', state.patient.dbId);
+    } else {
+      result = await sb.from('patients').insert(payload).select().single();
+      if (result.data) state.patient.dbId = result.data.id;
+    }
+    // Recargar lista de pacientes
+    const { data } = await sb.from('patients').select('*').eq('user_id', state.user.id).order('name');
+    state.patients = data || [];
+    showToast('Cliente guardado ✓');
+    var saveBtn = document.getElementById('saveClientBtn');
+    if (saveBtn) saveBtn.style.display = 'none';
+  } catch(e) {
+    showToast('Error al guardar el cliente');
+  }
+}
+
 async function handleAction(type) {
   if (!state.user) { showLoginPopup(); return; }
-  if (type === 'savePlan' || type === 'saveClient') { showPayPopup(); return; }
+  if (type === 'savePlan') { showPayPopup(); return; }
+  if (type === 'saveClient') { doSaveClient(); return; }
   if (!state.selectedExercises.length) { showToast('⚠️ Añade ejercicios al plan primero'); return; }
 
   // Comprobar créditos
@@ -1313,7 +1432,7 @@ function showNewPatientPopup() {
 
 function savePatient() {
   const name = document.getElementById('ptName').value.trim();
-  if (!name) { showToast('⚠️ Introduce el nombre del paciente'); return; }
+  if (!name) { showToast('Introduce el nombre del paciente'); return; }
   state.patient = {
     name,
     age: document.getElementById('ptAge').value,
@@ -1321,20 +1440,8 @@ function savePatient() {
     email: document.getElementById('ptEmail').value,
     notes: document.getElementById('ptNotes').value
   };
-  const p = state.patient;
-  document.getElementById('patientDisplay').innerHTML = `
-    <div style="background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:8px;padding:8px 11px;display:flex;align-items:flex-start;justify-content:space-between;margin-top:8px;">
-      <div style="min-width:0;flex:1;">
-        <div style="font-size:13px;font-weight:600;color:var(--blue);">${p.name}${p.age?' · '+p.age+' años':''}</div>
-        ${p.email?`<div style="font-size:11px;color:#3B82F6;margin-top:2px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${p.email}</div>`:''}
-        ${p.phone?`<div style="font-size:11px;color:#3B82F6;margin-top:1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.5 19.79 19.79 0 0 1 1.61 4.9 2 2 0 0 1 3.6 2.69h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> ${p.phone}</div>`:''}
-        ${p.notes?`<div style="font-size:11px;color:#60A5FA;margin-top:2px;">${p.notes}</div>`:''}
-      </div>
-      <button class="btn-remove" onclick="state.patient=null;document.getElementById('patientDisplay').innerHTML='';var sb=document.getElementById('saveClientBtn');if(sb)sb.style.display='none';">✕</button>
-    </div>
-  `;
-  var saveBtn = document.getElementById('saveClientBtn');
-  if (saveBtn) saveBtn.style.display = 'block';
+  document.getElementById('patientSearch').value = name;
+  renderPatientDisplay();
   closePopup();
   showToast('Paciente añadido ✓');
 }
