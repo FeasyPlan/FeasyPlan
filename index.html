@@ -1032,6 +1032,25 @@ function generatePDFDoc() {
 
   let y = 14;
 
+  // Logo fisio (solo Premium, esquina superior derecha)
+  const logoSize = 22;
+  if (isPremium && state.physio.logo) {
+    try {
+      const fmt = state.physio.logo.includes('image/png') ? 'PNG' : 'JPEG';
+      // Dibujar sobre fondo blanco
+      const logoCanvas = document.createElement('canvas');
+      logoCanvas.width = 400; logoCanvas.height = 400;
+      const lCtx = logoCanvas.getContext('2d');
+      lCtx.fillStyle = '#FFFFFF';
+      lCtx.fillRect(0, 0, 400, 400);
+      const logoImg = new Image();
+      logoImg.src = state.physio.logo;
+      lCtx.drawImage(logoImg, 0, 0, 400, 400);
+      const cleanLogo = logoCanvas.toDataURL('image/jpeg', 0.9);
+      doc.addImage(cleanLogo, 'JPEG', pageW - marginR - logoSize, 6, logoSize, logoSize);
+    } catch(e) { /* skip */ }
+  }
+
   // Fisio (izquierda) | Paciente (derecha)
   const colMid = pageW / 2;
 
