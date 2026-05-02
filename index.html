@@ -296,6 +296,10 @@ let state = {
   filterZona: 'Todas',
   filterTipo: 'Todos',
   filterMaterial: 'Todos',
+  filterOwn: false,
+  customExercises: [],
+  savedPlans: [],
+  newExercise: { name:'', desc:'', zona:'Piernas', tipo:'Fuerza', material:'Ninguno', series:'3', reps:'10', duration:'', img:null },
 };
 
 // ============================================
@@ -384,6 +388,28 @@ async function loadUserData() {
   // Cargar pacientes
   const { data: patients } = await sb.from('patients').select('*').eq('user_id', state.user.id).order('name', { ascending: true });
   state.patients = patients || [];
+
+  // Cargar planes guardados
+  const { data: savedPlans } = await sb.from('plans').select('*').eq('user_id', state.user.id).order('updated_at', { ascending: false });
+  state.savedPlans = savedPlans || [];
+
+  // Cargar ejercicios personalizados
+  const { data: customEx } = await sb.from('exercises').select('*').eq('user_id', state.user.id).eq('is_custom', true);
+  state.customExercises = (customEx || []).map(ex => ({
+    id: 'custom_' + ex.id,
+    dbId: ex.id,
+    img: ex.img_url || '',
+    name: ex.name,
+    desc: ex.description || '',
+    tags: ex.tags || [],
+    zona: ex.zona || 'General',
+    tipo: ex.tipo || 'Fuerza',
+    material: ex.material || 'Ninguno',
+    series: ex.default_series || '3',
+    reps: ex.default_reps || '10',
+    duration: ex.default_duration || '',
+    isCustom: true,
+  }));
 }
 
 // ============================================
@@ -399,23 +425,24 @@ function render() {
 
 function renderHeader() {
   const el = document.getElementById('headerRight');
-  if (state.user && state.credits) {
-    const remaining = Math.max(0, state.credits.daily_limit - state.credits.daily_used);
-    const monthlyLeft = Math.max(0, state.credits.monthly_limit - state.credits.monthly_used);
-    const pct = Math.round((remaining / state.credits.daily_limit) * 100);
-    const barColor = remaining === 0 ? '#DC2626' : remaining === 1 ? '#D97706' : '#059669';
+  const isPremium = state.profile?.is_premium || false;
+
+  if (state.user) {
+    const premiumBadge = isPremium
+      ? `<div style="display:flex;align-items:center;gap:5px;background:#FFF7ED;border:1px solid #FED7AA;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;color:#C2410C;">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="#C2410C" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Premium
+         </div>`
+      : state.credits
+        ? `<div class="credits-badge" onclick="showCreditsInfo()" style="cursor:pointer;flex-direction:row;align-items:center;gap:5px;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span style="font-weight:700;">${Math.max(0, state.credits.daily_limit - state.credits.daily_used)}/${state.credits.daily_limit}</span>
+           </div>`
+        : '';
     el.innerHTML = `
-      <div class="credits-badge" onclick="showCreditsInfo()" style="cursor:pointer;flex-direction:row;align-items:center;gap:5px;">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-          <span style="font-weight:700;">${remaining}/${state.credits.daily_limit}</span>
-      </div>
+      ${premiumBadge}
       <button class="btn btn-outline" onclick="handleNewPlan()">+ Nuevo Plan</button>
       <div class="avatar" onclick="showProfilePopup()" title="Mi perfil">${(state.profile?.name || state.user.email)[0].toUpperCase()}</div>
-    `;
-  } else if (state.user) {
-    el.innerHTML = `
-      <button class="btn btn-outline" onclick="handleNewPlan()">+ Nuevo Plan</button>
-      <div class="avatar" onclick="showProfilePopup()">${state.user.email[0].toUpperCase()}</div>
     `;
   } else {
     el.innerHTML = `
@@ -657,10 +684,8 @@ function renderPlanHeader() {
 // TABS Y EJERCICIOS
 // ============================================
 function switchTab(tab) {
-  if (tab !== 'search') {
-    if (!state.user) { showLoginPopup(); return; }
-    showPayPopup(); return;
-  }
+  if (!state.user) { showLoginPopup(); return; }
+  if (tab !== 'search' && !state.profile?.is_premium) { showPayPopup(); return; }
   state.activeTab = tab;
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-' + tab)?.classList.add('active');
@@ -669,11 +694,12 @@ function switchTab(tab) {
 
 function renderTab() {
   const el = document.getElementById('tabContent');
-  if (state.activeTab !== 'search') {
-    el.innerHTML = `<div class="empty-state" style="padding:30px 10px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><br><strong style="color:var(--gray-900)">Función Premium</strong><br><span style="font-size:11px;">Actualiza tu plan para acceder</span><br><button class="btn btn-primary" style="margin-top:12px;" onclick="showPayPopup()">Ver Premium</button></div>`;
-    return;
-  }
-  const filtered = EXERCISES.filter(ex => {
+  if (state.activeTab === 'create') { renderCreateTab(); return; }
+  if (state.activeTab === 'plans') { renderPlansTab(); return; }
+  const allExercises = state.filterOwn
+    ? state.customExercises
+    : [...EXERCISES, ...state.customExercises];
+  const filtered = allExercises.filter(ex => {
     const q = state.searchQuery.toLowerCase();
     return (!q || ex.name.toLowerCase().includes(q) || ex.tags.some(t=>t.includes(q)))
       && (state.filterZona === 'Todas' || ex.zona === state.filterZona)
@@ -690,6 +716,7 @@ function renderTab() {
       <select class="filter-sel" onchange="state.filterZona=this.value;renderTab()">${ZONAS.map(z=>`<option ${state.filterZona===z?'selected':''}>${z}</option>`).join('')}</select>
       <select class="filter-sel" onchange="state.filterTipo=this.value;renderTab()">${TIPOS.map(t=>`<option ${state.filterTipo===t?'selected':''}>${t}</option>`).join('')}</select>
       <select class="filter-sel" onchange="state.filterMaterial=this.value;renderTab()">${MATERIALES.map(m=>`<option ${state.filterMaterial===m?'selected':''}>${m}</option>`).join('')}</select>
+      ${state.user && state.profile?.is_premium && state.customExercises.length > 0 ? `<button onclick="state.filterOwn=!state.filterOwn;renderTab()" style="border:1px solid ${state.filterOwn?'var(--blue)':'var(--gray-200)'};background:${state.filterOwn?'var(--blue-light)':'white'};color:${state.filterOwn?'var(--blue)':'var(--gray-600)'};border-radius:7px;padding:5px 9px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;">Mis ejercicios</button>` : ''}
     </div>
     <div class="exercise-list">
       ${filtered.length === 0 ? '<div class="empty-state">Sin resultados para esa búsqueda</div>' :
@@ -701,11 +728,14 @@ function renderTab() {
           return `<div class="exercise-card">
             ${imgHtml}
             <div style="flex:1;min-width:0;">
-              <div class="exercise-name">${ex.name}</div>
+              <div class="exercise-name">${ex.name}${ex.isCustom?'<span style="font-size:9px;background:var(--blue-light);color:var(--blue);border-radius:4px;padding:1px 5px;margin-left:5px;font-weight:600;">mío</span>':''}</div>
               <div class="exercise-desc">${ex.desc}</div>
               <div style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap;">${ex.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
             </div>
-            <button class="btn-add ${added?'added':''}" onclick="handleAddExercise(${ex.id})">${added?'✓':'+'}</button>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+              <button class="btn-add ${added?'added':''}" onclick="handleAddExercise('${ex.id}')">${added?'✓':'+'}</button>
+              ${ex.isCustom?`<button onclick="deleteCustomExercise('${ex.id}')" style="width:28px;height:28px;border-radius:8px;background:var(--red-light);color:var(--red);border:none;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;">✕</button>`:''}
+            </div>
           </div>`;
         }).join('')}
     </div>
@@ -883,7 +913,10 @@ async function doSaveClient() {
 
 async function handleAction(type) {
   if (!state.user) { showLoginPopup(); return; }
-  if (type === 'savePlan') { showPayPopup(); return; }
+  if (type === 'savePlan') {
+    if (!state.profile?.is_premium) { showPayPopup(); return; }
+    showSavePlanPopup(); return;
+  }
   if (type === 'saveClient') { doSaveClient(); return; }
   if (!state.selectedExercises.length) { showToast('⚠️ Añade ejercicios al plan primero'); return; }
 
@@ -1444,6 +1477,238 @@ function savePatient() {
   renderPatientDisplay();
   closePopup();
   showToast('Paciente añadido ✓');
+}
+
+function renderCreateTab() {
+  const el = document.getElementById('tabContent');
+  const ex = state.newExercise;
+  const imgPreview = ex.img
+    ? `<img src="${ex.img}" style="width:80px;height:80px;object-fit:cover;border-radius:9px;border:1px solid var(--gray-200);">`
+    : `<div style="width:80px;height:80px;border-radius:9px;border:2px dashed var(--gray-200);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;background:var(--gray-50);" onclick="document.getElementById('exImgInput').click()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <span style="font-size:9px;color:var(--gray-400);">Añadir foto</span>
+       </div>`;
+
+  el.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;">
+      <div style="display:flex;gap:10px;align-items:flex-start;">
+        <label style="cursor:pointer;flex-shrink:0;">
+          ${imgPreview}
+          <input type="file" id="exImgInput" accept="image/*,.heic,.heif" style="display:none;" onchange="handleExerciseImageUpload(this)">
+        </label>
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+          <input class="input" style="background:white;" placeholder="Nombre del ejercicio*" value="${ex.name}" oninput="state.newExercise.name=this.value" id="exName">
+          <div style="display:flex;gap:5px;">
+            <select class="filter-sel" onchange="state.newExercise.zona=this.value" style="flex:1;">${ZONAS.filter(z=>z!=='Todas').map(z=>`<option ${ex.zona===z?'selected':''}>${z}</option>`).join('')}</select>
+            <select class="filter-sel" onchange="state.newExercise.tipo=this.value" style="flex:1;">${TIPOS.filter(t=>t!=='Todos').map(t=>`<option ${ex.tipo===t?'selected':''}>${t}</option>`).join('')}</select>
+          </div>
+        </div>
+      </div>
+      <textarea class="input" rows="3" placeholder="Descripción del ejercicio..." style="resize:none;background:white;" oninput="state.newExercise.desc=this.value">${ex.desc}</textarea>
+      <div style="display:flex;gap:5px;">
+        <div style="flex:1;"><div style="font-size:10px;font-weight:700;color:var(--gray-400);margin-bottom:3px;">SERIES</div><input class="input" type="number" value="${ex.series}" min="1" oninput="state.newExercise.series=this.value" style="background:white;"></div>
+        <div style="flex:1;"><div style="font-size:10px;font-weight:700;color:var(--gray-400);margin-bottom:3px;">REPS</div><input class="input" type="number" value="${ex.reps}" min="1" oninput="state.newExercise.reps=this.value" style="background:white;"></div>
+        <div style="flex:1;"><div style="font-size:10px;font-weight:700;color:var(--gray-400);margin-bottom:3px;">SEG.</div><input class="input" value="${ex.duration}" oninput="state.newExercise.duration=this.value" placeholder="-" style="background:white;"></div>
+      </div>
+      <select class="filter-sel" onchange="state.newExercise.material=this.value" style="width:100%;">${MATERIALES.filter(m=>m!=='Todos').map(m=>`<option ${ex.material===m?'selected':''}>${m}</option>`).join('')}</select>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="saveCustomExercise()">Guardar ejercicio</button>
+      ${ex.img ? `<button onclick="state.newExercise.img=null;renderTab()" style="font-size:11px;color:var(--gray-400);background:none;border:none;cursor:pointer;">Eliminar foto</button>` : ''}
+    </div>
+  `;
+}
+
+function handleExerciseImageUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5000000) { showToast('La imagen debe pesar menos de 5MB'); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    state.newExercise.img = e.target.result;
+    renderTab();
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveCustomExercise() {
+  const ex = state.newExercise;
+  if (!ex.name.trim()) { showToast('Añade un nombre al ejercicio'); return; }
+
+  try {
+    const maxId = Math.max(...EXERCISES.map(e => typeof e.id === 'number' ? e.id : 0), ...state.customExercises.map(e => parseInt(e.dbId) || 0), 50);
+
+    const payload = {
+      id: maxId + 1,
+      user_id: state.user.id,
+      is_custom: true,
+      name: ex.name.trim(),
+      description: ex.desc,
+      tags: ex.name.toLowerCase().split(' ').slice(0,2),
+      zona: ex.zona,
+      tipo: ex.tipo,
+      material: ex.material,
+      default_series: ex.series,
+      default_reps: ex.reps,
+      default_duration: ex.duration,
+      img_url: ex.img || null,
+      active: true,
+    };
+
+    const { data, error } = await sb.from('exercises').insert(payload).select().single();
+    if (error) throw error;
+
+    // Añadir a la lista local
+    state.customExercises.push({
+      id: 'custom_' + data.id,
+      dbId: data.id,
+      img: data.img_url || '',
+      name: data.name,
+      desc: data.description || '',
+      tags: data.tags || [],
+      zona: data.zona,
+      tipo: data.tipo,
+      material: data.material,
+      series: data.default_series,
+      reps: data.default_reps,
+      duration: data.default_duration,
+      isCustom: true,
+    });
+
+    // Reset form
+    state.newExercise = { name:'', desc:'', zona:'Piernas', tipo:'Fuerza', material:'Ninguno', series:'3', reps:'10', duration:'', img:null };
+    showToast('Ejercicio guardado ✓');
+    switchTab('search');
+  } catch(e) {
+    console.error(e);
+    showToast('Error al guardar el ejercicio');
+  }
+}
+
+async function deleteCustomExercise(id) {
+  const dbId = id.replace('custom_', '');
+  try {
+    await sb.from('exercises').delete().eq('id', dbId).eq('user_id', state.user.id);
+    state.customExercises = state.customExercises.filter(e => e.id !== id);
+    state.selectedExercises = state.selectedExercises.filter(e => e.id !== id);
+    renderTab();
+    renderSelectedExercises();
+    showToast('Ejercicio eliminado');
+  } catch(e) {
+    showToast('Error al eliminar el ejercicio');
+  }
+}
+
+function renderPlansTab() {
+  const el = document.getElementById('tabContent');
+  if (!state.savedPlans.length) {
+    el.innerHTML = `
+      <div class="empty-state" style="padding:24px 10px;">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <br><strong style="color:var(--gray-900);">Sin planes guardados</strong>
+        <br><span style="font-size:11px;">Crea un plan y guárdalo desde el footer</span>
+      </div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:6px;overflow-y:auto;flex:1;">
+      ${state.savedPlans.map(plan => {
+        const exCount = (plan.exercises || []).length;
+        const date = new Date(plan.updated_at).toLocaleDateString('es-ES', {day:'2-digit', month:'short'});
+        return `
+          <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius);padding:10px 12px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--blue-mid)';this.style.background='var(--blue-light)'" onmouseout="this.style.borderColor='var(--gray-200)';this.style.background='var(--gray-50)'">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+              <div style="font-size:13px;font-weight:600;color:var(--gray-900);">${plan.name || 'Plan sin nombre'}</div>
+              <div style="font-size:10px;color:var(--gray-400);">${date}</div>
+            </div>
+            <div style="font-size:11px;color:var(--gray-400);margin-bottom:8px;">${exCount} ejercicio${exCount!==1?'s':''}${plan.general_notes ? ' · ' + plan.general_notes.substring(0,30) + (plan.general_notes.length>30?'...':'') : ''}</div>
+            <div style="display:flex;gap:5px;">
+              <button onclick="loadPlan(${plan.id})" style="flex:1;padding:5px;border-radius:6px;border:1px solid var(--blue-mid);background:var(--blue-light);color:var(--blue);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">Cargar plan</button>
+              <button onclick="deletePlan(${plan.id})" style="padding:5px 8px;border-radius:6px;border:1px solid var(--gray-200);background:var(--red-light);color:var(--red);font-size:11px;cursor:pointer;font-family:inherit;">✕</button>
+            </div>
+          </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function showSavePlanPopup() {
+  if (!state.selectedExercises.length) { showToast('Añade ejercicios al plan primero'); return; }
+  showPopup(`
+    <div class="popup-icon blue">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+    </div>
+    <h2>Guardar plan</h2>
+    <p>Dale un nombre para encontrarlo fácilmente.</p>
+    <div class="popup-form">
+      <div><label class="form-label">Nombre del plan</label>
+      <input class="input" id="planNameInput" placeholder="Ej: Recuperación rodilla, Columna..." style="background:white;" onkeydown="if(event.key==='Enter')doSavePlan()"></div>
+    </div>
+    <div class="popup-btns">
+      <button class="btn-full primary" onclick="doSavePlan()">Guardar</button>
+      <button class="btn-full outline" onclick="closePopup()">Cancelar</button>
+    </div>
+  `);
+  setTimeout(() => document.getElementById('planNameInput')?.focus(), 100);
+}
+
+async function doSavePlan() {
+  const name = document.getElementById('planNameInput')?.value.trim() || 'Plan sin nombre';
+  try {
+    // Guardar ejercicios con sus parámetros pero sin datos del paciente
+    const exercisesToSave = state.selectedExercises.map(ex => ({
+      id: ex.id,
+      name: ex.name,
+      desc: ex.desc,
+      img: ex.img,
+      tags: ex.tags,
+      zona: ex.zona,
+      tipo: ex.tipo,
+      material: ex.material,
+      series: ex.series,
+      reps: ex.reps,
+      duration: ex.duration,
+      notes: ex.notes || '',
+    }));
+    const payload = {
+      user_id: state.user.id,
+      name,
+      patient_name: null,
+      general_notes: document.getElementById('planNotes').value,
+      exercises: exercisesToSave,
+      updated_at: new Date().toISOString(),
+    };
+    const { data, error } = await sb.from('plans').insert(payload).select().single();
+    if (error) throw error;
+    state.savedPlans.unshift(data);
+    closePopup();
+    showToast('Plan guardado ✓');
+  } catch(e) {
+    showToast('Error al guardar el plan');
+  }
+}
+
+async function loadPlan(id) {
+  const plan = state.savedPlans.find(p => p.id === id);
+  if (!plan) return;
+  state.selectedExercises = plan.exercises || [];
+  document.getElementById('planNotes').value = plan.general_notes || '';
+  if (plan.patient_name) {
+    state.patient = { name: plan.patient_name };
+    document.getElementById('patientSearch').value = plan.patient_name;
+    renderPatientDisplay();
+  }
+  renderSelectedExercises();
+  switchTab('search');
+  showToast('Plan cargado ✓ — ' + plan.name);
+}
+
+async function deletePlan(id) {
+  try {
+    await sb.from('plans').delete().eq('id', id).eq('user_id', state.user.id);
+    state.savedPlans = state.savedPlans.filter(p => p.id !== id);
+    renderPlansTab();
+    showToast('Plan eliminado');
+  } catch(e) {
+    showToast('Error al eliminar el plan');
+  }
 }
 
 function doSubscribe() {
