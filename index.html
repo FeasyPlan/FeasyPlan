@@ -146,9 +146,12 @@
 
     @media (max-width: 700px) {
       .panels-top, .main-body { grid-template-columns: 1fr; }
-      .hero { padding: 10px 12px 8px; }
-      .hero h1 { font-size: 17px; }
-      .panels-top, .main-body { padding: 0 10px 8px; }
+      .hero { padding: 10px 14px; }
+      .hero > div { flex-wrap: nowrap; align-items: center; gap: 10px; }
+      .hero h1 { font-size: 18px; line-height: 1.2; }
+      #pricingCards { gap: 6px; flex-shrink: 0; }
+      .panels-top { padding: 10px 10px 8px; }
+      .main-body { padding: 0 10px 8px; }
       .header { padding: 0 12px; height: 64px; }
       .footer { padding: 8px 12px; flex-direction: column; align-items: flex-start; gap: 6px; }
       .footer > div:last-child { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -176,8 +179,8 @@
 
 <!-- HERO -->
 <div class="hero">
-  <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;">
-    <div>
+  <div style="display:flex;align-items:stretch;justify-content:space-between;gap:20px;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;">
       <h1>Crea planes de recuperación<br><span>para tus pacientes en segundos</span></h1>
     </div>
     <div id="pricingCards" style="display:flex;gap:10px;flex-shrink:0;"></div>
@@ -448,21 +451,37 @@ function renderPricingCards() {
   const el = document.getElementById('pricingCards');
   if (!el) return;
   const isPremium = state.profile?.is_premium || false;
-  el.innerHTML = `
-    <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:10px 14px;min-width:140px;">
-      <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.6px;margin-bottom:4px;">FREE PLAN</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-bottom:6px;line-height:1.4;">Para uso puntual o probar sus funciones</div>
-      <div style="font-size:20px;font-weight:700;color:#fff;">0€</div>
-    </div>
-    <div style="background:${isPremium?'var(--blue)':'rgba(37,99,235,0.3)'};border:1px solid ${isPremium?'#60A5FA':'rgba(96,165,250,0.4)'};border-radius:12px;padding:10px 14px;min-width:160px;cursor:pointer;" onclick="showPayPopup()">
-      <div style="font-size:10px;font-weight:700;color:${isPremium?'#BFDBFE':'rgba(255,255,255,0.6)'};letter-spacing:0.6px;margin-bottom:4px;">PROFESSIONAL PLAN ${isPremium?'✓':''}</div>
-      <div style="font-size:11px;color:${isPremium?'#DBEAFE':'rgba(255,255,255,0.7)'};margin-bottom:6px;line-height:1.4;">Para uso diario en clínica y personalización avanzada</div>
-      <div style="display:flex;align-items:baseline;gap:8px;">
-        <div style="font-size:20px;font-weight:700;color:#fff;">9,99€<span style="font-size:11px;font-weight:400;opacity:0.7;">/mes</span></div>
-        <div style="font-size:11px;color:#93C5FD;font-weight:600;">99€/año</div>
+  const isMobile = window.innerWidth <= 700;
+  if (isMobile) {
+    el.innerHTML = `
+      <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:6px 10px;white-space:nowrap;">
+        <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.5px;">FREE</div>
+        <div style="font-size:14px;font-weight:700;color:#fff;">0€</div>
+        <div style="font-size:8px;color:rgba(255,255,255,0.45);margin-top:2px;">2/día · 10/mes</div>
       </div>
-    </div>
-  `;
+      <div style="background:${isPremium?'var(--blue)':'rgba(37,99,235,0.3)'};border:1px solid ${isPremium?'#60A5FA':'rgba(96,165,250,0.4)'};border-radius:8px;padding:6px 10px;cursor:pointer;white-space:nowrap;" onclick="showPayPopup()">
+        <div style="font-size:9px;font-weight:700;color:${isPremium?'#BFDBFE':'rgba(255,255,255,0.6)'};letter-spacing:0.5px;">PRO ${isPremium?'✓':''}</div>
+        <div style="font-size:14px;font-weight:700;color:#fff;">9,99€<span style="font-size:10px;font-weight:400;opacity:0.7;">/mes</span></div>
+        <div style="font-size:8px;color:${isPremium?'#BFDBFE':'rgba(255,255,255,0.5)'};margin-top:2px;">Ilimitado</div>
+      </div>
+    `;
+  } else {
+    el.innerHTML = `
+      <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:10px 14px;min-width:140px;">
+        <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.6px;margin-bottom:4px;">FREE PLAN</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-bottom:6px;line-height:1.4;">Para uso puntual o probar sus funciones</div>
+        <div style="font-size:20px;font-weight:700;color:#fff;">0€</div>
+      </div>
+      <div style="background:${isPremium?'var(--blue)':'rgba(37,99,235,0.3)'};border:1px solid ${isPremium?'#60A5FA':'rgba(96,165,250,0.4)'};border-radius:12px;padding:10px 14px;min-width:160px;cursor:pointer;" onclick="showPayPopup()">
+        <div style="font-size:10px;font-weight:700;color:${isPremium?'#BFDBFE':'rgba(255,255,255,0.6)'};letter-spacing:0.6px;margin-bottom:4px;">PROFESSIONAL PLAN ${isPremium?'✓':''}</div>
+        <div style="font-size:11px;color:${isPremium?'#DBEAFE':'rgba(255,255,255,0.7)'};margin-bottom:6px;line-height:1.4;">Para uso diario en clínica y personalización avanzada</div>
+        <div style="display:flex;align-items:baseline;gap:8px;">
+          <div style="font-size:20px;font-weight:700;color:#fff;">9,99€<span style="font-size:11px;font-weight:400;opacity:0.7;">/mes</span></div>
+          <div style="font-size:11px;color:#93C5FD;font-weight:600;">99€/año</div>
+        </div>
+      </div>
+    `;
+  }
 }
 
 function renderTabLabels() {
@@ -2107,6 +2126,7 @@ function showToast(msg) {
 // ============================================
 // ARRANQUE
 // ============================================
+window.addEventListener('resize', () => renderPricingCards());
 init();
 </script>
 </body>
