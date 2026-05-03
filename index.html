@@ -1121,7 +1121,7 @@ function generatePDFDoc() {
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(255, 255, 255);
-  doc.text(new Date().toLocaleDateString('es-ES', {day:'2-digit', month:'long', year:'numeric'}), pageW - marginR, 2.8, { align: 'right', baseline: 'top' });
+  doc.text(new Date().toLocaleDateString('es-ES', {day:'2-digit', month:'long', year:'numeric'}), pageW - marginR, 2.5, { align: 'right' });
 
   // Línea separadora cabecera
   y = Math.max(y, 36) + 4;
