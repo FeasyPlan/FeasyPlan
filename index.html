@@ -1577,22 +1577,68 @@ function showCreditPopup() {
 }
 
 function showProfilePopup() {
+  const isPremium = state.profile?.is_premium || false;
   const remaining = Math.max(0, (state.credits?.daily_limit||2) - (state.credits?.daily_used||0));
   const name = state.profile?.name || state.user?.email || '';
+
+  if (isPremium) {
+    showPopup(`
+      <div class="popup-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      <h2>${name}</h2>
+      <p style="margin-bottom:10px;">${state.user?.email}</p>
+      <div style="background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:10px;padding:13px;margin-bottom:14px;">
+        <div style="font-size:11px;color:var(--blue);margin-bottom:3px;font-weight:700;">PLAN PREMIUM</div>
+        <div style="font-size:18px;font-weight:700;color:var(--blue);">∞ Créditos ilimitados</div>
+        <div style="font-size:11px;color:var(--gray-400);margin-top:3px;">Acceso completo a todas las funciones</div>
+      </div>
+      <div class="popup-btns">
+        <button class="btn-full outline" onclick="doLogout()">Cerrar sesión</button>
+        <button class="btn-full outline" style="color:var(--red);border-color:var(--red);font-size:12px;" onclick="showCancelSubscriptionPopup()">Cancelar suscripción</button>
+      </div>
+    `);
+  } else {
+    showPopup(`
+      <div class="popup-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      <h2>${name}</h2>
+      <p style="margin-bottom:10px;">${state.user?.email}</p>
+      <div style="background:var(--gray-100);border-radius:10px;padding:13px;margin-bottom:14px;">
+        <div style="font-size:11px;color:var(--gray-600);margin-bottom:3px;font-weight:600;">CRÉDITOS HOY</div>
+        <div style="font-size:22px;font-weight:700;color:var(--amber);">${remaining}<span style="font-size:14px;color:var(--gray-400);font-weight:400;"> / ${state.credits?.daily_limit||2}</span></div>
+        <div style="font-size:11px;color:var(--gray-400);margin-top:3px;">Se recargan cada día a las 00:00</div>
+      </div>
+      <div class="popup-btns">
+        <button class="btn-full amber-btn" onclick="showPayPopup()"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Actualizar a Premium</button>
+        <button class="btn-full outline" onclick="doLogout()">Cerrar sesión</button>
+      </div>
+    `);
+  }
+}
+
+function showCancelSubscriptionPopup() {
   showPopup(`
-    <div class="popup-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-    <h2>${name}</h2>
-    <p style="margin-bottom:10px;">${state.user?.email}</p>
-    <div style="background:var(--gray-100);border-radius:10px;padding:13px;margin-bottom:14px;">
-      <div style="font-size:11px;color:var(--gray-600);margin-bottom:3px;font-weight:600;">CRÉDITOS HOY</div>
-      <div style="font-size:22px;font-weight:700;color:var(--amber);">${remaining}<span style="font-size:14px;color:var(--gray-400);font-weight:400;"> / ${state.credits?.daily_limit||2}</span></div>
-      <div style="font-size:11px;color:var(--gray-400);margin-top:3px;">Se recargan cada día a las 00:00</div>
+    <div class="popup-icon" style="background:var(--red-light);">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <h2 style="color:var(--red);">Cancelar suscripción</h2>
+    <p>Si cancelas tu suscripción Premium perderás acceso a:</p>
+    <div style="background:var(--red-light);border-radius:9px;padding:12px;margin-bottom:14px;">
+      <div style="font-size:13px;color:var(--red);display:flex;flex-direction:column;gap:6px;">
+        <div>✕ Todos tus <strong>ejercicios propios</strong> creados serán eliminados</div>
+        <div>✕ Todos tus <strong>planes guardados</strong> serán eliminados</div>
+        <div>✕ La <strong>base de datos de pacientes</strong> quedará inaccesible</div>
+        <div>✕ Volverás al límite de <strong>2 créditos diarios</strong></div>
+      </div>
     </div>
     <div class="popup-btns">
-      <button class="btn-full amber-btn" onclick="showPayPopup()"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Actualizar a Premium</button>
-      <button class="btn-full outline" onclick="doLogout()">Cerrar sesión</button>
+      <button class="btn-full outline" onclick="showProfilePopup()">Mantener Premium</button>
+      <button class="btn-full" style="background:var(--red);color:#fff;" onclick="doCancelSubscription()">Sí, cancelar suscripción</button>
     </div>
   `);
+}
+
+function doCancelSubscription() {
+  closePopup();
+  showToast('Para cancelar tu suscripción contacta con soporte@feasyplan.pro');
 }
 
 function showNewPatientPopup() {
