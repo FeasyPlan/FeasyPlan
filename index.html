@@ -11,7 +11,7 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { font-size: 16px; }
-    body { font-family: 'DM Sans', sans-serif; background: #F7F8FA; color: #1a1d23; min-height: 100vh; }
+    body { font-family: 'DM Sans', sans-serif; background: #0F172A; color: #1a1d23; min-height: 100vh; }
     :root {
       --blue: #2563EB; --blue-light: #EFF6FF; --blue-mid: #93C5FD;
       --gray-50: #F7F8FA; --gray-100: #F1F3F7; --gray-200: #E4E8F0;
@@ -48,7 +48,7 @@
     .hero h1 span { color: #60A5FA; font-weight: 100; }
 
     /* ====== PANELS ====== */
-    .panels-top { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 16px 24px 10px; background: var(--gray-50); }
+    .panels-top { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 16px 24px 10px; }
     .panel { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: 14px 16px; box-shadow: var(--shadow); }
     .panel-label { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; color: var(--blue); text-transform: uppercase; margin-bottom: 10px; display:flex;align-items:center;gap:5px; }
     .physio-row { display: flex; align-items: center; gap: 10px; }
@@ -148,9 +148,9 @@
       .panels-top, .main-body { grid-template-columns: 1fr; }
       .hero { padding: 10px 14px; }
       .hero > div { flex-wrap: nowrap; align-items: center; gap: 10px; }
-      .hero h1 { font-size: 18px; line-height: 1.2; }
+      .hero h1 { font-size: 15px; line-height: 1.2; }
       #pricingCards { gap: 6px; flex-shrink: 0; }
-      .panels-top { padding: 10px 10px 8px; }
+      .panels-top { padding: 10px 10px 8px; background: transparent; }
       .main-body { padding: 0 10px 8px; }
       .header { padding: 0 12px; height: 64px; }
       .footer { padding: 8px 12px; flex-direction: column; align-items: flex-start; gap: 6px; }
@@ -451,18 +451,19 @@ function renderPricingCards() {
   const el = document.getElementById('pricingCards');
   if (!el) return;
   const isPremium = state.profile?.is_premium || false;
+  if (isPremium) { el.innerHTML = ''; return; }
   const isMobile = window.innerWidth <= 700;
   if (isMobile) {
     el.innerHTML = `
-      <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:6px 10px;white-space:nowrap;">
-        <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.5px;">FREE</div>
-        <div style="font-size:14px;font-weight:700;color:#fff;">0€</div>
-        <div style="font-size:8px;color:rgba(255,255,255,0.45);margin-top:2px;">2/día · 10/mes</div>
+      <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:4px 7px;white-space:nowrap;">
+        <div style="font-size:8px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.4px;">FREE</div>
+        <div style="font-size:11px;font-weight:700;color:#fff;">0€</div>
+        <div style="font-size:7px;color:rgba(255,255,255,0.4);margin-top:1px;">2/día · 10/mes</div>
       </div>
-      <div style="background:${isPremium?'var(--blue)':'rgba(37,99,235,0.3)'};border:1px solid ${isPremium?'#60A5FA':'rgba(96,165,250,0.4)'};border-radius:8px;padding:6px 10px;cursor:pointer;white-space:nowrap;" onclick="showPayPopup()">
-        <div style="font-size:9px;font-weight:700;color:${isPremium?'#BFDBFE':'rgba(255,255,255,0.6)'};letter-spacing:0.5px;">PRO ${isPremium?'✓':''}</div>
-        <div style="font-size:14px;font-weight:700;color:#fff;">9,99€<span style="font-size:10px;font-weight:400;opacity:0.7;">/mes</span></div>
-        <div style="font-size:8px;color:${isPremium?'#BFDBFE':'rgba(255,255,255,0.5)'};margin-top:2px;">Ilimitado</div>
+      <div style="background:${isPremium?'var(--blue)':'rgba(37,99,235,0.3)'};border:1px solid ${isPremium?'#60A5FA':'rgba(96,165,250,0.4)'};border-radius:6px;padding:4px 7px;cursor:pointer;white-space:nowrap;" onclick="showPayPopup()">
+        <div style="font-size:8px;font-weight:700;color:${isPremium?'#BFDBFE':'rgba(255,255,255,0.6)'};letter-spacing:0.4px;">PRO ${isPremium?'✓':''}</div>
+        <div style="font-size:11px;font-weight:700;color:#fff;">9,99€<span style="font-size:8px;font-weight:400;opacity:0.7;">/mes</span></div>
+        <div style="font-size:7px;color:${isPremium?'#BFDBFE':'rgba(255,255,255,0.4)'};margin-top:1px;">Ilimitado</div>
       </div>
     `;
   } else {
@@ -1527,6 +1528,7 @@ function showPayPopup() {
 }
 
 function showCreditsInfo() {
+  if (state.profile?.is_premium) return;
   const remaining = Math.max(0, state.credits.daily_limit - state.credits.daily_used);
   const monthlyLeft = Math.max(0, state.credits.monthly_limit - state.credits.monthly_used);
   const used = state.credits.daily_used;
