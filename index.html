@@ -513,7 +513,9 @@ function renderHeader() {
     el.innerHTML = `
       ${premiumBadge}
       <button class="btn btn-outline" onclick="handleNewPlan()">+ Nuevo Plan</button>
-      <div class="avatar" onclick="showProfilePopup()" title="Mi perfil">${(state.profile?.name || state.user.email)[0].toUpperCase()}</div>
+      <div class="avatar" onclick="showProfilePopup()" title="Mi perfil" style="${state.physio.logo ? 'background:white;padding:1px;overflow:hidden;' : ''}">
+        ${state.physio.logo ? `<img src="${state.physio.logo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : (state.profile?.name || state.user.email)[0].toUpperCase()}
+      </div>
     `;
   } else {
     el.innerHTML = `
@@ -732,9 +734,10 @@ function confirmCrop() {
 
 async function savePhysio() {
   state.physioEditing = false;
-  // Guardar en Supabase si hay sesión
   if (state.user) {
-    await sb.from('profiles').upsert({
+    const logoSize = state.physio.logo ? Math.round(state.physio.logo.length / 1024) + 'KB' : 'sin logo';
+    console.log('Guardando logo:', logoSize);
+    const { error } = await sb.from('profiles').upsert({
       id: state.user.id,
       name: state.physio.name,
       clinic: state.physio.clinic,
@@ -742,6 +745,15 @@ async function savePhysio() {
       email: state.user.email,
       logo_url: state.physio.logo || null,
     });
+    if (error) {
+      console.error('Error guardando logo:', error);
+      showToast('Error al guardar el logo: ' + (error.message || error.code));
+      return;
+    }
+    // Verificar que se guardó
+    const { data } = await sb.from('profiles').select('logo_url').eq('id', state.user.id).single();
+    console.log('Logo guardado en BD:', data?.logo_url ? data.logo_url.substring(0,50) + '...' : 'null');
+    state.physio.logo = data?.logo_url || state.physio.logo;
   }
   render();
   showToast('Datos guardados ✓');
@@ -1581,9 +1593,13 @@ function showProfilePopup() {
   const remaining = Math.max(0, (state.credits?.daily_limit||2) - (state.credits?.daily_used||0));
   const name = state.profile?.name || state.user?.email || '';
 
+  const logoHtml = state.physio.logo
+    ? `<div style="width:64px;height:64px;border-radius:50%;overflow:hidden;border:2px solid var(--blue-mid);margin-bottom:12px;"><img src="${state.physio.logo}" style="width:100%;height:100%;object-fit:cover;"></div>`
+    : `<div class="popup-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>`;
+
   if (isPremium) {
     showPopup(`
-      <div class="popup-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      ${logoHtml}
       <h2>${name}</h2>
       <p style="margin-bottom:10px;">${state.user?.email}</p>
       <div style="background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:10px;padding:13px;margin-bottom:14px;">
@@ -1598,7 +1614,7 @@ function showProfilePopup() {
     `);
   } else {
     showPopup(`
-      <div class="popup-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      ${logoHtml}
       <h2>${name}</h2>
       <p style="margin-bottom:10px;">${state.user?.email}</p>
       <div style="background:var(--gray-100);border-radius:10px;padding:13px;margin-bottom:14px;">
