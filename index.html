@@ -1519,23 +1519,35 @@ async function doLogout() {
 // POPUPS — PAGO Y CRÉDITOS
 // ============================================
 function showPayPopup() {
+  const email = state.user?.email || '';
+  const checkoutMonthly = `https://feasyplan.lemonsqueezy.com/buy/d5b0e0b8-0b1a-4b1a-8b1a-0b1a4b1a8b1a?checkout[email]=${encodeURIComponent(email)}`;
+  const checkoutAnnual = `https://feasyplan.lemonsqueezy.com/buy/d5b0e0b8-0b1a-4b1a-8b1a-0b1a4b1a8b1b?checkout[email]=${encodeURIComponent(email)}`;
   showPopup(`
     <div class="popup-icon amber"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9z"/><path d="M11 3L8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg></div>
     <h2>Plan Premium</h2>
     <p>Desbloquea todo el potencial de FeasyPlan.</p>
-    <div class="price-badge">9,99 € / mes</div>
-    <div>
-      <div class="plan-feature"><span class="plan-feature-icon">✓</span> PDFs ilimitados</div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">
+      <div class="plan-feature"><span class="plan-feature-icon">✓</span> PDFs ilimitados con tu logo</div>
       <div class="plan-feature"><span class="plan-feature-icon">✓</span> Guardar y reutilizar planes</div>
       <div class="plan-feature"><span class="plan-feature-icon">✓</span> Base de datos de pacientes</div>
       <div class="plan-feature"><span class="plan-feature-icon">✓</span> Crear ejercicios personalizados</div>
-      <div class="plan-feature"><span class="plan-feature-icon">✓</span> Envío automático por email</div>
+      <div class="plan-feature"><span class="plan-feature-icon">✓</span> Envío por email y WhatsApp</div>
     </div>
     <div class="divider"></div>
-    <div class="popup-btns">
-      <button class="btn-full amber-btn" onclick="doSubscribe()"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Suscribirme ahora</button>
-      <button class="btn-full outline" onclick="closePopup()">Ahora no</button>
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <button onclick="doSubscribe('monthly')" style="flex:1;padding:12px 8px;border-radius:10px;border:2px solid var(--blue-mid);background:var(--blue-light);cursor:pointer;font-family:inherit;text-align:center;">
+        <div style="font-size:10px;font-weight:700;color:var(--blue);letter-spacing:0.5px;margin-bottom:4px;">MENSUAL</div>
+        <div style="font-size:20px;font-weight:700;color:var(--gray-900);">9,99€</div>
+        <div style="font-size:11px;color:var(--gray-400);">por mes</div>
+      </button>
+      <button onclick="doSubscribe('annual')" style="flex:1;padding:12px 8px;border-radius:10px;border:2px solid var(--blue);background:var(--blue);cursor:pointer;font-family:inherit;text-align:center;position:relative;">
+        <div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:#F59E0B;color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap;">AHORRA 20%</div>
+        <div style="font-size:10px;font-weight:700;color:#BFDBFE;letter-spacing:0.5px;margin-bottom:4px;">ANUAL</div>
+        <div style="font-size:20px;font-weight:700;color:#fff;">99€</div>
+        <div style="font-size:11px;color:#BFDBFE;">por año</div>
+      </button>
     </div>
+    <button class="btn-full outline" onclick="closePopup()">Ahora no</button>
   `);
 }
 
@@ -2020,9 +2032,15 @@ async function deletePlan(id) {
   }
 }
 
-function doSubscribe() {
+function doSubscribe(plan) {
   closePopup();
-  showToast('💳 Stripe — disponible próximamente');
+  const email = encodeURIComponent(state.user?.email || '');
+  // URLs de checkout de Lemon Squeezy — sustituir con las URLs reales del dashboard
+  const urls = {
+    monthly: 'https://feasyplan.lemonsqueezy.com/checkout/buy/4e40e8d1-7450-4564-87d4-b2318c769779?enabled=1611658&checkout[email]=' + email,
+    annual: 'https://feasyplan.lemonsqueezy.com/checkout/buy/8efbe815-a634-444e-9768-01cb917dd18c?enabled=1611627&checkout[email]=' + email,
+  };
+  window.open(urls[plan] || urls.monthly, '_blank');
 }
 
 // ============================================
