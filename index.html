@@ -1951,7 +1951,7 @@ function renderPlansTab() {
             </div>
             <div style="font-size:11px;color:var(--gray-400);margin-bottom:8px;">${exCount} ejercicio${exCount!==1?'s':''}${plan.general_notes ? ' · ' + plan.general_notes.substring(0,30) + (plan.general_notes.length>30?'...':'') : ''}</div>
             <div style="display:flex;gap:5px;">
-              <button onclick="loadPlan(${plan.id})" style="flex:1;padding:5px;border-radius:6px;border:1px solid var(--blue-mid);background:var(--blue-light);color:var(--blue);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">Cargar plan</button>
+              <button onclick="loadPlan('${plan.id}')" style="flex:1;padding:5px;border-radius:6px;border:1px solid var(--blue-mid);background:var(--blue-light);color:var(--blue);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">Cargar plan</button>
               <button onclick="deletePlan(${plan.id})" style="padding:5px 8px;border-radius:6px;border:1px solid var(--gray-200);background:var(--red-light);color:var(--red);font-size:11px;cursor:pointer;font-family:inherit;">✕</button>
             </div>
           </div>`;
@@ -2079,10 +2079,15 @@ async function doSavePlan() {
 }
 
 async function loadPlan(id) {
-  const plan = state.savedPlans.find(p => p.id === id);
-  if (!plan) return;
+  // Find plan by string comparison (id can be int or string)
+  const plan = state.savedPlans.find(p => String(p.id) === String(id));
+  if (!plan) {
+    console.error('Plan no encontrado:', id, state.savedPlans.map(p=>p.id));
+    showToast('Error: plan no encontrado');
+    return;
+  }
 
-  // Enrich exercises with full data from library (images, etc.)
+  // Enrich exercises with full data from library
   const allEx = [...EXERCISES, ...state.customExercises];
   state.selectedExercises = (plan.exercises || []).map(saved => {
     const found = allEx.find(e => String(e.id) === String(saved.id));
@@ -2095,15 +2100,19 @@ async function loadPlan(id) {
     };
   });
 
-  document.getElementById('planNotes').value = plan.general_notes || '';
-  if (plan.patient_name) {
-    state.patient = { name: plan.patient_name };
-    document.getElementById('patientSearch').value = plan.patient_name;
-    renderPatientDisplay();
-  }
-  updateAddButtons();
-  renderSelectedExercises();
+  // Set notes
+  const notesEl = document.getElementById('planNotes');
+  if (notesEl) notesEl.value = plan.general_notes || '';
+
+  // Switch to search tab first, then render
   switchTab('search');
+
+  // Render after tab switch
+  setTimeout(() => {
+    updateAddButtons();
+    renderSelectedExercises();
+  }, 50);
+
   showToast('Plan cargado: ' + plan.name + ' ✓');
 }
 
