@@ -600,6 +600,7 @@ function startPhysioEdit() {
 }
 
 function handleLogoUpload(input) {
+  window._fromExercise = false;
   const file = input.files[0];
   if (!file) return;
 
@@ -617,78 +618,98 @@ function handleLogoUpload(input) {
   const reader = new FileReader();
   reader.onload = (e) => {
     // Mostrar recortador
-    showLogoCropper(e.target.result);
+    if (window._fromExercise) {
+      showLogoCropper(e.target.result, 'exercise');
+    } else {
+      showLogoCropper(e.target.result, 'logo');
+    }
   };
   reader.readAsDataURL(file);
 }
 
-function showLogoCropper(src) {
-  // Bloquear scroll del fondo
-  document.body.style.overflow = 'hidden';
+function showLogoCropper(src, target) {
+  var cropTarget = target || 'logo';
+  const label = cropTarget === 'exercise' ? 'Recorta la imagen del ejercicio' : 'Ajusta tu logo';
 
   showPopup(`
-    <div style="font-size:15px;font-weight:700;color:var(--gray-900);margin-bottom:4px;">Ajusta tu logo</div>
-    <p style="font-size:12px;color:var(--gray-600);margin-bottom:10px;">Arrastra para reencuadrar. El cuadrado es lo que se guardará.</p>
-    <div style="position:relative;width:240px;height:240px;margin:0 auto 12px;flex-shrink:0;" id="cropWrap">
-      <div style="width:240px;height:240px;overflow:hidden;border-radius:10px;border:2px solid var(--blue);background:#111;touch-action:none;" id="cropBox">
-        <img id="cropImg" src="${src}" style="position:absolute;max-width:none;user-select:none;transform-origin:0 0;" draggable="false">
-      </div>
+    <div style="font-size:14px;font-weight:700;color:var(--gray-900);margin-bottom:4px;">${label}</div>
+    <p style="font-size:11px;color:var(--gray-500);margin-bottom:10px;">Arrastra para encuadrar · Desliza para hacer zoom</p>
+    <div style="width:220px;height:220px;margin:0 auto 12px;overflow:hidden;border-radius:12px;border:2px solid var(--blue);background:var(--gray-100);position:relative;touch-action:none;cursor:grab;" id="cropBox">
+      <img id="cropImg" src="${src}" style="position:absolute;user-select:none;transform-origin:top left;" draggable="false">
     </div>
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
-      <span style="font-size:11px;color:var(--gray-600);white-space:nowrap;">Zoom</span>
-      <input type="range" id="cropZoom" min="10" max="300" value="100" style="flex:1;accent-color:var(--blue);" oninput="updateCropZoom(this.value)">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+      <input type="range" id="cropZoom" min="50" max="400" value="100" style="flex:1;accent-color:var(--blue);" oninput="cropSetZoom(parseInt(this.value))">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
     </div>
     <div class="popup-btns">
-      <button class="btn-full primary" onclick="confirmCrop()">Usar esta zona</button>
+      <button class="btn-full primary" onclick="confirmCrop('${cropTarget}')">Usar esta zona</button>
       <button class="btn-full outline" onclick="cancelCrop()">Cancelar</button>
     </div>
   `);
 
   const box = document.getElementById('cropBox');
   const img = document.getElementById('cropImg');
-  const SIZE = 240;
-  let imgX = 0, imgY = 0, zoom = 1;
+  const SIZE = 220;
+  let scale = 1, imgX = 0, imgY = 0;
   let dragging = false, lastX, lastY;
 
-  function applyTransform() {
-    img.style.left = imgX + 'px';
-    img.style.top = imgY + 'px';
+  function clamp() {
+    // Limites: imagen no puede alejarse más allá del borde del recuadro
+    const iw = img.naturalWidth * scale;
+    const ih = img.naturalHeight * scale;
+    // No dejar espacio en blanco: imagen debe cubrir el recuadro siempre
+    imgX = Math.min(0, Math.max(SIZE - iw, imgX));
+    imgY = Math.min(0, Math.max(SIZE - ih, imgY));
   }
 
+  function applyTransform() {
+    clamp();
+    img.style.transform = `translate(${imgX}px, ${imgY}px) scale(${scale})`;
+    img.style.transformOrigin = 'top left';
+    img.style.width = img.naturalWidth + 'px';
+    img.style.height = img.naturalHeight + 'px';
+  }
+
+  window.cropSetZoom = function(val) {
+    const prevScale = scale;
+    scale = val / 100;
+    // Zoom hacia el centro del recuadro
+    const cx = SIZE / 2, cy = SIZE / 2;
+    imgX = cx - (cx - imgX) * (scale / prevScale);
+    imgY = cy - (cy - imgY) * (scale / prevScale);
+    applyTransform();
+  };
+
   img.onload = () => {
-    // Escalar para que llene el cuadrado manteniendo proporciones
-    const nw = img.naturalWidth;
-    const nh = img.naturalHeight;
-    const scale = Math.max(SIZE / nw, SIZE / nh);
-    zoom = scale * 100;
-    document.getElementById('cropZoom').value = zoom;
-    img.style.width = (nw * scale) + 'px';
-    img.style.height = (nh * scale) + 'px';
-    imgX = (SIZE - nw * scale) / 2;
-    imgY = (SIZE - nh * scale) / 2;
+    scale = Math.max(SIZE / img.naturalWidth, SIZE / img.naturalHeight);
+    document.getElementById('cropZoom').min = Math.round(scale * 100);
+    document.getElementById('cropZoom').value = Math.round(scale * 100);
+    imgX = (SIZE - img.naturalWidth * scale) / 2;
+    imgY = (SIZE - img.naturalHeight * scale) / 2;
     applyTransform();
   };
 
   // Mouse
-  box.addEventListener('mousedown', (e) => {
-    e.preventDefault();
-    dragging = true; lastX = e.clientX; lastY = e.clientY;
+  box.addEventListener('mousedown', e => {
+    e.preventDefault(); dragging = true;
+    lastX = e.clientX; lastY = e.clientY;
     box.style.cursor = 'grabbing';
   });
-  document.addEventListener('mousemove', (e) => {
+  window.addEventListener('mousemove', e => {
     if (!dragging) return;
     imgX += e.clientX - lastX; imgY += e.clientY - lastY;
     lastX = e.clientX; lastY = e.clientY;
     applyTransform();
   });
-  document.addEventListener('mouseup', () => { dragging = false; box.style.cursor = 'grab'; });
+  window.addEventListener('mouseup', () => { dragging = false; box.style.cursor = 'grab'; });
 
-  // Touch — sin propagar al body
-  box.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    dragging = true; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+  // Touch
+  box.addEventListener('touchstart', e => {
+    e.preventDefault(); dragging = true;
+    lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
   }, { passive: false });
-  box.addEventListener('touchmove', (e) => {
+  box.addEventListener('touchmove', e => {
     e.preventDefault();
     if (!dragging) return;
     imgX += e.touches[0].clientX - lastX; imgY += e.touches[0].clientY - lastY;
@@ -704,29 +725,10 @@ function cancelCrop() {
 }
 
 function updateCropZoom(val) {
-  const img = document.getElementById('cropImg');
-  if (!img) return;
-  const nw = img.naturalWidth;
-  const nh = img.naturalHeight;
-  const scale = val / 100;
-  const prevW = parseFloat(img.style.width) || nw;
-  const newW = nw * scale;
-  const newH = nh * scale;
-  // Mantener centro al hacer zoom
-  const cx = 240 / 2;
-  const cy = 240 / 2;
-  const oldLeft = parseFloat(img.style.left) || 0;
-  const oldTop = parseFloat(img.style.top) || 0;
-  const ratioX = (cx - oldLeft) / prevW;
-  const newLeft = cx - ratioX * newW;
-  const newTop = cy - ((cy - oldTop) / prevW) * newW;
-  img.style.width = newW + 'px';
-  img.style.height = newH + 'px';
-  img.style.left = newLeft + 'px';
-  img.style.top = newTop + 'px';
+  if (window.cropSetZoom) window.cropSetZoom(parseInt(val));
 }
 
-function confirmCrop() {
+function confirmCrop(target) {
   const box = document.getElementById('cropBox');
   const img = document.getElementById('cropImg');
   if (!box || !img) return;
@@ -735,6 +737,8 @@ function confirmCrop() {
   canvas.width = 400;
   canvas.height = 400;
   const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, 400, 400);
 
   const boxRect = box.getBoundingClientRect();
   const imgRect = img.getBoundingClientRect();
@@ -744,13 +748,26 @@ function confirmCrop() {
   const sy = Math.max(0, (boxRect.top - imgRect.top) * scaleY);
   const sw = Math.min(boxRect.width * scaleX, img.naturalWidth - sx);
   const sh = Math.min(boxRect.height * scaleY, img.naturalHeight - sy);
-
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, 400, 400);
   ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 400, 400);
-  state.physio.logo = canvas.toDataURL('image/png');
+  const cropped = canvas.toDataURL('image/jpeg', 0.85);
   document.body.style.overflow = '';
   closePopup();
-  renderPhysio();
-  showToast('Logo actualizado ✓');
+
+  if (target === 'exercise') {
+    state.newExercise.img = cropped;
+    // Update preview without re-render
+    const preview = document.getElementById('exImgPreview');
+    if (preview) {
+      preview.innerHTML = `<img src="${cropped}" style="width:80px;height:80px;object-fit:cover;border-radius:9px;border:1px solid var(--gray-200);" onclick="triggerImagePicker()">`;
+    }
+    showToast('Imagen añadida ✓');
+  } else {
+    state.physio.logo = cropped;
+    renderPhysio();
+    showToast('Logo actualizado ✓');
+  }
 }
 
 async function savePhysio() {
@@ -1794,6 +1811,7 @@ function renderCreateTab() {
 }
 
 function triggerImagePicker() {
+  window._fromExercise = true;
   // Crear un input nuevo cada vez — el único método fiable en iOS Safari
   const old = document.getElementById('exImgInputTemp');
   if (old) old.remove();
