@@ -826,55 +826,64 @@ function switchTab(tab) {
   renderTab();
 }
 
+function getFilteredExercises() {
+  const allExercises = state.filterOwn
+    ? state.customExercises
+    : [...EXERCISES, ...state.customExercises];
+  const q = state.searchQuery.toLowerCase();
+  return allExercises.filter(ex =>
+    (!q || ex.name.toLowerCase().includes(q) || ex.tags.some(t=>t.includes(q)))
+    && (state.filterZona === 'Todas' || ex.zona === state.filterZona)
+    && (state.filterTipo === 'Todos' || ex.tipo === state.filterTipo)
+    && (state.filterMaterial === 'Todos' || ex.material === state.filterMaterial)
+  );
+}
+
+function renderExerciseList() {
+  const listEl = document.getElementById('exerciseList');
+  if (!listEl) return;
+  const filtered = getFilteredExercises();
+  listEl.innerHTML = filtered.length === 0 ? '<div class="empty-state">Sin resultados para esa búsqueda</div>' :
+    filtered.map(ex => {
+      const added = state.selectedExercises.some(s => String(s.id) === String(ex.id));
+      const imgHtml = ex.img
+        ? `<img src="${ex.img}" style="width:52px;height:52px;object-fit:cover;border-radius:7px;flex-shrink:0;background:var(--gray-100);" loading="lazy">`
+        : `<div style="width:52px;height:52px;border-radius:7px;background:var(--gray-100);flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>`;
+      return `<div class="exercise-card">
+        ${imgHtml}
+        <div style="flex:1;min-width:0;">
+          <div class="exercise-name">${ex.name}${ex.isCustom?'<span style="font-size:9px;background:var(--blue-light);color:var(--blue);border-radius:4px;padding:1px 5px;margin-left:5px;font-weight:600;">mío</span>':''}</div>
+          <div class="exercise-desc">${ex.desc}</div>
+          <div style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap;">${ex.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <button class="btn-add ${added?'added':''}" data-exercise-id="${ex.id}" onclick="handleAddExercise('${ex.id}')">${added?'✓':'+'}</button>
+          ${ex.isCustom?`<button onclick="confirmDeleteExercise('${ex.id}')" style="width:22px;height:22px;border-radius:6px;background:var(--red-light);color:var(--red);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>`:''}
+        </div>
+      </div>`;
+    }).join('');
+}
+
 function renderTab() {
   const el = document.getElementById('tabContent');
   if (state.activeTab === 'create') { renderCreateTab(); return; }
   if (state.activeTab === 'plans') { renderPlansTab(); return; }
   if (state.activeTab === 'templates') { renderTemplatesTab(); return; }
-  const allExercises = state.filterOwn
-    ? state.customExercises
-    : [...EXERCISES, ...state.customExercises];
-  const filtered = allExercises.filter(ex => {
-    const q = state.searchQuery.toLowerCase();
-    return (!q || ex.name.toLowerCase().includes(q) || ex.tags.some(t=>t.includes(q)))
-      && (state.filterZona === 'Todas' || ex.zona === state.filterZona)
-      && (state.filterTipo === 'Todos' || ex.tipo === state.filterTipo)
-      && (state.filterMaterial === 'Todos' || ex.material === state.filterMaterial);
-  });
 
   el.innerHTML = `
     <div style="position:relative;margin-bottom:8px;">
-      <input class="input" placeholder="Buscar ejercicios..." value="${state.searchQuery}" oninput="state.searchQuery=this.value;renderTab()" style="padding-left:32px;background:white;">
+      <input class="input" id="exerciseSearch" placeholder="Buscar ejercicios..." value="${state.searchQuery}" oninput="state.searchQuery=this.value;renderExerciseList()" style="padding-left:32px;background:white;">
       <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#9CA3AF;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
     </div>
     <div style="display:flex;gap:5px;margin-bottom:9px;flex-wrap:wrap;">
-      <select class="filter-sel" onchange="state.filterZona=this.value;renderTab()">${ZONAS.map(z=>`<option ${state.filterZona===z?'selected':''}>${z}</option>`).join('')}</select>
-      <select class="filter-sel" onchange="state.filterTipo=this.value;renderTab()">${TIPOS.map(t=>`<option ${state.filterTipo===t?'selected':''}>${t}</option>`).join('')}</select>
-      <select class="filter-sel" onchange="state.filterMaterial=this.value;renderTab()">${MATERIALES.map(m=>`<option ${state.filterMaterial===m?'selected':''}>${m}</option>`).join('')}</select>
-      ${state.user && state.profile?.is_premium && state.customExercises.length > 0 ? `<button onclick="state.filterOwn=!state.filterOwn;renderTab()" style="border:1px solid ${state.filterOwn?'var(--blue)':'var(--gray-200)'};background:${state.filterOwn?'var(--blue-light)':'white'};color:${state.filterOwn?'var(--blue)':'var(--gray-600)'};border-radius:7px;padding:5px 9px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;">Mis ejercicios</button>` : ''}
+      <select class="filter-sel" onchange="state.filterZona=this.value;renderExerciseList()">${ZONAS.map(z=>`<option ${state.filterZona===z?'selected':''}>${z}</option>`).join('')}</select>
+      <select class="filter-sel" onchange="state.filterTipo=this.value;renderExerciseList()">${TIPOS.map(t=>`<option ${state.filterTipo===t?'selected':''}>${t}</option>`).join('')}</select>
+      <select class="filter-sel" onchange="state.filterMaterial=this.value;renderExerciseList()">${MATERIALES.map(m=>`<option ${state.filterMaterial===m?'selected':''}>${m}</option>`).join('')}</select>
+      ${state.user && state.profile?.is_premium && state.customExercises.length > 0 ? `<button onclick="state.filterOwn=!state.filterOwn;renderExerciseList()" style="border:1px solid ${state.filterOwn?'var(--blue)':'var(--gray-200)'};background:${state.filterOwn?'var(--blue-light)':'white'};color:${state.filterOwn?'var(--blue)':'var(--gray-600)'};border-radius:7px;padding:5px 9px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;">Mis ejercicios</button>` : ''}
     </div>
-    <div class="exercise-list">
-      ${filtered.length === 0 ? '<div class="empty-state">Sin resultados para esa búsqueda</div>' :
-        filtered.map(ex => {
-          const added = state.selectedExercises.some(s=>s.id===ex.id);
-          const imgHtml = ex.img
-            ? `<img src="${ex.img}" style="width:52px;height:52px;object-fit:cover;border-radius:7px;flex-shrink:0;background:var(--gray-100);" loading="lazy">`
-            : `<div style="width:52px;height:52px;border-radius:7px;background:var(--gray-100);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;">🏃</div>`;
-          return `<div class="exercise-card">
-            ${imgHtml}
-            <div style="flex:1;min-width:0;">
-              <div class="exercise-name">${ex.name}${ex.isCustom?'<span style="font-size:9px;background:var(--blue-light);color:var(--blue);border-radius:4px;padding:1px 5px;margin-left:5px;font-weight:600;">mío</span>':''}</div>
-              <div class="exercise-desc">${ex.desc}</div>
-              <div style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap;">${ex.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:4px;">
-              <button class="btn-add ${added?'added':''}" data-exercise-id="${ex.id}" onclick="handleAddExercise('${ex.id}')">${added?'✓':'+'}</button>
-              ${ex.isCustom?`<button onclick="confirmDeleteExercise('${ex.id}')" style="width:22px;height:22px;border-radius:6px;background:var(--red-light);color:var(--red);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>`:''}
-            </div>
-          </div>`;
-        }).join('')}
-    </div>
+    <div class="exercise-list" id="exerciseList"></div>
   `;
+  renderExerciseList();
 }
 
 function handleAddExercise(id) {
@@ -1972,8 +1981,29 @@ function renderPlansTab() {
     return;
   }
   el.innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:6px;overflow-y:auto;flex:1;">
-      ${state.savedPlans.map(plan => {
+    <div style="position:relative;margin-bottom:8px;">
+      <input class="input" id="planSearch" placeholder="Buscar planes..." oninput="renderPlansList()" style="padding-left:32px;background:white;">
+      <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#9CA3AF;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    </div>
+    <div id="plansList" style="display:flex;flex-direction:column;gap:6px;overflow-y:auto;flex:1;"></div>
+  `;
+  renderPlansList();
+}
+
+function renderPlansList() {
+  const listEl = document.getElementById('plansList');
+  if (!listEl) return;
+  const q = (document.getElementById('planSearch')?.value || '').toLowerCase();
+  const filtered = state.savedPlans.filter(p =>
+    !q || (p.name||'').toLowerCase().includes(q) || (p.patient_name||'').toLowerCase().includes(q)
+  );
+  if (!filtered.length) {
+    listEl.innerHTML = '<div class="empty-state">Sin resultados</div>';
+    return;
+  }
+  listEl.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      ${filtered.map(plan => {
         const exCount = (plan.exercises || []).length;
         const date = new Date(plan.updated_at).toLocaleDateString('es-ES', {day:'2-digit', month:'short'});
         return `
@@ -1992,20 +2022,60 @@ function renderPlansTab() {
     </div>`;
 }
 
+function renderTemplatesList() {
+  const listEl = document.getElementById('templatesList');
+  if (!listEl) return;
+  const q = (document.getElementById('templateSearch')?.value || '').toLowerCase();
+  const filtered = state.templates.filter(t =>
+    !q || t.name.toLowerCase().includes(q) || (t.description||'').toLowerCase().includes(q) || (t.category||'').toLowerCase().includes(q)
+  );
+  if (!filtered.length) {
+    listEl.innerHTML = '<div class="empty-state">Sin resultados</div>';
+    return;
+  }
+  const cats = [...new Set(filtered.map(t => t.category))];
+  listEl.innerHTML = cats.map(cat => `
+    <div style="margin-bottom:10px;">
+      <div style="font-size:10px;font-weight:700;color:var(--blue);letter-spacing:0.6px;text-transform:uppercase;margin-bottom:6px;">${cat}</div>
+      ${filtered.filter(t => t.category === cat).map(t => `
+        <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius);padding:10px 12px;margin-bottom:6px;">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:600;color:var(--gray-900);margin-bottom:2px;">${t.name}</div>
+              <div style="font-size:11px;color:var(--gray-400);line-height:1.4;">${t.description||''}</div>
+              <div style="font-size:10px;color:var(--gray-400);margin-top:4px;">${(t.exercises||[]).length} ejercicios</div>
+            </div>
+          </div>
+          <button onclick="loadTemplate(${t.id})" style="margin-top:8px;width:100%;padding:6px;border-radius:7px;border:1px solid var(--blue-mid);background:var(--blue-light);color:var(--blue);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">Usar esta plantilla</button>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
 function renderTemplatesTab() {
   const el = document.getElementById('tabContent');
   if (!state.templates.length) {
     el.innerHTML = `<div class="empty-state" style="padding:24px 10px;">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-      <br><span style="font-size:12px;color:var(--gray-400);">Cargando plantillas...</span>
+      <span style="font-size:12px;color:var(--gray-400);">Cargando plantillas...</span>
     </div>`;
     return;
   }
 
+  el.innerHTML = `
+    <div style="position:relative;margin-bottom:8px;">
+      <input class="input" id="templateSearch" placeholder="Buscar plantillas..." oninput="renderTemplatesList()" style="padding-left:32px;background:white;">
+      <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#9CA3AF;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    </div>
+    <div id="templatesList" style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:0;"></div>
+  `;
+  renderTemplatesList();
+
   // Agrupar por categoría
   const cats = [...new Set(state.templates.map(t => t.category))];
 
-  el.innerHTML = `
+  const fakeEl = { innerHTML: '' }; // placeholder to avoid breaking below
+  fakeEl.innerHTML = `
     <div style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:10px;">
       ${cats.map(cat => `
         <div>
