@@ -97,9 +97,9 @@
     .empty-state { text-align: center; padding: 28px 16px; color: var(--gray-400); font-size: 12px; }
 
     /* ====== FOOTER ====== */
-    .footer { background: #0F172A; border-top: none; padding: 11px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
-    .footer-label { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.6px; }
-    .btn-action { display: inline-flex; align-items: center; gap: 5px; padding: 7px 13px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.9); transition: all 0.15s; font-family: inherit; }
+    .footer { background: #0F172A; border-top: none; padding: 7px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; position: sticky; bottom: 0; z-index: 50; }
+    .footer-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.6px; }
+    .btn-action { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 7px; font-size: 11px; font-weight: 500; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.9); transition: all 0.15s; font-family: inherit; }
     .btn-action:hover { background: rgba(255,255,255,0.18); }
     .btn-action.blue { background: var(--blue-light); color: var(--blue); border-color: var(--blue-mid); }
     .btn-action.premium { background: var(--amber-light); color: var(--amber); border-color: #FDE68A; }
@@ -152,8 +152,10 @@
       #pricingCards { gap: 6px; flex-shrink: 0; }
       .panels-top { padding: 10px 10px 8px; background: transparent; }
       .main-body { padding: 0 10px 8px; }
-      .header { padding: 0 12px; height: 64px; }
-      .footer { padding: 8px 12px; flex-direction: column; align-items: flex-start; gap: 6px; }
+      .header { padding: 0 12px; height: 52px; }
+      .footer { padding: 6px 10px; flex-direction: row; align-items: center; gap: 4px; flex-wrap: nowrap; overflow-x: auto; }
+      .footer-label { display: none; }
+      .btn-action { padding: 5px 8px; font-size: 10px; white-space: nowrap; }
       .footer > div:last-child { display: flex; flex-wrap: wrap; gap: 5px; }
       .btn-action { font-size: 11px; padding: 6px 9px; }
       /* Header móvil sin sesión: solo iconos */
@@ -231,7 +233,7 @@
   </div>
 
   <!-- Plan -->
-  <div class="panel" style="display:flex;flex-direction:column;">
+  <div class="panel" id="planPanel" style="display:flex;flex-direction:column;">
     <div class="plan-header">
       <div class="plan-icon">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
@@ -876,6 +878,13 @@ function handleAddExercise(id) {
       notes: ''
     });
     showToast('Ejercicio añadido ✓');
+    // En móvil, scroll suave al plan solo con el primer ejercicio
+    if (state.selectedExercises.length === 1 && window.innerWidth <= 700) {
+      setTimeout(() => {
+        const planPanel = document.getElementById('planPanel');
+        if (planPanel) planPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+    }
   }
   renderTab();
   renderSelectedExercises();
