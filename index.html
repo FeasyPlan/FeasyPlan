@@ -229,7 +229,7 @@
       <button class="tab" id="tab-create" onclick="switchTab('create')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Crear</button>
       <button class="tab" id="tab-plans" onclick="switchTab('plans')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Mis Planes</button>
     </div>
-    <div id="tabContent" style="flex:1;display:flex;flex-direction:column;overflow:hidden;"></div>
+    <div id="tabContent" style="flex:1;display:flex;flex-direction:column;overflow:hidden;max-width:100%;"></div>
   </div>
 
   <!-- Plan -->
@@ -1764,18 +1764,18 @@ function renderCreateTab() {
        </div>`;
 
   el.innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;">
-      <input type="file" id="exImgInput" accept="image/*,.heic,.heif" capture="environment" style="display:none;" onchange="handleExerciseImageUpload(this)">
+    <div style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;overflow-x:hidden;max-width:100%;">
+      <input type="file" id="exImgInput" accept="image/*,.heic,.heif" style="display:none;" onchange="handleExerciseImageUpload(this)">
       <div style="display:flex;gap:10px;align-items:flex-start;">
-        <div id="exImgPreview" style="cursor:pointer;flex-shrink:0;" onclick="(document.getElementById('exImgInputGlobal')||document.getElementById('exImgInput')).click()">
+        <div id="exImgPreview" style="cursor:pointer;flex-shrink:0;" onclick="triggerImagePicker()">
           ${imgPreview}
         </div>
         <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
           <input class="input" style="background:white;" placeholder="Nombre del ejercicio*" value="${ex.name}" oninput="state.newExercise.name=this.value" id="exName">
-          <div style="display:flex;gap:5px;">
-            <select class="filter-sel" onchange="state.newExercise.zona=this.value" style="flex:1;">${ZONAS.filter(z=>z!=='Todas').map(z=>`<option ${ex.zona===z?'selected':''}>${z}</option>`).join('')}</select>
-            <select class="filter-sel" onchange="state.newExercise.tipo=this.value" style="flex:1;">${TIPOS.filter(t=>t!=='Todos').map(t=>`<option ${ex.tipo===t?'selected':''}>${t}</option>`).join('')}</select>
-            <select class="filter-sel" onchange="state.newExercise.material=this.value" style="flex:1;">${MATERIALES.filter(m=>m!=='Todos').map(m=>`<option ${ex.material===m?'selected':''}>${m}</option>`).join('')}</select>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;">
+            <select class="filter-sel" onchange="state.newExercise.zona=this.value" style="flex:1;min-width:75px;">${ZONAS.filter(z=>z!=='Todas').map(z=>`<option ${ex.zona===z?'selected':''}>${z}</option>`).join('')}</select>
+            <select class="filter-sel" onchange="state.newExercise.tipo=this.value" style="flex:1;min-width:75px;">${TIPOS.filter(t=>t!=='Todos').map(t=>`<option ${ex.tipo===t?'selected':''}>${t}</option>`).join('')}</select>
+            <select class="filter-sel" onchange="state.newExercise.material=this.value" style="flex:1;min-width:75px;">${MATERIALES.filter(m=>m!=='Todos').map(m=>`<option ${ex.material===m?'selected':''}>${m}</option>`).join('')}</select>
       
           </div>
         </div>
@@ -1791,6 +1791,14 @@ function renderCreateTab() {
       ${ex.img ? `<button onclick="state.newExercise.img=null;renderTab()" style="font-size:11px;color:var(--gray-400);background:none;border:none;cursor:pointer;">Eliminar foto</button>` : ''}
     </div>
   `;
+}
+
+function triggerImagePicker() {
+  const input = document.getElementById('exImgInputGlobal') || document.getElementById('exImgInput');
+  if (input) {
+    input.value = ''; // Reset so same file can be selected again
+    input.click();
+  }
 }
 
 function handleExerciseImageUpload(input) {
