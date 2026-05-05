@@ -852,7 +852,7 @@ function renderTab() {
             </div>
             <div style="display:flex;flex-direction:column;gap:4px;">
               <button class="btn-add ${added?'added':''}" data-exercise-id="${ex.id}" onclick="handleAddExercise('${ex.id}')">${added?'✓':'+'}</button>
-              ${ex.isCustom?`<button onclick="deleteCustomExercise('${ex.id}')" style="width:28px;height:28px;border-radius:8px;background:var(--red-light);color:var(--red);border:none;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;">✕</button>`:''}
+              ${ex.isCustom?`<button onclick="confirmDeleteExercise('${ex.id}')" style="width:22px;height:22px;border-radius:6px;background:var(--red-light);color:var(--red);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>`:''}
             </div>
           </div>`;
         }).join('')}
@@ -1775,6 +1775,7 @@ function renderCreateTab() {
           <div style="display:flex;gap:5px;">
             <select class="filter-sel" onchange="state.newExercise.zona=this.value" style="flex:1;">${ZONAS.filter(z=>z!=='Todas').map(z=>`<option ${ex.zona===z?'selected':''}>${z}</option>`).join('')}</select>
             <select class="filter-sel" onchange="state.newExercise.tipo=this.value" style="flex:1;">${TIPOS.filter(t=>t!=='Todos').map(t=>`<option ${ex.tipo===t?'selected':''}>${t}</option>`).join('')}</select>
+      
           </div>
         </div>
       </div>
@@ -1784,7 +1785,7 @@ function renderCreateTab() {
         <div style="flex:1;"><div style="font-size:10px;font-weight:700;color:var(--gray-400);margin-bottom:3px;">REPS</div><input class="input" type="number" value="${ex.reps}" min="1" oninput="state.newExercise.reps=this.value" style="background:white;"></div>
         <div style="flex:1;"><div style="font-size:10px;font-weight:700;color:var(--gray-400);margin-bottom:3px;">SEG.</div><input class="input" value="${ex.duration}" oninput="state.newExercise.duration=this.value" placeholder="-" style="background:white;"></div>
       </div>
-      <select class="filter-sel" onchange="state.newExercise.material=this.value" style="flex:1;">${MATERIALES.filter(m=>m!=='Todos').map(m=>`<option ${ex.material===m?'selected':''}>${m}</option>`).join('')}</select>
+
       <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="saveCustomExercise()">Guardar ejercicio</button>
       ${ex.img ? `<button onclick="state.newExercise.img=null;renderTab()" style="font-size:11px;color:var(--gray-400);background:none;border:none;cursor:pointer;">Eliminar foto</button>` : ''}
     </div>
@@ -1884,6 +1885,7 @@ async function saveCustomExercise() {
     // Reset form
     state.newExercise = { name:'', desc:'', zona:'Piernas', tipo:'Fuerza', material:'Ninguno', series:'3', reps:'10', duration:'', img:null };
     showToast('Ejercicio guardado ✓');
+    state.filterOwn = true;
     switchTab('search');
   } catch(e) {
     console.error(e);
@@ -1891,12 +1893,31 @@ async function saveCustomExercise() {
   }
 }
 
+function confirmDeleteExercise(id) {
+  const ex = state.customExercises.find(e => e.id === id);
+  const name = ex ? ex.name : 'este ejercicio';
+  showPopup(`
+    <div class="popup-icon" style="background:var(--red-light);">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+    </div>
+    <h2>¿Eliminar ejercicio?</h2>
+    <p>Se eliminará <strong>${name}</strong> de tu biblioteca. Esta acción no se puede deshacer.</p>
+    <div class="popup-btns">
+      <button class="btn-full" style="background:var(--red);color:#fff;" onclick="deleteCustomExercise('${id}')">Sí, eliminar</button>
+      <button class="btn-full outline" onclick="closePopup()">Cancelar</button>
+    </div>
+  `);
+}
+
 async function deleteCustomExercise(id) {
+  closePopup();
   const dbId = id.replace('custom_', '');
   try {
     await sb.from('exercises').delete().eq('id', dbId).eq('user_id', state.user.id);
     state.customExercises = state.customExercises.filter(e => e.id !== id);
     state.selectedExercises = state.selectedExercises.filter(e => e.id !== id);
+    // Reset filterOwn if no more custom exercises
+    if (state.customExercises.length === 0) state.filterOwn = false;
     renderTab();
     renderSelectedExercises();
     showToast('Ejercicio eliminado');
