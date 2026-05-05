@@ -776,37 +776,61 @@ function confirmCrop(target) {
   }
 }
 
+async function base64ToBlob(base64) {
+  const parts = base64.split(';base64,');
+  const type = parts[0].split(':')[1];
+  const binary = atob(parts[1]);
+  const array = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) array[i] = binary.charCodeAt(i);
+  return new Blob([array], { type });
+}
+
+async function uploadToStorage(bucket, path, base64) {
+  const blob = await base64ToBlob(base64);
+  const { data, error } = await sb.storage.from(bucket).upload(path, blob, {
+    upsert: true,
+    contentType: blob.type,
+  });
+  if (error) throw error;
+  const { data: urlData } = sb.storage.from(bucket).getPublicUrl(path);
+  return urlData.publicUrl;
+}
+
 async function savePhysio() {
   if (!state.user) {
-    // Guardar los datos temporalmente y mostrar login
     showLoginPopup('physio');
     return;
   }
   state.physioEditing = false;
-  if (state.user) {
-    const logoSize = state.physio.logo ? Math.round(state.physio.logo.length / 1024) + 'KB' : 'sin logo';
-    console.log('Guardando logo:', logoSize);
+
+  try {
+    let logoUrl = state.physio.logo;
+
+    // Si el logo es base64, subirlo a Storage
+    if (logoUrl && logoUrl.startsWith('data:')) {
+      showToast('Subiendo logo...');
+      const path = state.user.id + '/logo.jpg';
+      logoUrl = await uploadToStorage('logos', path, logoUrl);
+      state.physio.logo = logoUrl; // Actualizar con la URL pública
+    }
+
     const { error } = await sb.from('profiles').upsert({
       id: state.user.id,
       name: state.physio.name,
       clinic: state.physio.clinic,
       phone: state.physio.phone,
       email: state.user.email,
-      logo_url: state.physio.logo || null,
+      logo_url: logoUrl || null,
       copy_email: state.physio.copyEmail || false,
     });
-    if (error) {
-      console.error('Error guardando logo:', error);
-      showToast('Error al guardar el logo: ' + (error.message || error.code));
-      return;
-    }
-    // Verificar que se guardó
-    const { data } = await sb.from('profiles').select('logo_url').eq('id', state.user.id).single();
-    console.log('Logo guardado en BD:', data?.logo_url ? data.logo_url.substring(0,50) + '...' : 'null');
-    state.physio.logo = data?.logo_url || state.physio.logo;
+
+    if (error) throw error;
+    render();
+    showToast('Datos guardados ✓');
+  } catch(e) {
+    console.error('Error guardando perfil:', e);
+    showToast('Error al guardar: ' + (e.message || 'inténtalo de nuevo'));
   }
-  render();
-  showToast('Datos guardados ✓');
 }
 
 function renderPlanHeader() {
@@ -1931,6 +1955,14 @@ async function saveCustomExercise() {
   try {
     const maxId = Math.max(...EXERCISES.map(e => typeof e.id === 'number' ? e.id : 0), ...state.customExercises.map(e => parseInt(e.dbId) || 0), 50);
 
+    // Subir imagen a Storage si es base64
+    let imgUrl = ex.img || null;
+    if (imgUrl && imgUrl.startsWith('data:')) {
+      showToast('Subiendo imagen...');
+      const path = state.user.id + '/' + Date.now() + '.jpg';
+      imgUrl = await uploadToStorage('custom-exercises', path, imgUrl);
+    }
+
     const payload = {
       id: maxId + 1,
       user_id: state.user.id,
@@ -1944,14 +1976,14 @@ async function saveCustomExercise() {
       default_series: ex.series,
       default_reps: ex.reps,
       default_duration: ex.duration,
-      img_url: ex.img || null,
+      img_url: imgUrl,
       active: true,
     };
 
     const { data, error } = await sb.from('exercises').insert(payload).select().single();
     if (error) throw error;
 
-    // Añadir a la lista local
+    // Añadir a la lista local (usar URL de Storage, no base64)
     state.customExercises.push({
       id: 'custom_' + data.id,
       dbId: data.id,
