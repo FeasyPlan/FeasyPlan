@@ -851,7 +851,7 @@ function renderTab() {
               <div style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap;">${ex.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
             </div>
             <div style="display:flex;flex-direction:column;gap:4px;">
-              <button class="btn-add ${added?'added':''}" onclick="handleAddExercise('${ex.id}')">${added?'✓':'+'}</button>
+              <button class="btn-add ${added?'added':''}" data-exercise-id="${ex.id}" onclick="handleAddExercise('${ex.id}')">${added?'✓':'+'}</button>
               ${ex.isCustom?`<button onclick="deleteCustomExercise('${ex.id}')" style="width:28px;height:28px;border-radius:8px;background:var(--red-light);color:var(--red);border:none;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;">✕</button>`:''}
             </div>
           </div>`;
@@ -892,8 +892,18 @@ function handleAddExercise(id) {
       }, 500);
     }
   }
-  renderTab();
+  // Solo actualizar botones sin rerenderizar lista (evita scroll reset)
+  updateAddButtons();
   renderSelectedExercises();
+}
+
+function updateAddButtons() {
+  document.querySelectorAll('[data-exercise-id]').forEach(btn => {
+    const id = btn.getAttribute('data-exercise-id');
+    const added = state.selectedExercises.some(s => String(s.id) === String(id));
+    btn.textContent = added ? '✓' : '+';
+    btn.className = 'btn-add ' + (added ? 'added' : '');
+  });
 }
 
 function renderSelectedExercises() {
@@ -2088,6 +2098,7 @@ function doClearPlan() {
   state.selectedExercises = [];
   document.getElementById('planNotes').value = '';
   closePopup();
+  updateAddButtons();
   renderSelectedExercises();
   showToast('Plan limpiado ✓');
 }
