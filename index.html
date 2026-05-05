@@ -26,9 +26,9 @@
     }
 
     /* ====== HEADER ====== */
-    .header { background: var(--white); border-bottom: 1px solid var(--gray-200); padding: 0 24px; height: 54px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; box-shadow: var(--shadow); }
+    .header { background: var(--white); border-bottom: 1px solid var(--gray-200); padding: 0 32px; height: 54px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; box-shadow: var(--shadow); }
     .logo { font-size: 18px; font-weight: 700; color: var(--blue); letter-spacing: -0.5px; text-decoration: none; }
-    .logo-img { height: 32px; }
+    .logo-img { height: 38px; }
     .logo span { color: var(--gray-900); }
     .header-right { display: flex; align-items: center; gap: 8px; }
     .btn { display: inline-flex; align-items: center; gap: 5px; padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 400; cursor: pointer; border: none; transition: all 0.15s; font-family: inherit; white-space: nowrap; }
@@ -1794,11 +1794,18 @@ function renderCreateTab() {
 }
 
 function triggerImagePicker() {
-  const input = document.getElementById('exImgInputGlobal') || document.getElementById('exImgInput');
-  if (input) {
-    input.value = ''; // Reset so same file can be selected again
-    input.click();
-  }
+  // Crear un input nuevo cada vez — el único método fiable en iOS Safari
+  const old = document.getElementById('exImgInputTemp');
+  if (old) old.remove();
+
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.id = 'exImgInputTemp';
+  input.accept = 'image/*,.heic,.heif';
+  input.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;';
+  input.onchange = function() { handleExerciseImageUpload(this); };
+  document.body.appendChild(input);
+  input.click();
 }
 
 function handleExerciseImageUpload(input) {
