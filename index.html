@@ -11,7 +11,7 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { font-size: 16px; }
-    body { font-family: 'DM Sans', sans-serif; background: #0F172A; color: #1a1d23; min-height: 100vh; }
+    body { font-family: 'DM Sans', sans-serif; background: #0F172A; color: #1a1d23; min-height: 100vh; padding-bottom: 50px; }
     :root {
       --blue: #2563EB; --blue-light: #EFF6FF; --blue-mid: #93C5FD;
       --gray-50: #F7F8FA; --gray-100: #F1F3F7; --gray-200: #E4E8F0;
@@ -97,7 +97,7 @@
     .empty-state { text-align: center; padding: 28px 16px; color: var(--gray-400); font-size: 12px; }
 
     /* ====== FOOTER ====== */
-    .footer { background: #0F172A; border-top: none; padding: 7px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; position: sticky; bottom: 0; z-index: 50; }
+    .footer { background: #0F172A; border-top: none; padding: 7px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; }
     .footer-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.6px; }
     .btn-action { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 7px; font-size: 11px; font-weight: 500; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.9); transition: all 0.15s; font-family: inherit; }
     .btn-action:hover { background: rgba(255,255,255,0.18); }
@@ -791,15 +791,15 @@ function renderPlanHeader() {
 // TABS Y EJERCICIOS
 // ============================================
 function switchTab(tab) {
-  if (tab === 'templates') {
+  if (tab === 'templates' || tab === 'search') {
     state.activeTab = tab;
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.getElementById('tab-templates')?.classList.add('active');
+    document.getElementById('tab-' + tab)?.classList.add('active');
     renderTab();
     return;
   }
   if (!state.user) { showLoginPopup(); return; }
-  if (tab !== 'search' && !state.profile?.is_premium) { showPayPopup(); return; }
+  if (!state.profile?.is_premium) { showPayPopup(); return; }
   state.activeTab = tab;
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-' + tab)?.classList.add('active');
@@ -882,8 +882,12 @@ function handleAddExercise(id) {
     if (state.selectedExercises.length === 1 && window.innerWidth <= 700) {
       setTimeout(() => {
         const planPanel = document.getElementById('planPanel');
-        if (planPanel) planPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 300);
+        if (planPanel) {
+          // Scroll más lento y suave
+          const targetY = planPanel.getBoundingClientRect().top + window.scrollY - 10;
+          window.scrollTo({ top: targetY, behavior: 'smooth' });
+        }
+      }, 500);
     }
   }
   renderTab();
