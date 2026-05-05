@@ -105,8 +105,8 @@
     .btn-action.premium { background: var(--amber-light); color: var(--amber); border-color: #FDE68A; }
 
     /* ====== OVERLAY & POPUP ====== */
-    .overlay { position: fixed; inset: 0; background: rgba(17,24,39,0.5); z-index: 100; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(2px); }
-    .overlay.open { display: flex; }
+    .overlay { position: fixed; inset: 0; background: rgba(17,24,39,0.5); z-index: 100; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(2px); overflow: hidden; }
+    .overlay.open { display: flex; overscroll-behavior: contain; }
     .popup { background: var(--white); border-radius: var(--radius-lg); padding: 26px; max-width: 390px; width: 100%; box-shadow: var(--shadow-md); animation: popIn 0.18s ease; }
     @keyframes popIn { from { opacity:0; transform:scale(0.96) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
     .popup-icon { width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 14px; }
@@ -590,7 +590,6 @@ function renderPhysio() {
 }
 
 function startPhysioEdit() {
-  if (!state.user) { showLoginPopup('physio'); return; }
   state.physioEditing = true;
   render();
 }
