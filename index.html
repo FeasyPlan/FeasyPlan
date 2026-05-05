@@ -562,8 +562,8 @@ function renderPhysio() {
           </div>
         </div>
         <div style="display:flex;gap:6px;">
-          <input class="input" style="background:white;flex:1;" placeholder="Teléfono" type="tel" value="${state.physio.phone}" oninput="state.physio.phone=this.value">
-          <input class="input" style="background:white;flex:1;" placeholder="Email de contacto" type="email" value="${state.physio.email}" oninput="state.physio.email=this.value">
+          <input class="input" style="background:white;flex:1;" placeholder="Teléfono" type="tel" value="${state.physio.phone||''}" oninput="state.physio.phone=this.value">
+          <input class="input" style="background:white;flex:1;" placeholder="Email de contacto" type="email" value="${state.physio.email||''}" oninput="state.physio.email=this.value">
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:2px;">
           <input type="checkbox" id="copyToFisio" ${state.physio.copyEmail ? 'checked' : ''} onchange="state.physio.copyEmail=this.checked" style="width:16px;height:16px;cursor:pointer;accent-color:var(--blue);">
