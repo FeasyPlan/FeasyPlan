@@ -311,6 +311,8 @@ let state = {
   filterTipo: 'Todos',
   filterMaterial: 'Todos',
   filterOwn: false,
+  filterFavorites: false,
+  favorites: new Set(),
   customExercises: [],
   savedPlans: [],
   templates: [],
@@ -428,6 +430,10 @@ async function loadUserData() {
   // Cargar pacientes
   const { data: patients } = await sb.from('patients').select('*').eq('user_id', state.user.id).order('name', { ascending: true });
   state.patients = patients || [];
+
+  // Cargar favoritos
+  const { data: favs } = await sb.from('favorites').select('exercise_id').eq('user_id', state.user.id);
+  state.favorites = new Set((favs || []).map(f => f.exercise_id));
 
   // Cargar planes guardados
   const { data: savedPlans } = await sb.from('plans').select('*').eq('user_id', state.user.id).order('updated_at', { ascending: false });
@@ -856,8 +862,9 @@ function renderExerciseList() {
           <div class="exercise-desc">${ex.desc}</div>
           <div style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap;">${ex.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:4px;">
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:center;">
           <button class="btn-add ${added?'added':''}" data-exercise-id="${ex.id}" onclick="handleAddExercise('${ex.id}')">${added?'✓':'+'}</button>
+          ${state.user ? heartBtn(ex.id) : ''}
           ${ex.isCustom?`<button onclick="confirmDeleteExercise('${ex.id}')" style="width:22px;height:22px;border-radius:6px;background:var(--red-light);color:var(--red);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>`:''}
         </div>
       </div>`;
@@ -879,11 +886,44 @@ function renderTab() {
       <select class="filter-sel" onchange="state.filterZona=this.value;renderExerciseList()">${ZONAS.map(z=>`<option ${state.filterZona===z?'selected':''}>${z}</option>`).join('')}</select>
       <select class="filter-sel" onchange="state.filterTipo=this.value;renderExerciseList()">${TIPOS.map(t=>`<option ${state.filterTipo===t?'selected':''}>${t}</option>`).join('')}</select>
       <select class="filter-sel" onchange="state.filterMaterial=this.value;renderExerciseList()">${MATERIALES.map(m=>`<option ${state.filterMaterial===m?'selected':''}>${m}</option>`).join('')}</select>
-      ${state.user && state.profile?.is_premium && state.customExercises.length > 0 ? `<button onclick="state.filterOwn=!state.filterOwn;renderExerciseList()" style="border:1px solid ${state.filterOwn?'var(--blue)':'var(--gray-200)'};background:${state.filterOwn?'var(--blue-light)':'white'};color:${state.filterOwn?'var(--blue)':'var(--gray-600)'};border-radius:7px;padding:5px 9px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;">Mis ejercicios</button>` : ''}
+      ${state.user && state.profile?.is_premium && state.customExercises.length > 0 ? `<button onclick="state.filterOwn=!state.filterOwn;if(state.filterOwn)state.filterFavorites=false;renderTab()" style="border:1px solid ${state.filterOwn?'var(--blue)':'var(--gray-200)'};background:${state.filterOwn?'var(--blue)':'white'};color:${state.filterOwn?'#fff':'var(--gray-600)'};border-radius:7px;padding:5px 9px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;">${state.filterOwn?'Ejercicios FeasyPlan':'Mis ejercicios'}</button>` : ''}
+      ${state.user && state.favorites && state.favorites.size > 0 ? `<button onclick="state.filterFavorites=!state.filterFavorites;if(state.filterFavorites)state.filterOwn=false;renderTab()" style="border:1px solid ${state.filterFavorites?'#EF4444':'var(--gray-200)'};background:${state.filterFavorites?'#FEE2E2':'white'};color:${state.filterFavorites?'#EF4444':'var(--gray-600)'};border-radius:7px;padding:5px 9px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;display:flex;align-items:center;gap:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="${state.filterFavorites?'#EF4444':'none'}" stroke="${state.filterFavorites?'#EF4444':'currentColor'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>Favoritos</button>` : ''}
     </div>
     <div class="exercise-list" id="exerciseList"></div>
   `;
   renderExerciseList();
+}
+
+function heartBtn(id) {
+  const sid = String(id);
+  const fav = state.favorites && state.favorites.has(sid);
+  const heartFull = '<svg width="13" height="13" viewBox="0 0 24 24" fill="#EF4444" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+  const heartEmpty = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+  return `<button data-fav-id="${sid}" onclick="toggleFavorite('${sid}')" style="width:22px;height:22px;border-radius:6px;background:${fav?'#FEE2E2':'var(--gray-100)'};border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;color:${fav?'#EF4444':'var(--gray-400)'}">${fav?heartFull:heartEmpty}</button>`;
+}
+
+async function toggleFavorite(id) {
+  if (!state.user) { showLoginPopup(); return; }
+  if (!state.favorites) state.favorites = new Set();
+  const sid = String(id);
+  const isFav = state.favorites.has(sid);
+  try {
+    if (isFav) {
+      await sb.from('favorites').delete().eq('user_id', state.user.id).eq('exercise_id', sid);
+      state.favorites.delete(sid);
+    } else {
+      await sb.from('favorites').insert({ user_id: state.user.id, exercise_id: sid });
+      state.favorites.add(sid);
+    }
+    // Update heart button in place
+    const btn = document.querySelector('[data-fav-id="' + sid + '"]');
+    if (btn) btn.outerHTML = heartBtn(sid);
+    // Refresh filter buttons if needed
+    if (state.filterFavorites) renderExerciseList();
+    else renderTab();
+  } catch(e) {
+    showToast('Error al guardar favorito');
+  }
 }
 
 function handleAddExercise(id) {
