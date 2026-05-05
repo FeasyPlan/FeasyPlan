@@ -833,9 +833,12 @@ function switchTab(tab) {
 }
 
 function getFilteredExercises() {
-  const allExercises = state.filterOwn
+  let allExercises = state.filterOwn
     ? state.customExercises
     : [...EXERCISES, ...state.customExercises];
+  if (state.filterFavorites && state.favorites) {
+    allExercises = allExercises.filter(ex => state.favorites.has(String(ex.id)));
+  }
   const q = state.searchQuery.toLowerCase();
   return allExercises.filter(ex =>
     (!q || ex.name.toLowerCase().includes(q) || ex.tags.some(t=>t.includes(q)))
