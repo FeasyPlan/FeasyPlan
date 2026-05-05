@@ -295,7 +295,7 @@ let state = {
   user: null,
   profile: null,
   credits: null,
-  physio: { name:'', clinic:'', phone:'', email:'' },
+  physio: { name:'', clinic:'', phone:'', email:'', logo:null, copyEmail:false },
   physioEditing: false,
   patient: null,
   patients: [], // lista cargada desde Supabase
@@ -392,15 +392,28 @@ async function loadUserData() {
   // Reset créditos si es un día nuevo
   await sb.rpc('reset_daily_credits_if_needed', { p_user_id: state.user.id });
 
+  // Guardar datos que el usuario haya escrito antes de loguearse
+  const pendingName = state.physio.name;
+  const pendingClinic = state.physio.clinic;
+  const pendingPhone = state.physio.phone;
+  const pendingEmail = state.physio.email;
+  const pendingLogo = state.physio.logo;
+
   // Cargar perfil
   const { data: profile } = await sb.from('profiles').select('*').eq('id', state.user.id).single();
   state.profile = profile;
   if (profile) {
-    state.physio.name = profile.name || '';
-    state.physio.clinic = profile.clinic || '';
-    state.physio.phone = profile.phone || '';
-    state.physio.email = profile.email || '';
-    state.physio.logo = profile.logo_url || null;
+    // Conservar datos escritos antes de login si Supabase no tiene datos
+    state.physio.name = profile.name || pendingName;
+    state.physio.clinic = profile.clinic || pendingClinic;
+    state.physio.phone = profile.phone || pendingPhone;
+    state.physio.email = profile.email || pendingEmail;
+    state.physio.logo = profile.logo_url || pendingLogo;
+    state.physio.copyEmail = profile.copy_email || false;
+    // Si había datos pendientes sin guardar, guardarlos automáticamente
+    if (pendingName && !profile.name) {
+      setTimeout(() => savePhysio(), 800);
+    }
   }
 
   // Cargar créditos
@@ -546,6 +559,10 @@ function renderPhysio() {
         <div style="display:flex;gap:6px;">
           <input class="input" style="background:white;flex:1;" placeholder="Teléfono" type="tel" value="${state.physio.phone}" oninput="state.physio.phone=this.value">
           <input class="input" style="background:white;flex:1;" placeholder="Email de contacto" type="email" value="${state.physio.email}" oninput="state.physio.email=this.value">
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:2px;">
+          <input type="checkbox" id="copyToFisio" ${state.physio.copyEmail ? 'checked' : ''} onchange="state.physio.copyEmail=this.checked" style="width:16px;height:16px;cursor:pointer;accent-color:var(--blue);">
+          <label for="copyToFisio" style="font-size:12px;color:var(--gray-600);cursor:pointer;">Recibir copia del plan en mi email</label>
         </div>
         <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="savePhysio()">Guardar</button>
       </div>
@@ -733,6 +750,11 @@ function confirmCrop() {
 }
 
 async function savePhysio() {
+  if (!state.user) {
+    // Guardar los datos temporalmente y mostrar login
+    showLoginPopup('physio');
+    return;
+  }
   state.physioEditing = false;
   if (state.user) {
     const logoSize = state.physio.logo ? Math.round(state.physio.logo.length / 1024) + 'KB' : 'sin logo';
@@ -744,6 +766,7 @@ async function savePhysio() {
       phone: state.physio.phone,
       email: state.user.email,
       logo_url: state.physio.logo || null,
+      copy_email: state.physio.copyEmail || false,
     });
     if (error) {
       console.error('Error guardando logo:', error);
@@ -1678,9 +1701,9 @@ function showNewPatientPopup() {
       <div><label class="form-label">Nombre</label><input class="input" placeholder="Nombre del paciente" id="ptName" style="background:white;"></div>
       <div style="display:flex;gap:8px;">
         <div style="flex:1;"><label class="form-label">Edad</label><input class="input" type="number" placeholder="Años" id="ptAge" style="background:white;"></div>
-        <div style="flex:1;"><label class="form-label">Móvil</label><input class="input" type="tel" placeholder="+34 600 000 000" id="ptPhone" style="background:white;"></div>
+        <div style="flex:1;"><label class="form-label">Móvil <span style="font-size:9px;color:var(--blue);font-weight:500;">→ WhatsApp</span></label><input class="input" type="tel" placeholder="+34 600 000 000" id="ptPhone" style="background:white;"></div>
       </div>
-      <div><label class="form-label">Email</label><input class="input" type="email" placeholder="email@paciente.com" id="ptEmail" style="background:white;"></div>
+      <div><label class="form-label">Email <span style="font-size:9px;color:var(--blue);font-weight:500;">→ Envío del plan</span></label><input class="input" type="email" placeholder="email@paciente.com" id="ptEmail" style="background:white;"></div>
       <div><label class="form-label">Diagnóstico / Notas</label><input class="input" placeholder="Lesión, observaciones..." id="ptNotes" style="background:white;"></div>
     </div>
     <div class="popup-btns">
@@ -2147,6 +2170,7 @@ async function sendEmail() {
         },
         body: JSON.stringify({
           to: state.patient.email,
+          cc: (state.physio.copyEmail && state.physio.email) ? state.physio.email : null,
           subject: 'Tu plan de ejercicios - ' + state.patient.name,
           patientName: state.patient.name,
           physioName: state.physio.name || 'Tu fisioterapeuta',
@@ -2181,10 +2205,12 @@ async function generatePDFBase64() {
 function showPopup(html) {
   document.getElementById('popup').innerHTML = html;
   document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
 }
 
 function closePopup() {
   document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow = '';
 }
 
 function handleOverlayClick(e) {
