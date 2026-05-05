@@ -1765,9 +1765,9 @@ function renderCreateTab() {
 
   el.innerHTML = `
     <div style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;">
-      <input type="file" id="exImgInput" accept="image/*,.heic,.heif" style="display:none;" onchange="handleExerciseImageUpload(this)">
+      <input type="file" id="exImgInput" accept="image/*,.heic,.heif" capture="environment" style="display:none;" onchange="handleExerciseImageUpload(this)">
       <div style="display:flex;gap:10px;align-items:flex-start;">
-        <div id="exImgPreview" style="cursor:pointer;flex-shrink:0;" onclick="document.getElementById('exImgInput').click()">
+        <div id="exImgPreview" style="cursor:pointer;flex-shrink:0;" onclick="(document.getElementById('exImgInputGlobal')||document.getElementById('exImgInput')).click()">
           ${imgPreview}
         </div>
         <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
@@ -1775,6 +1775,7 @@ function renderCreateTab() {
           <div style="display:flex;gap:5px;">
             <select class="filter-sel" onchange="state.newExercise.zona=this.value" style="flex:1;">${ZONAS.filter(z=>z!=='Todas').map(z=>`<option ${ex.zona===z?'selected':''}>${z}</option>`).join('')}</select>
             <select class="filter-sel" onchange="state.newExercise.tipo=this.value" style="flex:1;">${TIPOS.filter(t=>t!=='Todos').map(t=>`<option ${ex.tipo===t?'selected':''}>${t}</option>`).join('')}</select>
+            <select class="filter-sel" onchange="state.newExercise.material=this.value" style="flex:1;">${MATERIALES.filter(m=>m!=='Todos').map(m=>`<option ${ex.material===m?'selected':''}>${m}</option>`).join('')}</select>
       
           </div>
         </div>
@@ -2080,16 +2081,30 @@ async function doSavePlan() {
 async function loadPlan(id) {
   const plan = state.savedPlans.find(p => p.id === id);
   if (!plan) return;
-  state.selectedExercises = plan.exercises || [];
+
+  // Enrich exercises with full data from library (images, etc.)
+  const allEx = [...EXERCISES, ...state.customExercises];
+  state.selectedExercises = (plan.exercises || []).map(saved => {
+    const found = allEx.find(e => String(e.id) === String(saved.id));
+    return {
+      ...(found || saved),
+      series: saved.series || '3',
+      reps: saved.reps || '10',
+      duration: saved.duration || '',
+      notes: saved.notes || '',
+    };
+  });
+
   document.getElementById('planNotes').value = plan.general_notes || '';
   if (plan.patient_name) {
     state.patient = { name: plan.patient_name };
     document.getElementById('patientSearch').value = plan.patient_name;
     renderPatientDisplay();
   }
+  updateAddButtons();
   renderSelectedExercises();
   switchTab('search');
-  showToast('Plan cargado ✓ — ' + plan.name);
+  showToast('Plan cargado: ' + plan.name + ' ✓');
 }
 
 async function deletePlan(id) {
