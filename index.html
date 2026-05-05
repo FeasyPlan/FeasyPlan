@@ -11,7 +11,7 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { font-size: 16px; }
-    body { font-family: 'DM Sans', sans-serif; background: #0F172A; color: #1a1d23; min-height: 100vh; padding-bottom: 80px; }
+    body { font-family: 'DM Sans', sans-serif; background: #0F172A; color: #1a1d23; min-height: 100vh; padding-bottom: 100px; }
     :root {
       --blue: #2563EB; --blue-light: #EFF6FF; --blue-mid: #93C5FD;
       --gray-50: #F7F8FA; --gray-100: #F1F3F7; --gray-200: #E4E8F0;
@@ -62,7 +62,7 @@
     .premium-lock { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--amber); background: var(--amber-light); border-radius: 6px; padding: 4px 8px; font-weight: 600; border: 1px solid #FDE68A; cursor: pointer; white-space: nowrap; }
 
     /* ====== MAIN BODY ====== */
-    .main-body { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 24px 12px; }
+    .main-body { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 24px 12px; min-height: calc(100vh - 200px); }
     .tabs { display: flex; gap: 2px; background: var(--gray-100); border-radius: 9px; padding: 3px; margin-bottom: 12px; border: 1px solid var(--gray-200); }
     .tab { flex: 1; padding: 6px 8px; border-radius: 7px; font-size: 12px; font-weight: 500; color: var(--gray-600); cursor: pointer; text-align: center; border: none; background: transparent; transition: all 0.15s; font-family: inherit; }
     .tab.active { background: var(--blue); color: #fff; box-shadow: var(--shadow); }
@@ -97,7 +97,7 @@
     .empty-state { text-align: center; padding: 28px 16px; color: var(--gray-400); font-size: 12px; }
 
     /* ====== FOOTER ====== */
-    .footer { background: #0F172A; border-top: 1px solid rgba(255,255,255,0.08); padding: 7px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap; gap: 6px; position: fixed; bottom: 0; left: 0; right: 0; z-index: 200; min-height: 44px; padding-bottom: env(safe-area-inset-bottom, 0px); }
+    .footer { background: #0F172A; border-top: 1px solid rgba(255,255,255,0.08); padding: 5px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap; gap: 6px; position: fixed; bottom: 0; left: 0; right: 0; z-index: 200; height: 44px; box-sizing: border-box; }
     .footer-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.6px; }
     .btn-action { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 7px; font-size: 11px; font-weight: 500; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.9); transition: all 0.15s; font-family: inherit; }
     .btn-action:hover { background: rgba(255,255,255,0.18); }
@@ -153,9 +153,9 @@
       .panels-top { padding: 10px 10px 8px; background: transparent; }
       .main-body { padding: 0 10px 8px; }
       .header { padding: 0 12px; height: 52px; }
-      .footer { padding: 6px 10px; flex-direction: row; align-items: center; gap: 4px; flex-wrap: nowrap; justify-content: space-around; }
+      .footer { padding: 4px 8px; flex-direction: row; align-items: center; gap: 3px; flex-wrap: nowrap; justify-content: space-around; height: 40px; }
       .footer-label { display: none; }
-      .btn-action { padding: 5px 6px; font-size: 10px; white-space: nowrap; flex: 1; justify-content: center; }
+      .btn-action { padding: 4px 6px; font-size: 10px; white-space: nowrap; flex: 1; justify-content: center; }
       .footer > div:last-child { display: flex; flex-wrap: wrap; gap: 5px; }
       .btn-action { font-size: 11px; padding: 6px 9px; }
       /* Header móvil sin sesión: solo iconos */
@@ -249,7 +249,7 @@
     <div class="section-label">Notas Generales</div>
     <textarea class="input" rows="2" placeholder="Recomendaciones, frecuencia, instrucciones..." id="planNotes" style="resize:none;margin-bottom:12px;"></textarea>
     <div class="section-label">Ejercicios Seleccionados</div>
-    <div id="selectedExercises" style="flex:1;overflow-y:auto;max-height:220px;">
+    <div id="selectedExercises" style="flex:1;overflow-y:auto;">
       <div class="empty-state"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg><br>Añade ejercicios desde el buscador</div>
     </div>
   </div>
