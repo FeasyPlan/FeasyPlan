@@ -1765,11 +1765,11 @@ function renderCreateTab() {
 
   el.innerHTML = `
     <div style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;">
+      <input type="file" id="exImgInput" accept="image/*,.heic,.heif" style="display:none;" onchange="handleExerciseImageUpload(this)">
       <div style="display:flex;gap:10px;align-items:flex-start;">
-        <label style="cursor:pointer;flex-shrink:0;">
+        <div id="exImgPreview" style="cursor:pointer;flex-shrink:0;" onclick="document.getElementById('exImgInput').click()">
           ${imgPreview}
-          <input type="file" id="exImgInput" accept="image/*,.heic,.heif" style="display:none;" onchange="handleExerciseImageUpload(this)">
-        </label>
+        </div>
         <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
           <input class="input" style="background:white;" placeholder="Nombre del ejercicio*" value="${ex.name}" oninput="state.newExercise.name=this.value" id="exName">
           <div style="display:flex;gap:5px;">
@@ -1784,7 +1784,7 @@ function renderCreateTab() {
         <div style="flex:1;"><div style="font-size:10px;font-weight:700;color:var(--gray-400);margin-bottom:3px;">REPS</div><input class="input" type="number" value="${ex.reps}" min="1" oninput="state.newExercise.reps=this.value" style="background:white;"></div>
         <div style="flex:1;"><div style="font-size:10px;font-weight:700;color:var(--gray-400);margin-bottom:3px;">SEG.</div><input class="input" value="${ex.duration}" oninput="state.newExercise.duration=this.value" placeholder="-" style="background:white;"></div>
       </div>
-      <select class="filter-sel" onchange="state.newExercise.material=this.value" style="width:100%;">${MATERIALES.filter(m=>m!=='Todos').map(m=>`<option ${ex.material===m?'selected':''}>${m}</option>`).join('')}</select>
+      <select class="filter-sel" onchange="state.newExercise.material=this.value" style="flex:1;">${MATERIALES.filter(m=>m!=='Todos').map(m=>`<option ${ex.material===m?'selected':''}>${m}</option>`).join('')}</select>
       <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="saveCustomExercise()">Guardar ejercicio</button>
       ${ex.img ? `<button onclick="state.newExercise.img=null;renderTab()" style="font-size:11px;color:var(--gray-400);background:none;border:none;cursor:pointer;">Eliminar foto</button>` : ''}
     </div>
@@ -1825,10 +1825,13 @@ function handleExerciseImageUpload(input) {
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
       state.newExercise.img = canvas.toDataURL('image/jpeg', 0.85);
-      renderTab();
+      // Update preview without full re-render
+      const preview = document.getElementById('exImgPreview');
+      if (preview) {
+        preview.innerHTML = `<img src="${state.newExercise.img}" style="width:80px;height:80px;object-fit:cover;border-radius:9px;border:1px solid var(--gray-200);" onclick="document.getElementById('exImgInput').click()">`;
+      }
       showToast('Imagen cargada ✓');
     };
-    // Set src AFTER defining onload to avoid race condition
     img.src = dataUrl;
   };
   reader.readAsDataURL(file);
