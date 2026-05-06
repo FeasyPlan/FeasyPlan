@@ -243,6 +243,7 @@
         <div class="plan-title">Plan de Ejercicios</div>
         <div class="plan-subtitle" id="planPhysioName">Sin fisioterapeuta</div>
       </div>
+      <button onclick="handleAction('savePlan')" title="Guardar plan" style="background:var(--blue-light);border:1px solid var(--blue-mid);cursor:pointer;padding:5px 9px;border-radius:7px;color:var(--blue);display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;font-family:inherit;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Guardar en Mis Planes</button>
       <button onclick="confirmClearPlan()" title="Limpiar plan" style="background:none;border:none;cursor:pointer;padding:4px;border-radius:6px;color:var(--gray-400);display:flex;align-items:center;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--gray-400)'">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
       </button>
@@ -251,7 +252,7 @@
     <textarea class="input" rows="2" placeholder="Recomendaciones, frecuencia, instrucciones..." id="planNotes" style="resize:none;margin-bottom:12px;"></textarea>
     <div class="section-label" style="display:flex;align-items:center;justify-content:space-between;">
       <span>Ejercicios Seleccionados</span>
-      <span style="font-size:9px;font-weight:500;color:var(--blue);background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:5px;padding:2px 6px;letter-spacing:0.3px;display:flex;align-items:center;gap:3px;">
+      <span onclick="showPlanPreview()" style="font-size:9px;font-weight:500;color:var(--blue);background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:5px;padding:2px 6px;letter-spacing:0.3px;display:flex;align-items:center;gap:3px;cursor:pointer;" onmouseover="this.style.background='var(--blue-mid)'" onmouseout="this.style.background='var(--blue-light)'">
         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         Vista previa del informe
       </span>
@@ -269,7 +270,7 @@
     <button class="btn-action blue" onclick="handleAction('email')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Email</button>
     <button class="btn-action blue" onclick="handleAction('whatsapp')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> WhatsApp</button>
     <button class="btn-action blue" onclick="handleAction('download')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> PDF</button>
-    <button class="btn-action premium" onclick="handleAction('savePlan')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Guardar Plan</button>
+
   </div>
 </div>
 
@@ -2490,6 +2491,55 @@ async function deletePlan(id) {
   } catch(e) {
     showToast('Error al eliminar el plan');
   }
+}
+
+function showPlanPreview() {
+  if (!state.selectedExercises.length) { showToast('Añade ejercicios al plan primero'); return; }
+  const notes = document.getElementById('planNotes').value.trim();
+  const physioName = state.physio.name || 'Sin fisioterapeuta';
+  const clinicName = state.physio.clinic || '';
+  const patientName = state.patient?.name || 'Sin paciente';
+  const date = new Date().toLocaleDateString('es-ES', {day:'2-digit', month:'long', year:'numeric'});
+
+  showPopup(`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--gray-900);">Vista previa del informe</div>
+        <div style="font-size:11px;color:var(--gray-400);">${date}</div>
+      </div>
+      <div style="background:var(--blue);color:#fff;border-radius:8px;padding:6px 10px;font-size:10px;font-weight:700;letter-spacing:0.5px;">PDF</div>
+    </div>
+    <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:10px;padding:12px;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;gap:10px;">
+        <div>
+          <div style="font-size:9px;font-weight:700;color:var(--blue);letter-spacing:0.5px;margin-bottom:3px;">FISIOTERAPEUTA</div>
+          <div style="font-size:13px;font-weight:700;color:var(--gray-900);">${physioName}</div>
+          ${clinicName ? `<div style="font-size:11px;color:var(--gray-400);">${clinicName}</div>` : ''}
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:9px;font-weight:700;color:var(--blue);letter-spacing:0.5px;margin-bottom:3px;">PACIENTE</div>
+          <div style="font-size:13px;font-weight:700;color:var(--gray-900);">${patientName}</div>
+        </div>
+      </div>
+    </div>
+    ${notes ? `<div style="background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:8px;padding:9px 12px;margin-bottom:12px;font-size:11px;color:var(--gray-700);line-height:1.5;"><strong>Notas:</strong> ${notes}</div>` : ''}
+    <div style="font-size:10px;font-weight:700;color:var(--gray-400);letter-spacing:0.5px;margin-bottom:8px;">EJERCICIOS (${state.selectedExercises.length})</div>
+    <div style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;">
+      ${state.selectedExercises.map((ex, i) => `
+        <div style="display:flex;align-items:center;gap:8px;background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:8px;padding:7px 10px;">
+          <div style="width:20px;height:20px;border-radius:50%;background:var(--blue);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${i+1}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12px;font-weight:600;color:var(--blue);">${ex.name}</div>
+            <div style="font-size:10px;color:var(--gray-400);">${ex.series} series · ${ex.reps} reps${ex.duration?' · '+ex.duration+'s':''}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="popup-btns" style="margin-top:14px;">
+      <button class="btn-full primary" onclick="closePopup();handleAction('download')">Descargar PDF</button>
+      <button class="btn-full outline" onclick="closePopup()">Cerrar</button>
+    </div>
+  `);
 }
 
 function confirmClearPlan() {
