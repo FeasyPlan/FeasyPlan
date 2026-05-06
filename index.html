@@ -85,9 +85,10 @@
     .plan-title { font-size: 15px; font-weight: 700; color: var(--gray-900); }
     .plan-subtitle { font-size: 12px; color: var(--gray-400); }
     .section-label { font-size: 10px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 7px; }
-    .sel-ex-card { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 9px 11px; margin-bottom: 6px; }
+    .sel-ex-card { background: var(--blue-light); border: 1.5px solid var(--blue-mid); border-radius: var(--radius); padding: 9px 11px; margin-bottom: 6px; position: relative; }
+    .sel-ex-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--blue); border-radius: var(--radius) 0 0 var(--radius); }
     .sel-ex-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
-    .sel-ex-name { font-size: 12px; font-weight: 600; color: var(--gray-900); }
+    .sel-ex-name { font-size: 12px; font-weight: 700; color: var(--blue); }
     .btn-remove { width: 20px; height: 20px; border-radius: 5px; background: var(--red-light); color: var(--red); border: none; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; }
     .params-row { display: flex; gap: 5px; flex-wrap: wrap; }
     .param-field { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 55px; }
@@ -248,7 +249,13 @@
     </div>
     <div class="section-label">Notas Generales</div>
     <textarea class="input" rows="2" placeholder="Recomendaciones, frecuencia, instrucciones..." id="planNotes" style="resize:none;margin-bottom:12px;"></textarea>
-    <div class="section-label">Ejercicios Seleccionados</div>
+    <div class="section-label" style="display:flex;align-items:center;justify-content:space-between;">
+      <span>Ejercicios Seleccionados</span>
+      <span style="font-size:9px;font-weight:500;color:var(--blue);background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:5px;padding:2px 6px;letter-spacing:0.3px;display:flex;align-items:center;gap:3px;">
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Vista previa del informe
+      </span>
+    </div>
     <div id="selectedExercises" style="flex:1;overflow-y:auto;">
       <div class="empty-state"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg><br>Añade ejercicios desde el buscador</div>
     </div>
