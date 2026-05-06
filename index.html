@@ -404,12 +404,11 @@ async function init() {
       state.credits = null;
       render();
     } else if (event === 'PASSWORD_RECOVERY') {
-      // Usuario viene del enlace de recuperación — mostrar popup para nueva contraseña
+      console.log('PASSWORD_RECOVERY event detected');
       state.user = session.user;
       await loadUserData();
       render();
-      setTimeout(() => showChangePasswordPopup(), 800);
-      return; // No continuar con el flujo normal
+      showChangePasswordPopup();
     } else if (session?.user && !state.user) {
       state.user = session.user;
       await loadUserData();
