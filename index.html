@@ -397,8 +397,10 @@ async function init() {
     } else if (event === 'PASSWORD_RECOVERY') {
       // Usuario viene del enlace de recuperación — mostrar popup para nueva contraseña
       state.user = session.user;
+      await loadUserData();
       render();
-      setTimeout(() => showChangePasswordPopup(), 500);
+      setTimeout(() => showChangePasswordPopup(), 800);
+      return; // No continuar con el flujo normal
     } else if (session?.user && !state.user) {
       state.user = session.user;
       await loadUserData();
@@ -1641,7 +1643,7 @@ async function doForgot() {
   btn.disabled = true;
 
   const { error } = await sb.auth.resetPasswordForEmail(email, {
-    redirectTo: 'https://feasyplan.pro',
+    redirectTo: 'https://feasyplan.pro/',
   });
 
   if (error) {
