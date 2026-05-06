@@ -2243,7 +2243,7 @@ function renderPlansList() {
             <div style="font-size:11px;color:var(--gray-400);margin-bottom:8px;">${exCount} ejercicio${exCount!==1?'s':''}${plan.general_notes ? ' · ' + plan.general_notes.substring(0,30) + (plan.general_notes.length>30?'...':'') : ''}</div>
             <div style="display:flex;gap:5px;">
               <button onclick="loadPlan('${plan.id}')" style="flex:1;padding:5px;border-radius:6px;border:1px solid var(--blue-mid);background:var(--blue-light);color:var(--blue);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">Cargar plan</button>
-              <button onclick="deletePlan(${plan.id})" style="padding:5px 8px;border-radius:6px;border:1px solid var(--gray-200);background:var(--red-light);color:var(--red);font-size:11px;cursor:pointer;font-family:inherit;">✕</button>
+              <button onclick="confirmDeletePlan('${plan.id}')" style="padding:5px 8px;border-radius:6px;border:1px solid var(--gray-200);background:var(--red-light);color:var(--red);font-size:11px;cursor:pointer;font-family:inherit;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>
             </div>
           </div>`;
       }).join('')}
@@ -2464,10 +2464,27 @@ async function loadPlan(id) {
   }, 400);
 }
 
+function confirmDeletePlan(id) {
+  const plan = state.savedPlans.find(p => String(p.id) === String(id));
+  const name = plan ? (plan.name || 'este plan') : 'este plan';
+  showPopup(`
+    <div class="popup-icon" style="background:var(--red-light);">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+    </div>
+    <h2>¿Eliminar plan?</h2>
+    <p>Se eliminará <strong>${name}</strong>. Esta acción no se puede deshacer.</p>
+    <div class="popup-btns">
+      <button class="btn-full" style="background:var(--red);color:#fff;" onclick="deletePlan('${id}')">Sí, eliminar</button>
+      <button class="btn-full outline" onclick="closePopup()">Cancelar</button>
+    </div>
+  `);
+}
+
 async function deletePlan(id) {
+  closePopup();
   try {
     await sb.from('plans').delete().eq('id', id).eq('user_id', state.user.id);
-    state.savedPlans = state.savedPlans.filter(p => p.id !== id);
+    state.savedPlans = state.savedPlans.filter(p => String(p.id) !== String(id));
     renderPlansTab();
     showToast('Plan eliminado');
   } catch(e) {
