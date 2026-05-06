@@ -1546,7 +1546,58 @@ function showLoginPopup(context) {
       <button class="btn-full outline" onclick="closePopup()">Cancelar</button>
     </div>
     <div class="popup-link" onclick="showRegisterPopup()">¿No tienes cuenta? <span>Regístrate gratis</span></div>
+    <div class="popup-link" onclick="showForgotPopup()" style="margin-top:4px;">¿Olvidaste tu contraseña? <span>Recupérala</span></div>
   `);
+}
+
+function showForgotPopup() {
+  showPopup(`
+    <div class="popup-icon blue">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <h2>Recuperar contraseña</h2>
+    <p>Introduce tu email y te enviaremos un enlace para crear una nueva contraseña.</p>
+    <div class="error-msg" id="forgotError"></div>
+    <div class="popup-form">
+      <div><label class="form-label">Email</label><input class="input" type="email" placeholder="tu@email.com" id="forgotEmail" style="background:white;" onkeydown="if(event.key==='Enter')doForgot()"></div>
+    </div>
+    <div class="popup-btns">
+      <button class="btn-full primary" id="forgotBtn" onclick="doForgot()">Enviar enlace</button>
+      <button class="btn-full outline" onclick="showLoginPopup()">Volver al login</button>
+    </div>
+  `);
+  setTimeout(() => document.getElementById('forgotEmail')?.focus(), 100);
+}
+
+async function doForgot() {
+  const email = document.getElementById('forgotEmail')?.value.trim();
+  const btn = document.getElementById('forgotBtn');
+  const errEl = document.getElementById('forgotError');
+  if (!email) { showError(errEl, 'Introduce tu email'); return; }
+
+  btn.innerHTML = '<span class="loading-spinner"></span> Enviando...';
+  btn.disabled = true;
+
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://feasyplan.pro',
+  });
+
+  if (error) {
+    btn.innerHTML = 'Enviar enlace';
+    btn.disabled = false;
+    showError(errEl, 'No se pudo enviar el email. Comprueba que es correcto.');
+  } else {
+    showPopup(`
+      <div class="popup-icon blue">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      </div>
+      <h2>Email enviado</h2>
+      <p>Revisa tu bandeja de entrada en <strong>${email}</strong> y sigue el enlace para crear una nueva contraseña.</p>
+      <div class="popup-btns">
+        <button class="btn-full primary" onclick="closePopup()">Entendido</button>
+      </div>
+    `);
+  }
 }
 
 function showRegisterPopup() {
@@ -2195,9 +2246,18 @@ function loadTemplate(id) {
   });
 
   document.getElementById('planNotes').value = t.general_notes || '';
+  updateAddButtons();
   renderSelectedExercises();
   switchTab('search');
   showToast('Plantilla cargada: ' + t.name + ' ✓');
+  // Scroll suave al plan de ejercicios
+  setTimeout(() => {
+    const planPanel = document.getElementById('planPanel');
+    if (planPanel) {
+      const targetY = planPanel.getBoundingClientRect().top + window.scrollY - 10;
+      window.scrollTo({ top: targetY, behavior: 'smooth' });
+    }
+  }, 300);
 }
 
 function showSavePlanPopup() {
@@ -2292,6 +2352,14 @@ async function loadPlan(id) {
   }, 50);
 
   showToast('Plan cargado: ' + plan.name + ' ✓');
+  // Scroll suave al plan de ejercicios
+  setTimeout(() => {
+    const planPanel = document.getElementById('planPanel');
+    if (planPanel) {
+      const targetY = planPanel.getBoundingClientRect().top + window.scrollY - 10;
+      window.scrollTo({ top: targetY, behavior: 'smooth' });
+    }
+  }, 400);
 }
 
 async function deletePlan(id) {
