@@ -394,12 +394,67 @@ async function init() {
       state.profile = null;
       state.credits = null;
       render();
+    } else if (event === 'PASSWORD_RECOVERY') {
+      // Usuario viene del enlace de recuperación — mostrar popup para nueva contraseña
+      state.user = session.user;
+      render();
+      setTimeout(() => showChangePasswordPopup(), 500);
     } else if (session?.user && !state.user) {
       state.user = session.user;
       await loadUserData();
       render();
     }
   });
+}
+
+function showChangePasswordPopup() {
+  showPopup(`
+    <div class="popup-icon blue">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <h2>Nueva contraseña</h2>
+    <p>Elige una contraseña segura para tu cuenta.</p>
+    <div class="error-msg" id="pwError"></div>
+    <div class="popup-form">
+      <div>
+        <label class="form-label">Nueva contraseña</label>
+        <input class="input" type="password" id="newPw" placeholder="Mínimo 8 caracteres" style="background:white;">
+      </div>
+      <div>
+        <label class="form-label">Confirmar contraseña</label>
+        <input class="input" type="password" id="newPw2" placeholder="Repite la contraseña" style="background:white;" onkeydown="if(event.key==='Enter')doChangePassword()">
+      </div>
+    </div>
+    <div class="popup-btns">
+      <button class="btn-full primary" id="changePwBtn" onclick="doChangePassword()">Guardar contraseña</button>
+    </div>
+  `);
+  setTimeout(() => document.getElementById('newPw')?.focus(), 100);
+}
+
+async function doChangePassword() {
+  const pw = document.getElementById('newPw')?.value;
+  const pw2 = document.getElementById('newPw2')?.value;
+  const errEl = document.getElementById('pwError');
+  const btn = document.getElementById('changePwBtn');
+
+  if (!pw || pw.length < 8) { showError(errEl, 'La contraseña debe tener al menos 8 caracteres'); return; }
+  if (pw !== pw2) { showError(errEl, 'Las contraseñas no coinciden'); return; }
+
+  btn.textContent = 'Guardando...';
+  btn.disabled = true;
+
+  const { error } = await sb.auth.updateUser({ password: pw });
+  if (error) {
+    btn.textContent = 'Guardar contraseña';
+    btn.disabled = false;
+    showError(errEl, 'Error al cambiar la contraseña. Inténtalo de nuevo.');
+  } else {
+    closePopup();
+    showToast('Contraseña actualizada correctamente ✓');
+    await loadUserData();
+    render();
+  }
 }
 
 async function loadUserData() {
