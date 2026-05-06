@@ -488,7 +488,7 @@ async function doChangePassword() {
     showError(errEl, 'Error al cambiar la contraseña. Inténtalo de nuevo.');
   } else {
     state.changingPassword = false;
-    closePopup();
+    closePopup(true);
     showToast('Contraseña actualizada correctamente ✓');
     await loadUserData();
     render();
@@ -2652,13 +2652,15 @@ function showPopup(html) {
   document.body.style.overflow = 'hidden';
 }
 
-function closePopup() {
+function closePopup(force) {
+  if (state.changingPassword && !force) return; // No cerrar si estamos cambiando contraseña
   document.getElementById('overlay').classList.remove('open');
   document.body.style.overflow = '';
 }
 
 function handleOverlayClick(e) {
   if (e.target === document.getElementById('overlay')) closePopup();
+  // closePopup ya gestiona el flag changingPassword internamente
 }
 
 function showError(el, msg) {
