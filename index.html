@@ -385,6 +385,15 @@ async function init() {
     state.user = session.user;
     await loadUserData();
     render();
+
+    // Detectar si viene de un enlace de recuperación de contraseña
+    const hash = window.location.hash;
+    const params = new URLSearchParams(hash.replace('#', '?'));
+    const type = params.get('type');
+    if (type === 'recovery') {
+      setTimeout(() => showChangePasswordPopup(), 600);
+      window.history.replaceState(null, '', window.location.pathname);
+    }
   }
 
   // Escuchar cambios futuros de sesión
