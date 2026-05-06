@@ -308,6 +308,7 @@ let state = {
   profile: null,
   credits: null,
   physio: { name:'', clinic:'', phone:'', email:'', logo:null, copyEmail:false },
+  changingPassword: false,
   physioEditing: false,
   patient: null,
   patients: [], // lista cargada desde Supabase
@@ -443,6 +444,7 @@ async function init() {
 }
 
 function showChangePasswordPopup() {
+  state.changingPassword = true;
   showPopup(`
     <div class="popup-icon blue">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -485,6 +487,7 @@ async function doChangePassword() {
     btn.disabled = false;
     showError(errEl, 'Error al cambiar la contraseña. Inténtalo de nuevo.');
   } else {
+    state.changingPassword = false;
     closePopup();
     showToast('Contraseña actualizada correctamente ✓');
     await loadUserData();
@@ -559,6 +562,8 @@ async function loadUserData() {
 // RENDER PRINCIPAL
 // ============================================
 function render() {
+  // No re-renderizar si hay un popup de cambio de contraseña abierto
+  if (state.changingPassword) return;
   renderHeader();
   renderPhysio();
   renderPlanHeader();
