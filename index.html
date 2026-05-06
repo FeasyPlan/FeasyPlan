@@ -370,6 +370,31 @@ async function loadTemplates() {
 }
 
 async function init() {
+  // Detectar recuperación de contraseña ANTES de todo
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
+  const accessToken = hashParams.get('access_token');
+  const tokenType = hashParams.get('type');
+  const isRecovery = tokenType === 'recovery';
+
+  if (isRecovery && accessToken) {
+    // Limpiar hash de la URL
+    window.history.replaceState(null, '', window.location.pathname);
+    // Establecer sesión manualmente con el token
+    const { data, error } = await sb.auth.setSession({
+      access_token: accessToken,
+      refresh_token: hashParams.get('refresh_token') || ''
+    });
+    if (!error && data.user) {
+      state.user = data.user;
+      await loadExercises();
+      await loadTemplates();
+      await loadUserData();
+      render();
+      setTimeout(() => showChangePasswordPopup(), 300);
+      return;
+    }
+  }
+
   // Cargar ejercicios desde Supabase
   await loadExercises();
 
