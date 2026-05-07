@@ -1328,7 +1328,21 @@ async function handleAction(type) {
     showSavePlanPopup(); return;
   }
   if (type === 'saveClient') { doSaveClient(); return; }
-  if (!state.selectedExercises.length) { showToast('⚠️ Añade ejercicios al plan primero'); return; }
+  if (!state.selectedExercises.length) { showToast('Añade ejercicios al plan primero'); return; }
+  if (!state.patient || !state.patient.name) {
+    showPopup(`
+      <div class="popup-icon blue">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <h2>Falta el paciente</h2>
+      <p>Añade los datos del paciente antes de enviar o descargar el plan. El documento debe ir personalizado con su nombre.</p>
+      <div class="popup-btns">
+        <button class="btn-full primary" onclick="closePopup();handleNewPatient()">Añadir paciente</button>
+        <button class="btn-full outline" onclick="closePopup()">Cancelar</button>
+      </div>
+    `);
+    return;
+  }
 
   // Comprobar créditos
   await sb.rpc('reset_daily_credits_if_needed', { p_user_id: state.user.id });
