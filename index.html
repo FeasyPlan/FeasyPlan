@@ -518,6 +518,7 @@ async function loadUserData() {
     state.physio.email = profile.email || pendingEmail;
     state.physio.logo = profile.logo_url || pendingLogo;
     state.physio.copyEmail = profile.copy_email || false;
+    if (profile.ls_subscription_id) state.profile.ls_subscription_id = profile.ls_subscription_id;
     // Si había datos pendientes sin guardar, guardarlos automáticamente
     if (pendingName && !profile.name) {
       setTimeout(() => savePhysio(), 800);
@@ -2046,9 +2047,56 @@ function showCancelSubscriptionPopup() {
   `);
 }
 
-function doCancelSubscription() {
+async function doCancelSubscription() {
   closePopup();
-  showToast('Para cancelar tu suscripción contacta con soporte@feasyplan.pro');
+  
+  const subId = state.profile?.ls_subscription_id;
+  if (!subId) {
+    showToast('Contacta con soporte@feasyplan.pro para cancelar');
+    return;
+  }
+
+  showPopup(`
+    <div style="text-align:center;padding:20px;">
+      <div style="font-size:14px;font-weight:600;color:var(--gray-900);margin-bottom:8px;">Cancelando suscripción...</div>
+      <div style="font-size:12px;color:var(--gray-400);">Por favor espera</div>
+    </div>
+  `);
+
+  try {
+    // Llamar a Edge Function para cancelar en Lemon Squeezy
+    const res = await fetch('https://hqofqaqlhknyxrazgwtc.supabase.co/functions/v1/cancel-subscription', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + (await sb.auth.getSession()).data.session?.access_token
+      },
+      body: JSON.stringify({ subscription_id: subId })
+    });
+
+    if (res.ok) {
+      state.profile.is_premium = false;
+      state.profile.ls_subscription_id = null;
+      closePopup(true);
+      render();
+      showPopup(`
+        <div style="text-align:center;padding:10px 0;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px;"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/></svg>
+          <div style="font-size:16px;font-weight:700;color:var(--gray-900);margin-bottom:8px;">Suscripción cancelada</div>
+          <div style="font-size:13px;color:var(--gray-500);line-height:1.6;">Recibirás un email de confirmación. Tus datos estarán guardados durante 2 meses.</div>
+        </div>
+        <div class="popup-btns" style="margin-top:16px;">
+          <button class="btn-full outline" onclick="closePopup(true)">Cerrar</button>
+        </div>
+      `);
+    } else {
+      closePopup(true);
+      showToast('Error al cancelar. Contacta con soporte@feasyplan.pro');
+    }
+  } catch(e) {
+    closePopup(true);
+    showToast('Error de conexión. Contacta con soporte@feasyplan.pro');
+  }
 }
 
 function showNewPatientPopup() {
