@@ -1146,6 +1146,7 @@ function handleNewPlan() {
 
 function handlePatientSearch(query) {
   if (!state.user) { showLoginPopup(); return; }
+  if (!state.profile?.is_premium) { showPayPopup(); document.getElementById('patientSearch').blur(); return; }
   const dropdown = document.getElementById('patientDropdown');
   if (!query.trim()) { dropdown.style.display = 'none'; return; }
   const q = query.toLowerCase();
@@ -1166,6 +1167,7 @@ function handlePatientSearch(query) {
 
 function handlePatientSearchFocus() {
   if (!state.user) { showLoginPopup(); return; }
+  if (!state.profile?.is_premium) { showPayPopup(); document.getElementById('patientSearch').blur(); return; }
   if (state.patients.length > 0) {
     const dropdown = document.getElementById('patientDropdown');
     dropdown.innerHTML = state.patients.map((p, idx) => `
@@ -1198,6 +1200,7 @@ document.addEventListener('click', function(e) {
 
 function handleNewPatient() {
   if (!state.user) { showLoginPopup('patient'); return; }
+  // Nuevo paciente libre para todos los usuarios logueados
   showNewPatientPopup();
 }
 
@@ -1289,6 +1292,7 @@ function clearPatient() {
 
 async function doSaveClient() {
   if (!state.user) { showLoginPopup(); return; }
+  if (!state.profile?.is_premium) { showPayPopup(); return; }
   if (!state.patient) return;
   try {
     const payload = {
