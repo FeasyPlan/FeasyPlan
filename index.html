@@ -1897,6 +1897,13 @@ function showPayPopup() {
   showPopup(`
     <div class="popup-icon amber"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9z"/><path d="M11 3L8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg></div>
     <h2>Plan Premium</h2>
+    <div style="background:linear-gradient(135deg,#0F172A,#1E3A5F);border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">
+      <div style="width:36px;height:36px;border-radius:8px;background:rgba(147,197,253,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#93C5FD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></div>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#fff;">14 días de prueba gratis</div>
+        <div style="font-size:11px;color:#93C5FD;">Sin compromiso · Cancela cuando quieras</div>
+      </div>
+    </div>
     <p>Desbloquea todo el potencial de FeasyPlan.</p>
     <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">
       <div class="plan-feature"><span class="plan-feature-icon">✓</span> PDFs ilimitados con tu logo</div>
@@ -1962,7 +1969,7 @@ function showCreditsInfo() {
 
 function showCreditPopup() {
   showPopup(`
-    <div class="popup-icon amber">⚡</div>
+    <div class="popup-icon amber"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
     <h2>Créditos agotados</h2>
     <p>Has usado tus <strong>${state.credits?.daily_limit || 2} créditos diarios</strong>. Se recargan automáticamente mañana, o actualiza a Premium para generación ilimitada.</p>
     <div class="popup-btns">
@@ -2048,7 +2055,7 @@ function doCancelSubscription() {
 function showNewPatientPopup() {
   document.body.style.overflow = 'hidden';
   showPopup(`
-    <div class="popup-icon blue">👤</div>
+    <div class="popup-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
     <h2>Nuevo Paciente</h2>
     <p>Añade los datos del paciente para este plan.</p>
     <div class="popup-form">
