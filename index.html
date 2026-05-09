@@ -1806,6 +1806,12 @@ function showRegisterPopup() {
       <div><label class="form-label">Email</label><input class="input" type="email" placeholder="tu@email.com" id="regEmail" style="background:white;"></div>
       <div><label class="form-label">Contraseña</label><input class="input" type="password" placeholder="Mínimo 6 caracteres" id="regPass" style="background:white;" onkeydown="if(event.key==='Enter')doRegister()"></div>
     </div>
+    <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:14px;padding:10px 12px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200);">
+      <input type="checkbox" id="termsCheck" style="width:16px;height:16px;margin-top:2px;flex-shrink:0;cursor:pointer;accent-color:var(--blue);">
+      <label for="termsCheck" style="font-size:12px;color:var(--gray-600);line-height:1.5;cursor:pointer;">
+        He leído y acepto los <a href="https://feasyplan.pro/terminos" target="_blank" style="color:var(--blue);font-weight:600;">Términos y Condiciones</a> y la <a href="https://feasyplan.pro/privacidad" target="_blank" style="color:var(--blue);font-weight:600;">Política de Privacidad</a>. Entiendo que mis datos se tratan conforme al RGPD.
+      </label>
+    </div>
     <div class="popup-btns">
       <button class="btn-full primary" id="regBtn" onclick="doRegister()">Crear cuenta gratis</button>
       <button class="btn-full outline" onclick="closePopup()">Cancelar</button>
@@ -1858,13 +1864,17 @@ async function doRegister() {
 
   if (!name || !email || !pass) { showError(errEl, 'Completa todos los campos'); return; }
   if (pass.length < 6) { showError(errEl, 'La contraseña debe tener al menos 6 caracteres'); return; }
+  if (!document.getElementById('termsCheck')?.checked) { showError(errEl, 'Debes aceptar los Términos y la Política de Privacidad para continuar'); return; }
 
   btn.innerHTML = '<span class="loading-spinner"></span> Creando cuenta...';
   btn.disabled = true;
 
   const { error } = await sb.auth.signUp({
     email, password: pass,
-    options: { data: { name }, emailRedirectTo: window.location.href }
+    options: { 
+      data: { name, terms_accepted_at: new Date().toISOString(), terms_version: '1.0' },
+      emailRedirectTo: window.location.href 
+    }
   });
 
   if (error) {
