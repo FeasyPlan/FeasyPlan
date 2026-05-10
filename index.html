@@ -167,7 +167,7 @@
 
       .main-body { padding: 0 10px 8px; }
       .header { padding: 0 12px; height: 52px; }
-      .footer { padding: 5px 8px; flex-direction: row; align-items: center; gap: 3px; flex-wrap: nowrap; justify-content: space-around; }
+      .footer { padding: 5px 8px; flex-direction: row; align-items: center; gap: 3px; flex-wrap: nowrap; justify-content: space-around; position: sticky; bottom: 0; }
       .footer-label { display: none; }
       .btn-action { padding: 4px 6px; font-size: 10px; white-space: nowrap; flex: 1; justify-content: center; }
       .footer > div:last-child { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -2942,16 +2942,15 @@ window.addEventListener('resize', () => {
 
 function adjustFooterPadding() {
   const footer = document.querySelector('.footer');
-  if (footer) {
+  const isMobile = window.innerWidth <= 700;
+  if (footer && !isMobile) {
     const h = footer.getBoundingClientRect().height;
-    document.body.style.paddingBottom = (h + 20) + 'px';
+    document.body.style.paddingBottom = (h + 16) + 'px';
+  } else {
+    document.body.style.paddingBottom = '0';
   }
 }
-
-// Run on load, resize and scroll
-setTimeout(adjustFooterPadding, 100);
-setTimeout(adjustFooterPadding, 500);
-document.addEventListener('scroll', adjustFooterPadding, { passive: true });
+setTimeout(adjustFooterPadding, 200);
 init();
 </script>
 </body>
