@@ -349,6 +349,7 @@ async function loadExercises() {
       .from('exercises')
       .select('*')
       .eq('active', true)
+      .or('is_custom.is.null,is_custom.eq.false')
       .order('id', { ascending: true });
 
     if (error) throw error;
@@ -441,6 +442,10 @@ async function init() {
       state.user = null;
       state.profile = null;
       state.credits = null;
+      state.customExercises = [];
+      state.patients = [];
+      state.savedPlans = [];
+      state.favorites = new Set();
       render();
     } else if (event === 'PASSWORD_RECOVERY') {
       console.log('PASSWORD_RECOVERY event detected');
