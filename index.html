@@ -108,7 +108,7 @@
     .empty-state { text-align: center; padding: 28px 16px; color: var(--gray-400); font-size: 12px; }
 
     /* ====== FOOTER ====== */
-    .footer { background: #0F172A; border-top: 1px solid rgba(255,255,255,0.08); padding: 5px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap; gap: 6px; position: fixed; bottom: 0; left: 0; right: 0; z-index: 200; height: 44px; box-sizing: border-box; padding-bottom: max(5px, env(safe-area-inset-bottom)); }
+    .footer { background: #0F172A; border-top: 1px solid rgba(255,255,255,0.08); padding: 5px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap; gap: 6px; position: fixed; bottom: 0; left: 0; right: 0; z-index: 200; box-sizing: border-box; }
     .footer-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.6px; }
     .btn-action { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 7px; font-size: 11px; font-weight: 500; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.9); transition: all 0.15s; font-family: inherit; }
     .btn-action:hover { background: rgba(255,255,255,0.18); }
@@ -153,7 +153,9 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ====== RESPONSIVE ====== */
+    html { height: 100%; }
     html, body { overflow-x: hidden; max-width: 100vw; }
+    body { min-height: 100dvh; min-height: 100vh; }
 
     @media (max-width: 700px) {
       .panels-top, .main-body { grid-template-columns: 1fr; }
@@ -165,7 +167,7 @@
 
       .main-body { padding: 0 10px 8px; }
       .header { padding: 0 12px; height: 52px; }
-      .footer { padding: 4px 8px max(4px, env(safe-area-inset-bottom)); flex-direction: row; align-items: center; gap: 3px; flex-wrap: nowrap; justify-content: space-around; min-height: 40px; height: auto; }
+      .footer { padding: 5px 8px; flex-direction: row; align-items: center; gap: 3px; flex-wrap: nowrap; justify-content: space-around; }
       .footer-label { display: none; }
       .btn-action { padding: 4px 6px; font-size: 10px; white-space: nowrap; flex: 1; justify-content: center; }
       .footer > div:last-child { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -2941,14 +2943,15 @@ window.addEventListener('resize', () => {
 function adjustFooterPadding() {
   const footer = document.querySelector('.footer');
   if (footer) {
-    const h = footer.offsetHeight;
-    document.body.style.paddingBottom = (h + 24) + 'px';
+    const h = footer.getBoundingClientRect().height;
+    document.body.style.paddingBottom = (h + 20) + 'px';
   }
 }
 
-// Run after DOM ready and after each render
-setTimeout(adjustFooterPadding, 300);
-setTimeout(adjustFooterPadding, 1000);
+// Run on load, resize and scroll
+setTimeout(adjustFooterPadding, 100);
+setTimeout(adjustFooterPadding, 500);
+document.addEventListener('scroll', adjustFooterPadding, { passive: true });
 init();
 </script>
 </body>
