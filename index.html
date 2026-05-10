@@ -162,7 +162,7 @@
       .hero h1 { font-size: 13px; line-height: 1.2; flex-shrink: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       #pricingCards { gap: 5px; flex-shrink: 0; }
       .panels-top { padding: 10px 10px 8px; background: transparent; }
-      #app { padding-bottom: 100px; }
+      #app { padding-bottom: 140px; }
       .main-body { padding: 0 10px 8px; }
       .header { padding: 0 12px; height: 52px; }
       .footer { padding: 4px 8px; flex-direction: row; align-items: center; gap: 3px; flex-wrap: nowrap; justify-content: space-around; height: 40px; }
@@ -2739,7 +2739,7 @@ function doSubscribe(plan) {
     closePopup();
     // Store which plan was selected to redirect after login
     state.pendingSubscribePlan = plan;
-    showLoginPopup('subscribe');
+    showRegisterPopup();
     return;
   }
   closePopup();
