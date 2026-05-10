@@ -162,6 +162,7 @@
       .hero h1 { font-size: 13px; line-height: 1.2; flex-shrink: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       #pricingCards { gap: 5px; flex-shrink: 0; }
       .panels-top { padding: 10px 10px 8px; background: transparent; }
+      #app { padding-bottom: 100px; }
       .main-body { padding: 0 10px 8px; }
       .header { padding: 0 12px; height: 52px; }
       .footer { padding: 4px 8px; flex-direction: row; align-items: center; gap: 3px; flex-wrap: nowrap; justify-content: space-around; height: 40px; }
@@ -320,6 +321,7 @@ let state = {
   credits: null,
   physio: { name:'', clinic:'', phone:'', email:'', logo:null, copyEmail:false },
   changingPassword: false,
+  pendingSubscribePlan: null,
   physioEditing: false,
   patient: null,
   patients: [], // lista cargada desde Supabase
@@ -532,6 +534,12 @@ async function loadUserData() {
     // Si había datos pendientes sin guardar, guardarlos automáticamente
     if (pendingName && !profile.name) {
       setTimeout(() => savePhysio(), 800);
+    }
+    // Si había un plan de suscripción pendiente, redirigir al checkout
+    if (state.pendingSubscribePlan) {
+      const pendingPlan = state.pendingSubscribePlan;
+      state.pendingSubscribePlan = null;
+      setTimeout(() => doSubscribe(pendingPlan), 500);
     }
   }
 
@@ -2726,14 +2734,28 @@ function doClearPlan() {
 }
 
 function doSubscribe(plan) {
+  // Require login before payment
+  if (!state.user) {
+    closePopup();
+    // Store which plan was selected to redirect after login
+    state.pendingSubscribePlan = plan;
+    showLoginPopup('subscribe');
+    return;
+  }
   closePopup();
   const email = encodeURIComponent(state.user?.email || '');
-  // URLs de checkout de Lemon Squeezy — sustituir con las URLs reales del dashboard
   const urls = {
     monthly: 'https://feasyplan.lemonsqueezy.com/checkout/buy/4e40e8d1-7450-4564-87d4-b2318c769779?enabled=1611658&checkout[email]=' + email,
     annual: 'https://feasyplan.lemonsqueezy.com/checkout/buy/8efbe815-a634-444e-9768-01cb917dd18c?enabled=1611627&checkout[email]=' + email,
   };
-  window.open(urls[plan] || urls.monthly, '_blank');
+  const url = urls[plan] || urls.monthly;
+  // Use location.href for iOS PWA (window.open blocked in standalone mode)
+  const isIOSPWA = window.navigator.standalone === true;
+  if (isIOSPWA) {
+    window.location.href = url;
+  } else {
+    window.open(url, '_blank');
+  }
 }
 
 // ============================================
