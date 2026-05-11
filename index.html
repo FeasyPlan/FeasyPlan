@@ -77,7 +77,7 @@
     .tab { flex: 1; padding: 6px 4px; border-radius: 7px; font-size: 11px; font-weight: 500; color: var(--gray-600); cursor: pointer; text-align: center; border: none; background: transparent; transition: all 0.15s; font-family: inherit; white-space: nowrap; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 3px; }
     .tab.active { background: var(--blue); color: #fff; box-shadow: var(--shadow); }
     .filter-sel { border: 1px solid var(--gray-200); border-radius: 7px; padding: 6px 8px; font-size: 12px; color: var(--gray-600); background: var(--white); cursor: pointer; outline: none; flex: 1; font-family: inherit; }
-    .exercise-list { display: flex; flex-direction: column; gap: 6px; padding-right: 4px; }
+    .exercise-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; }
     .exercise-list::-webkit-scrollbar { width: 4px; }
     .exercise-list::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 4px; }
     .exercise-card { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 10px 12px; display: flex; align-items: flex-start; gap: 8px; transition: all 0.15s; }
@@ -238,7 +238,7 @@
 <!-- MAIN BODY -->
 <div class="main-body">
   <!-- Library -->
-  <div class="panel">
+  <div class="panel" id="leftPanel">
     <div class="tabs">
       <button class="tab active" id="tab-search" onclick="switchTab('search')">Buscar</button>
       <button class="tab" id="tab-templates" onclick="switchTab('templates')">Plantillas</button>
@@ -601,6 +601,7 @@ function render() {
   renderSelectedExercises();
   renderTabLabels();
   renderPricingCards();
+  setTimeout(syncPanelHeights, 50);
 }
 
 function renderPricingCards() {
@@ -2976,6 +2977,7 @@ function showToast(msg) {
 window.addEventListener('resize', () => {
   renderPricingCards();
   adjustFooterPadding();
+  syncPanelHeights();
 });
 
 function adjustFooterPadding() {
@@ -2988,7 +2990,31 @@ function adjustFooterPadding() {
     document.body.style.paddingBottom = '0';
   }
 }
+
+function syncPanelHeights() {
+  if (window.innerWidth <= 700) return; // solo desktop
+  const leftPanel = document.getElementById('leftPanel');
+  const planPanel = document.getElementById('planPanel');
+  const exerciseList = document.getElementById('exerciseList');
+  if (!leftPanel || !planPanel || !exerciseList) return;
+
+  // Get plan panel height
+  const planHeight = planPanel.getBoundingClientRect().height;
+
+  // Min height: show ~5 exercises (approx 420px with header)
+  const minHeight = 420;
+  const targetHeight = Math.max(planHeight, minHeight);
+
+  // Set left panel height
+  leftPanel.style.minHeight = targetHeight + 'px';
+
+  // Set exercise list max-height = panel height minus tabs/search/filters (~130px)
+  const listMaxHeight = targetHeight - 130;
+  exerciseList.style.maxHeight = Math.max(listMaxHeight, 280) + 'px';
+}
+
 setTimeout(adjustFooterPadding, 200);
+setTimeout(syncPanelHeights, 300);
 init();
 </script>
 </body>
