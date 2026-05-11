@@ -1,8 +1,11 @@
 {
   "buildCommand": "node build.js",
   "outputDirectory": "dist",
-  "rewrites": [
-    { "source": "/terminos", "destination": "/terminos.html" },
-    { "source": "/privacidad", "destination": "/privacidad.html" }
+  "routes": [
+    { "src": "/terminos", "dest": "/terminos.html" },
+    { "src": "/privacidad", "dest": "/privacidad.html" },
+    { "src": "/cookies", "dest": "/cookies.html" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/404.html", "status": 404 }
   ]
 }
