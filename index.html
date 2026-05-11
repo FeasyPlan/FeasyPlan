@@ -77,7 +77,7 @@
     .tab { flex: 1; padding: 6px 4px; border-radius: 7px; font-size: 11px; font-weight: 500; color: var(--gray-600); cursor: pointer; text-align: center; border: none; background: transparent; transition: all 0.15s; font-family: inherit; white-space: nowrap; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 3px; }
     .tab.active { background: var(--blue); color: #fff; box-shadow: var(--shadow); }
     .filter-sel { border: 1px solid var(--gray-200); border-radius: 7px; padding: 6px 8px; font-size: 12px; color: var(--gray-600); background: var(--white); cursor: pointer; outline: none; flex: 1; font-family: inherit; }
-    .exercise-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; }
+    .exercise-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; max-height: 560px; }
     .exercise-list::-webkit-scrollbar { width: 4px; }
     .exercise-list::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 4px; }
     .exercise-card { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 10px 12px; display: flex; align-items: flex-start; gap: 8px; transition: all 0.15s; }
@@ -159,8 +159,8 @@
 
     @media (max-width: 700px) {
       .panels-top, .main-body { grid-template-columns: 1fr; }
-      .exercise-card img { width: 52px !important; height: 52px !important; }
-      .exercise-card > div[style*='72px'] { width: 52px !important; height: 52px !important; }
+      .exercise-card img { width: 56px !important; height: 56px !important; }
+      .exercise-list { max-height: none !important; }
       .hero { padding: 8px 12px; }
       .hero > div { flex-wrap: nowrap !important; align-items: center; gap: 8px; overflow: hidden; }
       .hero h1 { font-size: 13px; line-height: 1.2; flex-shrink: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1020,8 +1020,8 @@ function renderExerciseList() {
     filtered.map(ex => {
       const added = state.selectedExercises.some(s => String(s.id) === String(ex.id));
       const imgHtml = ex.img
-        ? `<img src="${ex.img}" style="width:72px;height:72px;object-fit:cover;border-radius:7px;flex-shrink:0;background:var(--gray-100);" loading="lazy">`
-        : `<div style="width:72px;height:72px;border-radius:7px;background:var(--gray-100);flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>`;
+        ? `<img src="${ex.img}" style="width:100px;height:100px;object-fit:cover;border-radius:7px;flex-shrink:0;background:var(--gray-100);" loading="lazy">`
+        : `<div style="width:100px;height:100px;border-radius:7px;background:var(--gray-100);flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>`;
       return `<div class="exercise-card">
         ${imgHtml}
         <div style="flex:1;min-width:0;">
@@ -2992,25 +2992,22 @@ function adjustFooterPadding() {
 }
 
 function syncPanelHeights() {
-  if (window.innerWidth <= 700) return; // solo desktop
+  if (window.innerWidth <= 700) return;
   const leftPanel = document.getElementById('leftPanel');
   const planPanel = document.getElementById('planPanel');
   const exerciseList = document.getElementById('exerciseList');
   if (!leftPanel || !planPanel || !exerciseList) return;
 
-  // Get plan panel height
   const planHeight = planPanel.getBoundingClientRect().height;
-
-  // Min height: show ~5 exercises (approx 420px with header)
-  const minHeight = 420;
+  const minHeight = 580; // ~5 exercises at 100px + header
   const targetHeight = Math.max(planHeight, minHeight);
 
-  // Set left panel height
+  // Make left panel same height as right
   leftPanel.style.minHeight = targetHeight + 'px';
 
-  // Set exercise list max-height = panel height minus tabs/search/filters (~130px)
-  const listMaxHeight = targetHeight - 130;
-  exerciseList.style.maxHeight = Math.max(listMaxHeight, 280) + 'px';
+  // exercise-list fills the space: panel height - tabs(40) - search(42) - filters(38) - padding(20)
+  const listMax = targetHeight - 150;
+  exerciseList.style.maxHeight = Math.max(listMax, 400) + 'px';
 }
 
 setTimeout(adjustFooterPadding, 200);
