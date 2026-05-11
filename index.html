@@ -1385,12 +1385,24 @@ async function handleAction(type) {
   // Consumir crédito para todas las acciones (no premium)
   async function consumeCredit() {
     if (!state.profile?.is_premium) {
+      const newDailyUsed = cr.daily_used + 1;
       await sb.from('credits').update({
-        daily_used: cr.daily_used + 1,
+        daily_used: newDailyUsed,
         monthly_used: cr.monthly_used + 1
       }).eq('user_id', state.user.id);
-      state.credits.daily_used++;
+      state.credits.daily_used = newDailyUsed;
       renderHeader();
+      // Si acaba de agotar los créditos diarios, enviar email
+      if (newDailyUsed >= (cr.daily_limit || 2)) {
+        fetch('https://hqofqaqlhknyxrazgwtc.supabase.co/functions/v1/credits-exhausted', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: state.user.email,
+            name: state.physio.name || ''
+          })
+        }).catch(() => {}); // Fire and forget
+      }
     }
   }
 
