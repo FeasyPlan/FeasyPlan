@@ -621,10 +621,10 @@ function renderPricingCards() {
         <div style="font-size:11px;font-weight:700;color:#fff;">0€</div>
         <div style="font-size:7px;color:rgba(255,255,255,0.4);margin-top:1px;">2/día · 10/mes</div>
       </div>
-      <div style="background:${isPremium?'var(--blue)':'rgba(37,99,235,0.3)'};border:1px solid ${isPremium?'#60A5FA':'rgba(96,165,250,0.4)'};border-radius:6px;padding:4px 7px;cursor:pointer;white-space:nowrap;" onclick="showPayPopup()">
-        <div style="font-size:8px;font-weight:700;color:${isPremium?'#BFDBFE':'rgba(255,255,255,0.6)'};letter-spacing:0.4px;">PRO ${isPremium?'✓':''}</div>
-        <div style="font-size:11px;font-weight:700;color:#fff;">9,99€<span style="font-size:8px;font-weight:400;opacity:0.7;">/mes</span></div>
-        <div style="font-size:7px;color:${isPremium?'#BFDBFE':'rgba(255,255,255,0.4)'};margin-top:1px;">Ilimitado</div>
+      <div style="background:${isPremium?'var(--blue)':'rgba(245,158,11,0.3)'};border:1px solid ${isPremium?'#60A5FA':'#F59E0B'};border-radius:6px;padding:4px 7px;cursor:pointer;white-space:nowrap;" onclick="showPayPopup()">
+        <div style="font-size:8px;font-weight:700;color:${isPremium?'#BFDBFE':'#FCD34D'};letter-spacing:0.4px;">PRO ${isPremium?'✓':''}</div>
+        <div style="font-size:11px;font-weight:700;color:#fff;">${isPremium?'Activo':'1€<span style="font-size:8px;font-weight:400;opacity:0.8;"> 1er mes</span>'}</div>
+        <div style="font-size:7px;color:${isPremium?'#BFDBFE':'rgba(255,255,255,0.7)'};margin-top:1px;">${isPremium?'Ilimitado':'después 9,99€'}</div>
       </div>
     `;
   } else {
@@ -1991,16 +1991,18 @@ function showPayPopup() {
     </div>
     <div class="divider"></div>
     <div style="display:flex;gap:8px;margin-bottom:10px;">
-      <button onclick="doSubscribe('monthly')" style="flex:1;padding:12px 8px;border-radius:10px;border:2px solid var(--blue-mid);background:var(--blue-light);cursor:pointer;font-family:inherit;text-align:center;">
-        <div style="font-size:10px;font-weight:700;color:var(--blue);letter-spacing:0.5px;margin-bottom:4px;">MENSUAL</div>
-        <div style="font-size:20px;font-weight:700;color:var(--gray-900);">9,99€</div>
-        <div style="font-size:11px;color:var(--gray-400);">por mes</div>
+      <button onclick="doSubscribe('monthly')" style="flex:1;padding:12px 8px;border-radius:10px;border:2px solid #F59E0B;background:#FFF7ED;cursor:pointer;font-family:inherit;text-align:center;position:relative;">
+        <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#F59E0B;color:#fff;font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;">OFERTA LANZAMIENTO</div>
+        <div style="font-size:10px;font-weight:700;color:#B45309;letter-spacing:0.5px;margin-bottom:2px;">MENSUAL</div>
+        <div style="font-size:22px;font-weight:700;color:#92400E;">1€</div>
+        <div style="font-size:10px;color:#B45309;margin-bottom:2px;">el primer mes</div>
+        <div style="font-size:10px;color:#D97706;">después 9,99€/mes</div>
       </button>
       <button onclick="doSubscribe('annual')" style="flex:1;padding:12px 8px;border-radius:10px;border:2px solid var(--blue);background:var(--blue);cursor:pointer;font-family:inherit;text-align:center;position:relative;">
-        <div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:#F59E0B;color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap;">AHORRA 20%</div>
-        <div style="font-size:10px;font-weight:700;color:#BFDBFE;letter-spacing:0.5px;margin-bottom:4px;">ANUAL</div>
-        <div style="font-size:20px;font-weight:700;color:#fff;">99€</div>
-        <div style="font-size:11px;color:#BFDBFE;">por año</div>
+        <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#10B981;color:#fff;font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;">AHORRA 21€</div>
+        <div style="font-size:10px;font-weight:700;color:#BFDBFE;letter-spacing:0.5px;margin-bottom:2px;">ANUAL</div>
+        <div style="font-size:22px;font-weight:700;color:#fff;">99€</div>
+        <div style="font-size:10px;color:#BFDBFE;">8,25€/mes</div>
       </button>
     </div>
     <button class="btn-full outline" onclick="closePopup()">Ahora no</button>
