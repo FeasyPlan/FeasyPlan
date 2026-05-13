@@ -187,6 +187,7 @@
       .panel-label { margin-bottom: 7px; }
     }
   </style>
+  <script src="https://assets.lemonsqueezy.com/lemon.js" defer></script>
 </head>
 <body>
 
@@ -2798,13 +2799,15 @@ function doSubscribe(plan) {
     monthly: 'https://feasyplan.lemonsqueezy.com/checkout/buy/a100889b-1d72-47fd-b2eb-d6366ac9a98b?checkout[discount_code]=LAUNCH1&checkout[email]=' + email,
     annual: 'https://feasyplan.lemonsqueezy.com/checkout/buy/10d01e49-751b-4a53-9ce7-13c4094b65b2?checkout[email]=' + email,
   };
-  const url = urls[plan] || urls.monthly;
+  const url = (urls[plan] || urls.monthly) + '&embed=1';
   // Use location.href for iOS PWA (window.open blocked in standalone mode)
   const isIOSPWA = window.navigator.standalone === true;
   if (isIOSPWA) {
-    window.location.href = url;
+    window.location.href = url.replace('&embed=1', '');
   } else {
-    window.open(url, '_blank');
+    // Open as popup overlay using Lemon Squeezy embed
+    window.LemonSqueezy?.Url?.Open(url);
+    if (!window.LemonSqueezy) window.open(url, '_blank');
   }
 }
 
