@@ -636,7 +636,7 @@ function renderPricingCards() {
       </div>
       <div style="background:${isPremium?'var(--blue)':'rgba(37,99,235,0.3)'};border:1px solid ${isPremium?'#60A5FA':'rgba(96,165,250,0.4)'};border-radius:12px;padding:10px 14px;min-width:160px;cursor:pointer;" onclick="showPayPopup()">
         <div style="font-size:10px;font-weight:700;color:${isPremium?'#BFDBFE':'rgba(255,255,255,0.6)'};letter-spacing:0.6px;margin-bottom:4px;">PROFESSIONAL PLAN ${isPremium?'✓':''}</div>
-        <div style="font-size:11px;color:${isPremium?'#DBEAFE':'rgba(255,255,255,0.7)'};margin-bottom:6px;line-height:1.4;">Para uso diario en clínica y personalización avanzada</div>
+        <div style="font-size:11px;color:${isPremium?'#DBEAFE':'rgba(255,255,255,0.7)'};margin-bottom:6px;line-height:1.4;">${!isPremium?'Oferta lanzamiento — precio especial':'Para uso diario en clínica'}</div>
         <div style="display:flex;align-items:baseline;gap:8px;">
           <div style="font-size:20px;font-weight:700;color:#fff;">9,99€<span style="font-size:11px;font-weight:400;opacity:0.7;">/mes</span></div>
           <div style="font-size:11px;color:#93C5FD;font-weight:600;">99€/año</div>
@@ -1977,8 +1977,8 @@ function showPayPopup() {
     <div style="background:linear-gradient(135deg,#0F172A,#1E3A5F);border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">
       <div style="width:36px;height:36px;border-radius:8px;background:rgba(147,197,253,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#93C5FD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></div>
       <div>
-        <div style="font-size:13px;font-weight:700;color:#fff;">14 días de prueba gratis</div>
-        <div style="font-size:11px;color:#93C5FD;">Sin compromiso · Cancela cuando quieras</div>
+        <div style="font-size:13px;font-weight:700;color:#fff;">1€ el primer mes</div>
+        <div style="font-size:11px;color:#93C5FD;">Después 9,99€/mes · Cancela cuando quieras</div>
       </div>
     </div>
     <p>Desbloquea todo el potencial de FeasyPlan.</p>
@@ -2794,7 +2794,7 @@ function doSubscribe(plan) {
   closePopup();
   const email = encodeURIComponent(state.user?.email || '');
   const urls = {
-    monthly: 'https://feasyplan.lemonsqueezy.com/checkout/buy/4e40e8d1-7450-4564-87d4-b2318c769779?enabled=1611658&checkout[email]=' + email,
+    monthly: 'https://feasyplan.lemonsqueezy.com/checkout/buy/4e40e8d1-7450-4564-87d4-b2318c769779?enabled=1611658&checkout[discount_code]=LAUNCH1&checkout[email]=' + email,
     annual: 'https://feasyplan.lemonsqueezy.com/checkout/buy/8efbe815-a634-444e-9768-01cb917dd18c?enabled=1611627&checkout[email]=' + email,
   };
   const url = urls[plan] || urls.monthly;
