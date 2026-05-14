@@ -2835,57 +2835,107 @@ function sendWhatsApp() {
   if (state.physio.clinic) msg += ' (' + state.physio.clinic + ')';
   var waUrl = 'https://wa.me/' + phone.replace('+','') + '?text=' + encodeURIComponent(msg);
 
+  // Detect environment
+  var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  var isAndroid = /Android/i.test(navigator.userAgent);
+  var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  var isChrome = /Chrome/i.test(navigator.userAgent) && !/Edge/i.test(navigator.userAgent);
+
+  var step2Text = isMobile
+    ? 'WhatsApp se abrirá con el mensaje listo. Adjunta el PDF desde el clip <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>'
+    : 'WhatsApp Web se abrirá con el mensaje listo. Adjunta el PDF desde el clip';
+
+  var downloadNote = isChrome && !isMobile
+    ? '<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:9px 12px;font-size:12px;color:#1E40AF;line-height:1.6;"><strong>Chrome:</strong> El PDF se descargará abajo del navegador. Acepta la descarga si te lo pide y después adjúntalo en WhatsApp.</div>'
+    : isIOS
+    ? '<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:9px 12px;font-size:12px;color:#1E40AF;line-height:1.6;"><strong>iPhone:</strong> El PDF se guardará en Archivos. Desde WhatsApp pulsa el clip → Documento → Archivos para adjuntarlo.</div>'
+    : isAndroid
+    ? '<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:9px 12px;font-size:12px;color:#1E40AF;line-height:1.6;"><strong>Android:</strong> El PDF se guardará en Descargas. Desde WhatsApp pulsa el clip → Documento → Descargas para adjuntarlo.</div>'
+    : '<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:9px 12px;font-size:12px;color:#1E40AF;line-height:1.6;">El PDF se descargará automáticamente. Adjúntalo en WhatsApp desde el clip.</div>';
+
   showPopup(`
-    <div class="popup-icon blue">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-    </div>
     <h2>Enviar por WhatsApp</h2>
+    <p style="font-size:13px;color:var(--gray-500);margin-bottom:14px;">Plan para <strong>${patientName}</strong></p>
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
-      <div style="display:flex;align-items:center;gap:10px;background:var(--gray-100);border-radius:10px;padding:11px;">
+      <div style="display:flex;align-items:center;gap:10px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:10px;padding:11px;">
         <div style="width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">1</div>
         <div>
-          <div style="font-size:13px;font-weight:600;color:var(--gray-900);">Descarga el PDF</div>
-          <div style="font-size:11px;color:var(--gray-400);">Se guardará en tu carpeta de descargas</div>
+          <div style="font-size:13px;font-weight:600;color:var(--gray-900);">Se descarga el PDF</div>
+          <div style="font-size:11px;color:var(--gray-400);">Automáticamente al pulsar el botón</div>
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:10px;background:var(--gray-100);border-radius:10px;padding:11px;">
+      <div style="display:flex;align-items:center;gap:10px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:10px;padding:11px;">
         <div style="width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</div>
-        <div>
-          <div style="font-size:13px;font-weight:600;color:var(--gray-900);">Abre WhatsApp y adjunta el PDF</div>
-          <div style="font-size:11px;color:var(--gray-400);">El mensaje ya estará escrito</div>
-        </div>
+        <div style="font-size:12px;color:var(--gray-600);line-height:1.5;">${step2Text}</div>
       </div>
     </div>
-    <div style="background:var(--amber-light);border:1px solid #FDE68A;border-radius:8px;padding:8px 11px;margin-bottom:14px;font-size:11px;color:#92400e;line-height:1.5;">
-      En PC necesitas WhatsApp Web conectado. En móvil se abre la app directamente.
-    </div>
-    <div class="popup-btns">
-      <button class="btn-full primary" onclick="doSendWhatsApp('${waUrl}')">Descargar PDF y abrir WhatsApp</button>
+    ${downloadNote}
+    <div class="popup-btns" style="margin-top:14px;">
+      <button class="btn-full primary" onclick="doSendWhatsApp('${waUrl}')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Descargar PDF y abrir WhatsApp
+      </button>
       <button class="btn-full outline" onclick="closePopup()">Cancelar</button>
     </div>
   `);
 }
 
-
 async function doSendWhatsApp(url) {
   closePopup();
-  showToast('Generando PDF...');
-  // Precargar imágenes antes de generar
+
+  // Show guided loading popup
+  showPopup(`
+    <div style="text-align:center;padding:16px 0;">
+      <div style="width:44px;height:44px;border-radius:50%;background:var(--blue-light);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </div>
+      <div style="font-size:15px;font-weight:700;color:var(--gray-900);margin-bottom:6px;">Generando PDF...</div>
+      <div style="font-size:13px;color:var(--gray-400);">Esto puede tardar unos segundos</div>
+    </div>
+  `);
+
   await preloadExerciseImages();
   var doc = generatePDFDoc();
   var filename = 'plan-' + ((state.patient && state.patient.name) ? state.patient.name.replace(/[^a-z0-9]/gi,'-').toLowerCase() : 'paciente') + '.pdf';
   var blob = doc.output('blob');
   var blobUrl = URL.createObjectURL(blob);
+
+  // Trigger download
   var a = document.createElement('a');
   a.href = blobUrl;
   a.download = filename;
   document.body.appendChild(a);
   a.click();
-  setTimeout(function() {
-    document.body.removeChild(a);
-    URL.revokeObjectURL(blobUrl);
-    window.open(url, '_blank');
-  }, 800);
+  document.body.removeChild(a);
+
+  // Show success + next step guidance
+  var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  var isAndroid = /Android/i.test(navigator.userAgent);
+  var isChrome = /Chrome/i.test(navigator.userAgent) && !/Edge/i.test(navigator.userAgent);
+
+  var nextStep = isMobile
+    ? (isIOS
+        ? 'WhatsApp se abrirá ahora. Pulsa el <strong>clip</strong> → <strong>Documento</strong> → busca el PDF en Archivos.'
+        : 'WhatsApp se abrirá ahora. Pulsa el <strong>clip</strong> → <strong>Documento</strong> → busca el PDF en Descargas.')
+    : isChrome
+      ? 'El PDF se ha descargado. Verás la notificación abajo del navegador. Ahora se abrirá WhatsApp Web — adjunta el PDF desde el clip.'
+      : 'El PDF se ha descargado en tu carpeta de Descargas. Ahora se abrirá WhatsApp — adjunta el PDF desde el clip.';
+
+  showPopup(`
+    <div style="text-align:center;padding:8px 0 14px;">
+      <div style="width:44px;height:44px;border-radius:50%;background:#DCFCE7;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div style="font-size:15px;font-weight:700;color:var(--gray-900);margin-bottom:8px;">PDF descargado</div>
+      <div style="font-size:13px;color:var(--gray-500);line-height:1.6;margin-bottom:16px;">${nextStep}</div>
+      <button class="btn-full primary" onclick="closePopup(true);setTimeout(()=>{ ${isIOS ? 'window.location.href' : 'window.open'}('${url}', '${isIOS ? '_self' : '_blank'}'); }, 100);">
+        Abrir WhatsApp
+      </button>
+      <button class="btn-full outline" style="margin-top:8px;" onclick="closePopup(true);URL.revokeObjectURL('${blobUrl}');">Cerrar</button>
+    </div>
+  `);
 }
 
 async function sendEmail() {
