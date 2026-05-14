@@ -2909,7 +2909,10 @@ async function doSendWhatsApp(url) {
   a.click();
   document.body.removeChild(a);
 
-  // Show success + next step guidance
+  // Store url in state for named function access
+  state._pendingWaUrl = url;
+  state._pendingBlobUrl = blobUrl;
+
   var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
   var isAndroid = /Android/i.test(navigator.userAgent);
@@ -2930,12 +2933,28 @@ async function doSendWhatsApp(url) {
       </div>
       <div style="font-size:15px;font-weight:700;color:var(--gray-900);margin-bottom:8px;">PDF descargado</div>
       <div style="font-size:13px;color:var(--gray-500);line-height:1.6;margin-bottom:16px;">${nextStep}</div>
-      <button class="btn-full primary" onclick="closePopup(true);setTimeout(()=>{ ${isIOS ? 'window.location.href' : 'window.open'}('${url}', '${isIOS ? '_self' : '_blank'}'); }, 100);">
-        Abrir WhatsApp
-      </button>
-      <button class="btn-full outline" style="margin-top:8px;" onclick="closePopup(true);URL.revokeObjectURL('${blobUrl}');">Cerrar</button>
+      <button class="btn-full primary" onclick="openWhatsAppAfterDownload()">Abrir WhatsApp</button>
+      <button class="btn-full outline" style="margin-top:8px;" onclick="closePopup(true)">Cerrar</button>
     </div>
   `);
+}
+
+function openWhatsAppAfterDownload() {
+  closePopup(true);
+  var url = state._pendingWaUrl;
+  if (!url) return;
+  var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  var isPWA = window.navigator.standalone === true;
+  if (isIOS || isPWA) {
+    window.location.href = url;
+  } else {
+    window.open(url, '_blank');
+  }
+  state._pendingWaUrl = null;
+  if (state._pendingBlobUrl) {
+    setTimeout(() => URL.revokeObjectURL(state._pendingBlobUrl), 2000);
+    state._pendingBlobUrl = null;
+  }
 }
 
 async function sendEmail() {
