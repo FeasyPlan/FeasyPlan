@@ -2907,7 +2907,7 @@ function doSubscribe(plan) {
 // ============================================
 // EMAIL
 // ============================================
-function sendWhatsApp() {
+async function sendWhatsApp() {
   if (!state.patient || !state.patient.phone) {
     showToast('Añade el móvil del paciente primero');
     return;
@@ -2922,20 +2922,85 @@ function sendWhatsApp() {
   var notes = document.getElementById('planNotes').value.trim();
   var phone = state.patient.phone.replace(/[\s\-\(\)]/g, '');
   if (!phone.startsWith('+')) phone = '+34' + phone;
-  var msg = 'Hola ' + patientName + ', te comparto tu plan de ejercicios personalizado.';
-  if (notes) msg += ' Indicaciones: ' + notes;
-  msg += ' Encontrarás todos los ejercicios en el PDF adjunto. Un saludo, ' + physioName;
+
+  // Show loading popup while generating and uploading PDF
+  showPopup(`
+    <div style="text-align:center;padding:20px 0;">
+      <div style="width:44px;height:44px;border-radius:50%;background:var(--blue-light);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </div>
+      <div style="font-size:15px;font-weight:700;color:var(--gray-900);margin-bottom:6px;">Preparando plan...</div>
+      <div style="font-size:13px;color:var(--gray-400);">Generando y subiendo el PDF</div>
+    </div>
+  `);
+
+  // Generate PDF and upload to Supabase Storage
+  await preloadExerciseImages();
+  const doc = await generatePDFDoc();
+  const pdfBlob = doc.output('blob');
+
+  // Upload to Supabase Storage
+  let pdfUrl = null;
+  try {
+    const filename = state.user.id + '/' + Date.now() + '.pdf';
+    const { data, error } = await sb.storage.from('plans-pdf').upload(filename, pdfBlob, {
+      contentType: 'application/pdf',
+      upsert: true
+    });
+    if (!error) {
+      const { data: urlData } = sb.storage.from('plans-pdf').getPublicUrl(filename);
+      pdfUrl = urlData.publicUrl;
+    }
+  } catch(e) {
+    console.error('Error subiendo PDF:', e);
+  }
+
+  // Build WhatsApp message with PDF link
+  var msg = 'Hola ' + patientName + ', te comparto tu plan de ejercicios personalizado';
+  if (physioName) msg += ' de ' + physioName;
   if (state.physio.clinic) msg += ' (' + state.physio.clinic + ')';
+  msg += '.';
+  if (notes) msg += '\n\n📋 Indicaciones: ' + notes;
+  if (pdfUrl) {
+    msg += '\n\n📄 Aquí tienes tu plan en PDF:\n' + pdfUrl;
+    msg += '\n\n⚠️ Descárgalo antes de 30 días, el enlace expirará pasado ese plazo.';
+  }
+  msg += '\n\nCualquier duda no dudes en contactarme.\n\nUn saludo.';
+
   var waUrl = 'https://wa.me/' + phone.replace('+','') + '?text=' + encodeURIComponent(msg);
 
-  // Detect environment
-  var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  // Show success popup with link and open WhatsApp
   var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-  var isAndroid = /Android/i.test(navigator.userAgent);
-  var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-  var isChrome = /Chrome/i.test(navigator.userAgent) && !/Edge/i.test(navigator.userAgent);
+  var isPWA = window.navigator.standalone === true;
 
-  var step2Text = isMobile
+  // Show result popup
+  showPopup(`
+    <div style="text-align:center;margin-bottom:16px;">
+      <div style="width:44px;height:44px;border-radius:50%;background:#DCFCE7;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div style="font-size:15px;font-weight:700;color:var(--gray-900);margin-bottom:4px;">Plan listo para enviar</div>
+      <div style="font-size:13px;color:var(--gray-500);">El link al PDF se incluirá en el mensaje</div>
+    </div>
+    ${pdfUrl ? `<div style="background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:8px;padding:10px 12px;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span style="font-size:11px;color:var(--blue);font-weight:500;word-break:break-all;">${pdfUrl.split('/').pop()}</span>
+    </div>` : ''}
+    <div class="popup-btns">
+      <button class="btn-full primary" onclick="openWhatsAppWithLink('${waUrl}')">Abrir WhatsApp y enviar</button>
+      <button class="btn-full outline" onclick="closePopup(true)">Cerrar</button>
+    </div>
+  `);
+  return;
+
+  // Detect environment (legacy — not reached)
+  var isMobile2 = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  var isIOS2 = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  var isAndroid2 = /Android/i.test(navigator.userAgent);
+  var isSafari2 = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  var isChrome2 = /Chrome/i.test(navigator.userAgent) && !/Edge/i.test(navigator.userAgent);
+
+  var step2Text = isMobile2
     ? 'WhatsApp se abrirá con el mensaje listo. Adjunta el PDF desde el clip <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>'
     : 'WhatsApp Web se abrirá con el mensaje listo. Adjunta el PDF desde el clip';
 
@@ -2965,13 +3030,23 @@ function sendWhatsApp() {
     </div>
     ${downloadNote}
     <div class="popup-btns" style="margin-top:14px;">
-      <button class="btn-full primary" onclick="doSendWhatsApp('${waUrl}')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Descargar PDF y abrir WhatsApp
+      <button class="btn-full primary" onclick="openWhatsAppWithLink('${waUrl}')">
+        Abrir WhatsApp
       </button>
       <button class="btn-full outline" onclick="closePopup()">Cancelar</button>
     </div>
   `);
+}
+
+function openWhatsAppWithLink(url) {
+  closePopup(true);
+  var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  var isPWA = window.navigator.standalone === true;
+  if (isIOS || isPWA) {
+    window.location.href = url;
+  } else {
+    window.open(url, '_blank');
+  }
 }
 
 async function doSendWhatsApp(url) {
