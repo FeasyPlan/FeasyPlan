@@ -1120,6 +1120,7 @@ function sendContactEmail() {
 
 function showOnboarding() {
   if (localStorage.getItem('fp_onboarding_done')) return;
+  document.body.style.overflow = 'hidden';
   showPopup(`
     <div style="text-align:center;margin-bottom:20px;">
       <div style="font-size:28px;font-weight:200;color:var(--blue);margin-bottom:6px;">Bienvenido a FeasyPlan</div>
@@ -1134,21 +1135,21 @@ function showOnboarding() {
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:10px;">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--gray-300);color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</div>
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--gray-700,#374151);color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</div>
         <div>
           <div style="font-size:13px;font-weight:700;color:var(--gray-900);">Añade un paciente</div>
           <div style="font-size:12px;color:var(--gray-500);">Nombre y móvil para enviarlo por WhatsApp</div>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:10px;">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--gray-300);color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</div>
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--gray-700,#374151);color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</div>
         <div>
           <div style="font-size:13px;font-weight:700;color:var(--gray-900);">Busca ejercicios y añádelos</div>
           <div style="font-size:12px;color:var(--gray-500);">Filtra por zona o material y pulsa +</div>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:10px;">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--gray-300);color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">4</div>
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--gray-700,#374151);color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">4</div>
         <div>
           <div style="font-size:13px;font-weight:700;color:var(--gray-900);">Descarga o envía el PDF</div>
           <div style="font-size:12px;color:var(--gray-500);">Por email, WhatsApp o descarga directa</div>
@@ -1520,7 +1521,7 @@ async function handleAction(type) {
 // ============================================
 // GENERACIÓN DE PDF
 // ============================================
-function generatePDFDoc() {
+async function generatePDFDoc() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const pageW = 210;
@@ -1556,18 +1557,23 @@ function generatePDFDoc() {
   const logoSize = 22;
   if (isPremium && state.physio.logo) {
     try {
-      const fmt = state.physio.logo.includes('image/png') ? 'PNG' : 'JPEG';
-      // Dibujar sobre fondo blanco
-      const logoCanvas = document.createElement('canvas');
-      logoCanvas.width = 400; logoCanvas.height = 400;
-      const lCtx = logoCanvas.getContext('2d');
-      lCtx.fillStyle = '#FFFFFF';
-      lCtx.fillRect(0, 0, 400, 400);
-      const logoImg = new Image();
-      logoImg.src = state.physio.logo;
-      lCtx.drawImage(logoImg, 0, 0, 400, 400);
-      const cleanLogo = logoCanvas.toDataURL('image/jpeg', 0.9);
-      doc.addImage(cleanLogo, 'JPEG', pageW - marginR - logoSize, 6, logoSize, logoSize);
+      await new Promise((resolve) => {
+        const logoCanvas = document.createElement('canvas');
+        logoCanvas.width = 400; logoCanvas.height = 400;
+        const lCtx = logoCanvas.getContext('2d');
+        lCtx.fillStyle = '#FFFFFF';
+        lCtx.fillRect(0, 0, 400, 400);
+        const logoImg = new Image();
+        logoImg.crossOrigin = 'anonymous';
+        logoImg.onload = () => {
+          lCtx.drawImage(logoImg, 0, 0, 400, 400);
+          const cleanLogo = logoCanvas.toDataURL('image/jpeg', 0.9);
+          doc.addImage(cleanLogo, 'JPEG', pageW - marginR - logoSize, 6, logoSize, logoSize);
+          resolve();
+        };
+        logoImg.onerror = () => resolve();
+        logoImg.src = state.physio.logo + '?t=' + Date.now();
+      });
     } catch(e) { /* skip */ }
   }
 
@@ -1833,7 +1839,7 @@ async function preloadExerciseImages() {
 
 async function generatePDF() {
   await preloadExerciseImages();
-  const doc = generatePDFDoc();
+  const doc = await generatePDFDoc();
   const filename = 'plan-' + (state.patient?.name || 'paciente').replace(/[^a-z0-9]/gi, '-').toLowerCase() + '.pdf';
   doc.save(filename);
   showToast('PDF descargado ✓');
@@ -2983,7 +2989,7 @@ async function doSendWhatsApp(url) {
   `);
 
   await preloadExerciseImages();
-  var doc = generatePDFDoc();
+  var doc = await generatePDFDoc();
   var filename = 'plan-' + ((state.patient && state.patient.name) ? state.patient.name.replace(/[^a-z0-9]/gi,'-').toLowerCase() : 'paciente') + '.pdf';
   var blob = doc.output('blob');
   var blobUrl = URL.createObjectURL(blob);
@@ -3096,7 +3102,7 @@ async function sendEmail() {
 
 async function generatePDFBase64() {
   await preloadExerciseImages();
-  const doc = generatePDFDoc();
+  const doc = await generatePDFDoc();
   return doc.output('datauristring').split(',')[1];
 }
 
