@@ -457,6 +457,23 @@ async function init() {
       state.patients = [];
       state.savedPlans = [];
       state.favorites = new Set();
+      state.templates = [];
+      state.selectedExercises = [];
+      state.patient = null;
+      state.physio = { name:'', clinic:'', phone:'', email:'', logo:null, copyEmail:false, colegiado:'' };
+      state.physioEditing = false;
+      state.filterOwn = false;
+      state.filterFavorites = false;
+      state.searchQuery = '';
+      state.filterZona = 'Todas';
+      state.filterTipo = 'Todos';
+      state.filterMaterial = 'Todos';
+      // Clear plan notes
+      const planNotes = document.getElementById('planNotes');
+      if (planNotes) planNotes.value = '';
+      // Clear patient display
+      const patientDisplay = document.getElementById('patientDisplay');
+      if (patientDisplay) patientDisplay.innerHTML = '';
       render();
     } else if (event === 'PASSWORD_RECOVERY') {
       console.log('PASSWORD_RECOVERY event detected');
