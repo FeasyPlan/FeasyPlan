@@ -177,7 +177,7 @@
       .header-right { gap: 4px; }
       .header-right .btn { padding: 5px 8px; font-size: 11px; }
       .avatar { width: 30px !important; height: 30px !important; flex-shrink: 0; }
-      .logo-img { height: 35px; }
+      .logo-img { height: 42px; }
       .btn-mobile-icon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--gray-200); background: transparent; cursor: pointer; font-size: 13px; }
       .btn-mobile-text { display: none; }
       .credits-badge { font-size: 10px; padding: 3px 7px; }
@@ -390,6 +390,16 @@ async function loadTemplates() {
     console.error('Error cargando plantillas:', e);
   }
 }
+
+// Detect iOS PWA and adjust logo size
+(function() {
+  if (window.navigator.standalone === true) {
+    document.addEventListener('DOMContentLoaded', () => {
+      const logoImg = document.querySelector('.logo-img');
+      if (logoImg) logoImg.style.height = '35px';
+    });
+  }
+})();
 
 async function init() {
   // Detectar recuperación de contraseña ANTES de todo
