@@ -399,7 +399,7 @@ async function loadTemplates() {
     if (!header || !logoImg) return;
     const isPWA = window.navigator.standalone === true;
     // Reset to default first
-    logoImg.style.height = isPWA ? '30px' : '36px';
+    logoImg.style.height = isPWA ? '28px' : '34px';
     // Check if header overflows
     if (header.scrollWidth > header.clientWidth) {
       let h = parseInt(logoImg.style.height);
