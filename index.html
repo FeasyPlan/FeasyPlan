@@ -177,8 +177,7 @@
       .header-right { gap: 4px; }
       .header-right .btn { padding: 5px 8px; font-size: 11px; }
       .avatar { width: 30px !important; height: 30px !important; flex-shrink: 0; }
-      .logo-img { height: 36px; max-height: 5vw; min-height: 24px; }
-      .logo-img { height: clamp(24px, 9vw, 32px); }
+      .logo-img { height: 36px; }
       .btn-mobile-icon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--gray-200); background: transparent; cursor: pointer; font-size: 13px; }
       .btn-mobile-text { display: none; }
       .credits-badge { font-size: 10px; padding: 3px 7px; }
@@ -392,14 +391,26 @@ async function loadTemplates() {
   }
 }
 
-// Detect iOS PWA and adjust logo size
+// Adapt logo size to available space
 (function() {
-  if (window.navigator.standalone === true) {
-    document.addEventListener('DOMContentLoaded', () => {
-      const logoImg = document.querySelector('.logo-img');
-      if (logoImg) logoImg.style.height = '30px';
-    });
+  function adaptLogoSize() {
+    const header = document.querySelector('.header');
+    const logoImg = document.querySelector('.logo-img');
+    if (!header || !logoImg) return;
+    const isPWA = window.navigator.standalone === true;
+    // Reset to default first
+    logoImg.style.height = isPWA ? '30px' : '36px';
+    // Check if header overflows
+    if (header.scrollWidth > header.clientWidth) {
+      let h = parseInt(logoImg.style.height);
+      while (header.scrollWidth > header.clientWidth && h > 22) {
+        h -= 2;
+        logoImg.style.height = h + 'px';
+      }
+    }
   }
+  document.addEventListener('DOMContentLoaded', adaptLogoSize);
+  window.addEventListener('resize', adaptLogoSize);
 })();
 
 async function init() {
