@@ -1150,7 +1150,7 @@ function sendContactEmail() {
   if (!name || !email || !msg) { showToast('Completa todos los campos'); return; }
   const subject = encodeURIComponent('Soporte FeasyPlan — ' + name);
   const body = encodeURIComponent('Nombre: ' + name + '\nEmail: ' + email + '\n\n' + msg);
-  window.open('mailto:soporte@feasyplan.pro?subject=' + subject + '&body=' + body);
+  window.open('mailto:hello@feasyplan.pro?subject=' + subject + '&body=' + body);
   closePopup();
   showToast('Abriendo tu gestor de email ✓');
 }
