@@ -919,7 +919,7 @@ function updateCropZoom(val) {
   if (window.cropSetZoom) window.cropSetZoom(parseInt(val));
 }
 
-function confirmCrop(target) {
+async function confirmCrop(target) {
   const box = document.getElementById('cropBox');
   const img = document.getElementById('cropImg');
   if (!box || !img) return;
@@ -957,7 +957,22 @@ function confirmCrop(target) {
   } else {
     state.physio.logo = cropped;
     renderPhysio();
-    showToast('Logo actualizado ✓');
+    // Auto-save logo to Storage immediately
+    if (state.user && state.profile?.is_premium) {
+      showToast('Subiendo logo...');
+      try {
+        const path = state.user.id + '/logo.jpg';
+        const logoUrl = await uploadToStorage('logos', path, cropped);
+        state.physio.logo = logoUrl;
+        await sb.from('profiles').update({ logo_url: logoUrl }).eq('id', state.user.id);
+        renderPhysio();
+        showToast('Logo guardado ✓');
+      } catch(e) {
+        showToast('Error al subir el logo. Pulsa Guardar para intentarlo de nuevo.');
+      }
+    } else {
+      showToast('Logo actualizado ✓');
+    }
   }
 }
 
