@@ -143,6 +143,21 @@
     .error-msg { background: var(--red-light); border: 1px solid #FCA5A5; border-radius: 7px; padding: 8px 11px; font-size: 12px; color: var(--red); margin-bottom: 10px; display: none; }
 
     /* ====== TOAST ====== */
+    /* ====== TOUR GUIADO ====== */
+    .tour-hole { position: fixed; z-index: 90; border-radius: 14px; box-shadow: 0 0 0 9999px rgba(15,23,42,0.55); pointer-events: none; transition: all 0.25s ease; }
+    .tour-card { position: fixed; z-index: 95; width: min(340px, calc(100vw - 24px)); background: #fff; border-radius: 14px; box-shadow: 0 12px 40px rgba(15,23,42,0.28); padding: 16px 16px 14px; font-family: inherit; transition: top 0.25s ease, left 0.25s ease; }
+    .tour-card .tour-step { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--blue); margin-bottom: 4px; }
+    .tour-card h3 { margin: 0 0 6px; font-size: 16px; font-weight: 700; color: var(--gray-900); }
+    .tour-card p { margin: 0 0 12px; font-size: 13px; line-height: 1.5; color: var(--gray-600); }
+    .tour-card .tour-hint { font-size: 12px; color: var(--blue); font-weight: 600; margin: -4px 0 12px; }
+    .tour-dots { display: flex; gap: 5px; }
+    .tour-dots span { width: 7px; height: 7px; border-radius: 50%; background: var(--gray-200); }
+    .tour-dots span.on { background: var(--blue); }
+    .tour-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .tour-actions .tour-skip { background: none; border: none; color: var(--gray-400); font-size: 12px; cursor: pointer; font-family: inherit; padding: 4px; }
+    .tour-pulse { animation: tourPulse 1.6s ease-in-out infinite; border-radius: 10px; }
+    @keyframes tourPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(37,99,235,0.55); } 50% { box-shadow: 0 0 0 6px rgba(37,99,235,0); } }
+    @media (prefers-reduced-motion: reduce) { .tour-pulse { animation: none; outline: 2px solid var(--blue); } .tour-hole, .tour-card { transition: none; } }
     .toast { position: fixed; bottom: 20px; right: 20px; background: var(--gray-900); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 13px; font-weight: 500; z-index: 200; display: none; animation: toastIn 0.2s ease; max-width: 300px; }
     @keyframes toastIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
 
@@ -315,6 +330,7 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 function trackActivity(event) {
   if (!state.user) return;
   sb.rpc('log_activity', { p_event: event }).then(() => {}, () => {});
+  if (['pdf_download', 'send_email', 'send_whatsapp'].includes(event) && typeof tourActionDone === 'function') tourActionDone();
 }
 // Mientras la pestaña está visible, un aviso cada 5 minutos (la base de datos ignora los repetidos)
 setInterval(() => { if (document.visibilityState === 'visible') trackActivity('heartbeat'); }, 5 * 60 * 1000);
@@ -456,9 +472,6 @@ async function init() {
 
   // Render inmediato para mostrar la UI sin sesión
   render();
-  // Onboarding primera visita
-  setTimeout(showOnboarding, 800);
-
   // Recuperar sesión guardada en el navegador
   const { data: { session } } = await sb.auth.getSession();
   if (session?.user) {
@@ -467,6 +480,7 @@ async function init() {
     render();
     trackActivity('app_open');
     recordOAuthConsent(session.user);
+    maybeStartTour();
 
     // Detectar si viene de un enlace de recuperación de contraseña
     const hash = window.location.hash;
@@ -519,6 +533,7 @@ async function init() {
       render();
       trackActivity('app_open');
       recordOAuthConsent(session.user);
+      maybeStartTour();
     }
   });
 }
@@ -1149,7 +1164,11 @@ function showContactPopup() {
   const userName = state.physio?.name || '';
   showPopup(`
     <h2>Contactar con soporte</h2>
-    <p style="font-size:13px;color:var(--gray-500);margin-bottom:16px;">Estamos aquí para ayudarte. Te responderemos en menos de 24 horas.</p>
+    <p style="font-size:13px;color:var(--gray-500);margin-bottom:12px;">Estamos aquí para ayudarte. Te responderemos en menos de 24 horas.</p>
+    <button class="btn-full outline" onclick="startTour(true)" style="margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:8px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+      Ver el tutorial de la app
+    </button>
     <div class="popup-form">
       <div>
         <label class="form-label">Tu nombre</label>
@@ -1184,47 +1203,155 @@ function sendContactEmail() {
   showToast('Abriendo tu gestor de email ✓');
 }
 
-function showOnboarding() {
-  if (localStorage.getItem('fp_onboarding_done')) return;
-  document.body.style.overflow = 'hidden';
-  showPopup(`
-    <div style="text-align:center;margin-bottom:20px;">
-      <div style="font-size:28px;font-weight:200;color:var(--blue);margin-bottom:6px;">Bienvenido a FeasyPlan</div>
-      <div style="font-size:14px;color:var(--gray-500);">Crea tu primer plan en menos de 2 minutos</div>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
-      <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:10px;">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">1</div>
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--blue);">Rellena tus datos</div>
-          <div style="font-size:12px;color:var(--gray-500);">Nombre, clínica y logo aparecerán en el PDF</div>
-        </div>
+// ============================================
+// TOUR GUIADO — primeros pasos para recién registrados
+// Resalta cada parte real de la app; avanza solo cuando el fisio lo hace (o con «Siguiente»).
+// ============================================
+const TOUR_STEPS = [
+  { target: () => document.querySelector('.panels-top .panel:nth-child(1)'),
+    title: 'Tus datos de fisio',
+    text: 'Tu nombre, clínica y logo aparecerán en cada PDF que envíes. Pulsa en tu ficha para completarla cuando quieras.',
+    next: 'Siguiente' },
+  { target: () => document.querySelector('.panels-top .panel:nth-child(2)'),
+    title: 'Tu paciente',
+    text: 'Busca un paciente o pulsa «+ Nuevo». Con su móvil podrás enviarle el plan por WhatsApp.',
+    hint: 'Añade un paciente para continuar',
+    done: () => !!state.patient,
+    next: 'Saltar este paso' },
+  { target: () => document.getElementById('leftPanel'),
+    title: 'Busca ejercicios',
+    text: 'Escribe una zona (por ejemplo «rodilla») o usa los filtros, y pulsa + para añadir un ejercicio al plan.',
+    hint: 'Añade tu primer ejercicio',
+    enter: () => { try { switchTab('search'); } catch (e) { /* pestaña ya activa */ } },
+    done: () => (state.selectedExercises || []).length > 0,
+    next: 'Saltar este paso' },
+  { target: () => document.getElementById('planPanel'),
+    title: 'Tu plan de ejercicios',
+    text: 'Aquí se va montando el plan. Puedes ajustar series y repeticiones de cada ejercicio y añadir notas generales.',
+    next: 'Siguiente' },
+  { target: () => document.querySelector('.footer > div:nth-child(2)'),
+    title: '¡Envíalo!',
+    text: 'Descarga el PDF o envíalo al paciente por WhatsApp o email. Así de rápido es tu primer plan.',
+    hint: 'Pulsa PDF, WhatsApp o Email',
+    final: true,
+    next: 'Terminar' },
+];
+
+const tour = { active: false, i: 0, timer: null, hole: null, card: null, pulsed: null };
+
+function startTour(manual) {
+  if (tour.active) return;
+  tour.active = true; tour.i = 0;
+  closePopup();
+  tour.hole = document.createElement('div'); tour.hole.className = 'tour-hole';
+  tour.card = document.createElement('div'); tour.card.className = 'tour-card';
+  tour.card.setAttribute('role', 'dialog'); tour.card.setAttribute('aria-live', 'polite');
+  document.body.append(tour.hole, tour.card);
+  window.addEventListener('resize', positionTour);
+  window.addEventListener('scroll', positionTour, true);
+  tour.timer = setInterval(tickTour, 600);
+  trackActivity('tour_start');
+  showTourStep(0);
+}
+
+function showTourStep(i) {
+  tour.i = i;
+  const s = TOUR_STEPS[i];
+  if (s.enter) s.enter();
+  if (i > 0) trackActivity('tour_step_' + (i + 1));
+  const dots = TOUR_STEPS.map((_, k) => `<span class="${k <= i ? 'on' : ''}"></span>`).join('');
+  tour.card.innerHTML = `
+    <div class="tour-step">Paso ${i + 1} de ${TOUR_STEPS.length}</div>
+    <h3>${s.title}</h3>
+    <p>${s.text}</p>
+    ${s.hint ? `<div class="tour-hint">👉 ${s.hint}</div>` : ''}
+    <div class="tour-actions">
+      <div class="tour-dots">${dots}</div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        ${s.final ? '' : '<button class="tour-skip" onclick="endTour(false)">Saltar tutorial</button>'}
+        <button class="btn btn-primary" style="padding:7px 14px;" onclick="${s.final ? 'endTour(true)' : 'nextTourStep()'}">${s.next}</button>
       </div>
-      <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:10px;">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--gray-700,#374151);color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</div>
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--gray-900);">Añade un paciente</div>
-          <div style="font-size:12px;color:var(--gray-500);">Nombre y móvil para enviarlo por WhatsApp</div>
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:10px;">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--gray-700,#374151);color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</div>
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--gray-900);">Busca ejercicios y añádelos</div>
-          <div style="font-size:12px;color:var(--gray-500);">Filtra por zona o material y pulsa +</div>
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:10px;">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--gray-700,#374151);color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">4</div>
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--gray-900);">Descarga o envía el PDF</div>
-          <div style="font-size:12px;color:var(--gray-500);">Por email, WhatsApp o descarga directa</div>
-        </div>
-      </div>
-    </div>
-    <button class="btn-full primary" onclick="closePopup();localStorage.setItem('fp_onboarding_done','1');">Empezar</button>
-  `);
-  localStorage.setItem('fp_onboarding_done', '1');
+    </div>`;
+  const el = s.target();
+  if (tour.pulsed) tour.pulsed.classList.remove('tour-pulse');
+  tour.pulsed = el;
+  if (el) { el.classList.add('tour-pulse'); el.scrollIntoView({ block: window.innerWidth < 700 ? 'start' : 'nearest', behavior: 'smooth' }); }
+  setTimeout(positionTour, 250);
+}
+
+function nextTourStep() {
+  if (tour.i < TOUR_STEPS.length - 1) showTourStep(tour.i + 1); else endTour(true);
+}
+
+function positionTour() {
+  if (!tour.active) return;
+  const el = TOUR_STEPS[tour.i].target();
+  const popupOpen = !!document.getElementById('overlay')?.classList.contains('open');
+  tour.hole.style.display = tour.card.style.display = popupOpen ? 'none' : '';
+  if (popupOpen || !el) return;
+  const r = el.getBoundingClientRect(), pad = 6;
+  Object.assign(tour.hole.style, { top: (r.top - pad) + 'px', left: (r.left - pad) + 'px', width: (r.width + pad * 2) + 'px', height: (r.height + pad * 2) + 'px' });
+  const cw = tour.card.offsetWidth, ch = tour.card.offsetHeight, vw = window.innerWidth, vh = window.innerHeight, gap = 12;
+  const footerTop = vh - (document.querySelector('.footer')?.offsetHeight || 50);
+  const clampTop = (t) => Math.max(10, Math.min(footerTop - ch - 10, t));
+  let top, left;
+  if (r.bottom + gap + ch <= footerTop - 10) {                 // debajo del elemento…
+    top = r.bottom + gap; left = Math.min(Math.max(12, r.left), vw - cw - 12);
+  } else if (r.top - ch - gap >= 10) {                         // …o encima…
+    top = r.top - ch - gap; left = Math.min(Math.max(12, r.left), vw - cw - 12);
+  } else if (r.right + gap + cw <= vw - 12) {                  // …o a su derecha (paneles altos)…
+    left = r.right + gap; top = clampTop(r.top);
+  } else if (r.left - gap - cw >= 12) {                        // …o a su izquierda…
+    left = r.left - gap - cw; top = clampTop(r.top);
+  } else {                                                     // …o, si no hay sitio, abajo del todo
+    left = Math.min(Math.max(12, r.left), vw - cw - 12); top = clampTop(footerTop - ch - 10);
+  }
+  if (vw < 700) {
+    // Móvil: tarjeta fija abajo, encima de la barra de acciones; el elemento queda arriba
+    const footerH = document.querySelector('.footer')?.offsetHeight || 50;
+    left = (vw - cw) / 2;
+    top = vh - ch - footerH - 10;
+  }
+  Object.assign(tour.card.style, { top: top + 'px', left: left + 'px' });
+}
+
+function tickTour() {
+  if (!tour.active) return;
+  const s = TOUR_STEPS[tour.i];
+  if (s.done && s.done()) { nextTourStep(); return; }
+  positionTour();
+}
+
+// La llama trackActivity cuando el fisio descarga o envía: completa el último paso
+function tourActionDone() {
+  if (tour.active && TOUR_STEPS[tour.i].final) endTour(true);
+}
+
+function endTour(completed) {
+  if (!tour.active) return;
+  tour.active = false;
+  clearInterval(tour.timer);
+  window.removeEventListener('resize', positionTour);
+  window.removeEventListener('scroll', positionTour, true);
+  if (tour.pulsed) tour.pulsed.classList.remove('tour-pulse');
+  tour.hole?.remove(); tour.card?.remove();
+  trackActivity(completed ? 'tour_done' : 'tour_skip');
+  try { localStorage.setItem('fp_tour_done', '1'); } catch (e) { /* sin almacenamiento */ }
+  if (state.user && !state.user.user_metadata?.tour_done) {
+    sb.auth.updateUser({ data: { tour_done: true } }).then(() => {}, () => {});
+    state.user.user_metadata = { ...(state.user.user_metadata || {}), tour_done: true };
+  }
+  showToast(completed ? '¡Listo! Ya sabes crear y enviar planes 🎉' : 'Puedes ver el tutorial cuando quieras desde Soporte');
+}
+
+// Se lanza solo para cuentas nuevas (últimos 14 días) que aún no lo han hecho
+function maybeStartTour() {
+  const u = state.user;
+  if (!u || tour.active) return;
+  let seen = false;
+  try { seen = !!localStorage.getItem('fp_tour_done'); } catch (e) { /* sin almacenamiento */ }
+  const isNew = u.created_at && (Date.now() - new Date(u.created_at).getTime()) < 14 * 864e5;
+  if (!seen && !u.user_metadata?.tour_done && isNew) setTimeout(() => startTour(false), 900);
 }
 
 async function toggleFavorite(id) {
@@ -2155,6 +2282,7 @@ async function doLogin() {
       render();
       showToast('¡Bienvenido de nuevo! 👋');
       trackActivity('app_open');
+      maybeStartTour();
     }
   } catch(e) {
     btn.innerHTML = 'Iniciar sesión';
