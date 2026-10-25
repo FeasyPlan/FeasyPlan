@@ -310,6 +310,15 @@ const SUPABASE_KEY = document.querySelector('meta[name="sb-key"]')?.content || '
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// Registro de actividad (panel HQ): solo eventos permitidos y siempre a nombre del usuario conectado.
+// Si falla no pasa nada: nunca bloquea la app.
+function trackActivity(event) {
+  if (!state.user) return;
+  sb.rpc('log_activity', { p_event: event }).then(() => {}, () => {});
+}
+// Mientras la pestaña está visible, un aviso cada 5 minutos (la base de datos ignora los repetidos)
+setInterval(() => { if (document.visibilityState === 'visible') trackActivity('heartbeat'); }, 5 * 60 * 1000);
+
 // ============================================
 // EJERCICIOS (base de datos local inicial)
 // ============================================
@@ -456,6 +465,7 @@ async function init() {
     state.user = session.user;
     await loadUserData();
     render();
+    trackActivity('app_open');
 
     // Detectar si viene de un enlace de recuperación de contraseña
     const hash = window.location.hash;
@@ -505,6 +515,7 @@ async function init() {
       state.user = session.user;
       await loadUserData();
       render();
+      trackActivity('app_open');
     }
   });
 }
@@ -1575,15 +1586,16 @@ async function handleAction(type) {
       }).eq('user_id', state.user.id);
       state.credits.daily_used = newDailyUsed;
       renderHeader();
-      // Si acaba de agotar los créditos diarios, enviar email
+      // Si acaba de agotar los créditos diarios, enviar email (la función identifica al usuario por su sesión)
       if (newDailyUsed >= (cr.daily_limit || 2)) {
-        fetch('https://hqofqaqlhknyxrazgwtc.supabase.co/functions/v1/credits-exhausted', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: state.user.email,
-            name: state.physio.name || ''
-          })
+        sb.auth.getSession().then(({ data }) => {
+          const token = data.session?.access_token;
+          if (!token) return;
+          return fetch('https://hqofqaqlhknyxrazgwtc.supabase.co/functions/v1/credits-exhausted', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: '{}'
+          });
         }).catch(() => {}); // Fire and forget
       }
     }
@@ -1592,12 +1604,15 @@ async function handleAction(type) {
   if (type === 'download') {
     await generatePDF();
     await consumeCredit();
+    trackActivity('pdf_download');
   } else if (type === 'email') {
     await consumeCredit();
     sendEmail();
+    trackActivity('send_email');
   } else if (type === 'whatsapp') {
     await consumeCredit();
     sendWhatsApp();
+    trackActivity('send_whatsapp');
   }
 }
 
@@ -2068,6 +2083,7 @@ async function doLogin() {
       closePopup();
       render();
       showToast('¡Bienvenido de nuevo! 👋');
+      trackActivity('app_open');
     }
   } catch(e) {
     btn.innerHTML = 'Iniciar sesión';
