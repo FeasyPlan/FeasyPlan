@@ -39,6 +39,8 @@
     .logo-img { height: 45px; }
     .logo span { color: var(--gray-900); }
     .header-right { display: flex; align-items: center; gap: 8px; }
+    .header-btn { display: inline-flex; align-items: center; gap: 5px; }
+    .premium-badge { display: flex; align-items: center; gap: 5px; background: #FFF7ED; border: 1px solid #FED7AA; border-radius: 8px; padding: 4px 10px; font-size: 11px; font-weight: 700; color: #C2410C; }
     .btn { display: inline-flex; align-items: center; gap: 5px; padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 400; cursor: pointer; border: none; transition: all 0.15s; font-family: inherit; white-space: nowrap; }
     .btn-primary { background: var(--blue); color: #fff; }
     .btn-primary:hover { background: #1d4ed8; }
@@ -218,6 +220,9 @@
       /* Header móvil sin sesión: solo iconos */
       .header-right { gap: 4px; }
       .header-right .btn { padding: 5px 8px; font-size: 11px; }
+      .header-right { gap: 6px; flex-shrink: 0; }
+      .header-right .header-btn { width: 32px; height: 32px; padding: 0; justify-content: center; border-radius: 8px; }
+      .premium-badge { width: 32px; height: 32px; padding: 0; justify-content: center; }
       .avatar { width: 30px !important; height: 30px !important; flex-shrink: 0; }
       .logo-img { height: 34px !important; }
       .btn-mobile-icon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--gray-200); background: transparent; cursor: pointer; font-size: 13px; }
@@ -762,9 +767,9 @@ function renderHeader() {
 
   if (state.user) {
     const premiumBadge = isPremium
-      ? `<div style="display:flex;align-items:center;gap:5px;background:#FFF7ED;border:1px solid #FED7AA;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;color:#C2410C;">
+      ? `<div class="premium-badge" title="Plan Premium">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="#C2410C" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          Premium
+          <span class="btn-mobile-hide">Premium</span>
          </div>`
       : state.credits
         ? `<div class="credits-badge" onclick="showCreditsInfo()" style="cursor:pointer;flex-direction:row;align-items:center;gap:5px;">
@@ -774,10 +779,12 @@ function renderHeader() {
         : '';
     el.innerHTML = `
       ${premiumBadge}
-      <button class="btn btn-outline" onclick="showFollowupsList()" title="Seguimientos de pacientes" style="display:inline-flex;align-items:center;gap:5px;">
+      <button class="btn btn-outline header-btn" onclick="showFollowupsList()" title="Seguimientos de pacientes">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span class="btn-mobile-hide">Seguimientos</span>
       </button>
-      <button class="btn btn-outline" onclick="handleNewPlan()">+ Nuevo Plan</button>
+      <button class="btn btn-outline header-btn" onclick="handleNewPlan()" title="Nuevo plan">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span class="btn-mobile-hide">Nuevo Plan</span>
+      </button>
       <div class="avatar" onclick="showProfilePopup()" title="Mi perfil" style="${state.physio.logo ? 'background:white;padding:1px;overflow:hidden;' : ''}">
         ${state.physio.logo ? `<img src="${state.physio.logo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : (state.profile?.name || state.user.email)[0].toUpperCase()}
       </div>
