@@ -143,6 +143,33 @@
     .error-msg { background: var(--red-light); border: 1px solid #FCA5A5; border-radius: 7px; padding: 8px 11px; font-size: 12px; color: var(--red); margin-bottom: 10px; display: none; }
 
     /* ====== TOAST ====== */
+    /* ====== SEGUIMIENTOS ====== */
+    .fu-offer { position: fixed; right: 16px; bottom: 64px; z-index: 150; width: min(380px, calc(100vw - 24px)); background: #fff; border: 1px solid var(--blue-mid); border-radius: 14px; box-shadow: 0 10px 30px rgba(15,23,42,0.18); padding: 12px 36px 12px 14px; display: flex; align-items: center; gap: 10px; animation: toastIn 0.2s ease; }
+    .fu-offer-text { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--gray-600); line-height: 1.4; flex: 1; min-width: 0; }
+    .fu-offer-text strong { font-size: 13px; color: var(--gray-900); }
+    .fu-offer .btn { white-space: nowrap; }
+    .fu-offer-close { position: absolute; top: 6px; right: 8px; background: none; border: none; color: var(--gray-400); cursor: pointer; font-size: 13px; padding: 4px; }
+    .fu-channels { display: flex; flex-direction: column; gap: 6px; }
+    .fu-channel { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 1px solid var(--gray-200); border-radius: 10px; cursor: pointer; background: #fff; }
+    .fu-channel:has(input:checked) { border-color: var(--blue); background: var(--blue-light); }
+    .fu-channel input { margin-top: 3px; accent-color: var(--blue); }
+    .fu-channel span { display: flex; flex-direction: column; gap: 2px; font-size: 13px; color: var(--gray-900); }
+    .fu-channel small { font-size: 12px; color: var(--gray-600); line-height: 1.4; }
+    .fu-section { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--blue); margin: 12px 0 6px; }
+    .fu-row { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--gray-100); }
+    .fu-row-main { display: flex; flex-direction: column; gap: 2px; font-size: 13px; min-width: 0; }
+    .fu-row-main span { font-size: 12px; color: var(--gray-600); }
+    .fu-row-main .fu-err { color: var(--red); }
+    .fu-row-actions { grid-column: 1 / -1; display: flex; gap: 12px; }
+    .fu-row-actions:empty { display: none; }
+    .fu-link { background: none; border: none; padding: 0; font: inherit; font-size: 12px; font-weight: 600; color: var(--blue); cursor: pointer; }
+    .fu-link.danger { color: var(--red); }
+    .fu-pill { font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 999px; background: var(--gray-100); color: var(--gray-600); white-space: nowrap; }
+    .fu-pill.fu-programado { background: var(--blue-light); color: var(--blue); }
+    .fu-pill.fu-enviado { background: var(--green-light); color: var(--green); }
+    .fu-pill.fu-error { background: var(--red-light); color: var(--red); }
+    @media (max-width: 700px) { .btn-mobile-hide { display: none; } .fu-offer { right: 12px; bottom: 60px; } }
+    .fu-empty { font-size: 13px; color: var(--gray-600); background: var(--gray-50); border-radius: 10px; padding: 14px; line-height: 1.5; }
     /* ====== TOUR GUIADO ====== */
     .tour-hole { position: fixed; z-index: 90; border-radius: 14px; box-shadow: 0 0 0 9999px rgba(15,23,42,0.55); pointer-events: none; transition: all 0.25s ease; }
     .tour-card { position: fixed; z-index: 95; width: min(340px, calc(100vw - 24px)); background: #fff; border-radius: 14px; box-shadow: 0 12px 40px rgba(15,23,42,0.28); padding: 16px 16px 14px; font-family: inherit; transition: top 0.25s ease, left 0.25s ease; }
@@ -747,6 +774,9 @@ function renderHeader() {
         : '';
     el.innerHTML = `
       ${premiumBadge}
+      <button class="btn btn-outline" onclick="showFollowupsList()" title="Seguimientos de pacientes" style="display:inline-flex;align-items:center;gap:5px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span class="btn-mobile-hide">Seguimientos</span>
+      </button>
       <button class="btn btn-outline" onclick="handleNewPlan()">+ Nuevo Plan</button>
       <div class="avatar" onclick="showProfilePopup()" title="Mi perfil" style="${state.physio.logo ? 'background:white;padding:1px;overflow:hidden;' : ''}">
         ${state.physio.logo ? `<img src="${state.physio.logo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : (state.profile?.name || state.user.email)[0].toUpperCase()}
@@ -1354,6 +1384,177 @@ function maybeStartTour() {
   if (!seen && !u.user_metadata?.tour_done && isNew) setTimeout(() => startTour(false), 900);
 }
 
+// ============================================
+// SEGUIMIENTO DE PACIENTES (Premium)
+// WhatsApp: el día elegido el fisio recibe un email con un botón que abre WhatsApp con el mensaje escrito.
+// Email: el mensaje llega automáticamente al paciente, en nombre del fisio.
+// ============================================
+const fu = { editingId: null, prefill: null };
+const pad2 = (n) => String(n).padStart(2, '0');
+const localDate = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const localTime = (d) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+
+function followupDefaultMessage(patientName) {
+  const first = String(patientName || '').trim().split(' ')[0] || '';
+  const who = state.physio?.name ? `Soy ${state.physio.name}${state.physio.clinic ? ' de ' + state.physio.clinic : ''}. ` : '';
+  return `Hola${first ? ' ' + first : ''} 👋 ${who}¿Qué tal te encuentras con los ejercicios? ¿Has notado mejoría? Cuéntame cualquier molestia o duda. ¡Un saludo!`;
+}
+
+// Tarjeta discreta tras enviar o descargar un plan
+function offerFollowup() {
+  if (!state.user || !state.patient?.name) return;
+  document.getElementById('fuOffer')?.remove();
+  const isPremium = !!state.profile?.is_premium;
+  const card = document.createElement('div');
+  card.id = 'fuOffer'; card.className = 'fu-offer'; card.setAttribute('role', 'status');
+  card.innerHTML = isPremium
+    ? `<div class="fu-offer-text"><strong>📅 ¿Programar seguimiento?</strong><span>Pregunta a ${escapeHtml(state.patient.name)} cómo está dentro de 7 días.</span></div>
+       <button class="btn btn-primary" onclick="document.getElementById('fuOffer')?.remove();showFollowupPopup()">Programar</button>
+       <button class="fu-offer-close" aria-label="Cerrar" onclick="document.getElementById('fuOffer')?.remove()">✕</button>`
+    : `<div class="fu-offer-text"><strong>🔒 Seguimiento de pacientes</strong><span>Programa un mensaje para preguntar cómo está. Disponible en Premium.</span></div>
+       <button class="btn btn-primary" onclick="document.getElementById('fuOffer')?.remove();showPayPopup()">Ver Premium</button>
+       <button class="fu-offer-close" aria-label="Cerrar" onclick="document.getElementById('fuOffer')?.remove()">✕</button>`;
+  document.body.append(card);
+  setTimeout(() => card.remove(), 25000);
+}
+
+function showFollowupPopup(existing) {
+  if (!state.user) { showLoginPopup(); return; }
+  if (!state.profile?.is_premium) { showPayPopup(); return; }
+  const p = existing || {
+    patient_name: state.patient?.name || '', patient_phone: state.patient?.phone || '', patient_email: state.patient?.email || '',
+    channel: state.patient?.phone ? 'whatsapp' : 'email',
+    message: followupDefaultMessage(state.patient?.name),
+    send_at: new Date(Date.now() + 7 * 864e5).toISOString(),
+  };
+  fu.editingId = existing?.id || null;
+  fu.prefill = p;
+  const when = new Date(p.send_at);
+  const minDate = localDate(new Date());
+  showPopup(`
+    <h2>${existing ? 'Editar seguimiento' : 'Programar seguimiento'}</h2>
+    <p style="margin-bottom:12px;">Para <strong>${escapeHtml(p.patient_name || 'tu paciente')}</strong>. Elige cómo y cuándo preguntarle qué tal está.</p>
+    <div class="error-msg" id="fuError"></div>
+    <div class="popup-form">
+      <div>
+        <label class="form-label">Cómo enviarlo</label>
+        <div class="fu-channels">
+          <label class="fu-channel"><input type="radio" name="fuChannel" value="whatsapp" ${p.channel === 'whatsapp' ? 'checked' : ''} onchange="updateFollowupHelp()">
+            <span><strong>WhatsApp</strong><small>Ese día te llega un recordatorio con un botón: un clic y lo envías tú.</small></span></label>
+          <label class="fu-channel"><input type="radio" name="fuChannel" value="email" ${p.channel === 'email' ? 'checked' : ''} onchange="updateFollowupHelp()">
+            <span><strong>Email automático</strong><small>Le llega al paciente solo, en tu nombre. Si responde, te llega a ti.</small></span></label>
+        </div>
+      </div>
+      <div id="fuContact"></div>
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;"><label class="form-label" for="fuDate">Día</label><input class="input" type="date" id="fuDate" min="${minDate}" value="${localDate(when)}" style="background:white;"></div>
+        <div style="flex:1;"><label class="form-label" for="fuTime">Hora</label><input class="input" type="time" id="fuTime" value="${localTime(when)}" style="background:white;"></div>
+      </div>
+      <div>
+        <label class="form-label" for="fuMessage">Mensaje</label>
+        <textarea class="input" id="fuMessage" rows="5" maxlength="2000" style="background:white;resize:vertical;">${escapeHtml(p.message)}</textarea>
+      </div>
+    </div>
+    <div class="popup-btns">
+      <button class="btn-full primary" id="fuSaveBtn" onclick="saveFollowup()">${existing ? 'Guardar cambios' : 'Programar seguimiento'}</button>
+      <button class="btn-full outline" onclick="closePopup()">Cancelar</button>
+    </div>
+  `);
+  updateFollowupHelp();
+}
+
+// Campo de móvil o email según el canal, con el dato del paciente ya puesto
+function updateFollowupHelp() {
+  const ch = document.querySelector('input[name=fuChannel]:checked')?.value || 'whatsapp';
+  const p = fu.prefill || {};
+  const box = document.getElementById('fuContact');
+  if (!box) return;
+  box.innerHTML = ch === 'whatsapp'
+    ? `<label class="form-label" for="fuPhone">Móvil del paciente</label><input class="input" type="tel" id="fuPhone" value="${escapeHtml(p.patient_phone || '')}" placeholder="600 123 456" style="background:white;">`
+    : `<label class="form-label" for="fuEmail">Email del paciente</label><input class="input" type="email" id="fuEmail" value="${escapeHtml(p.patient_email || '')}" placeholder="paciente@email.com" style="background:white;">`;
+}
+
+async function saveFollowup() {
+  const errEl = document.getElementById('fuError');
+  const btn = document.getElementById('fuSaveBtn');
+  const p = fu.prefill || {};
+  const channel = document.querySelector('input[name=fuChannel]:checked')?.value;
+  const phone = document.getElementById('fuPhone')?.value.trim() ?? p.patient_phone ?? '';
+  const email = document.getElementById('fuEmail')?.value.trim() ?? p.patient_email ?? '';
+  const message = document.getElementById('fuMessage').value.trim();
+  const date = document.getElementById('fuDate').value;
+  const time = document.getElementById('fuTime').value;
+  const sendAt = new Date(`${date}T${time || '10:00'}`);
+
+  if (!channel) return showError(errEl, 'Elige WhatsApp o email');
+  if (channel === 'whatsapp' && phone.replace(/\D/g, '').length < 9) return showError(errEl, 'Escribe el móvil del paciente');
+  if (channel === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showError(errEl, 'Escribe un email válido del paciente');
+  if (!message) return showError(errEl, 'Escribe el mensaje');
+  if (!date || isNaN(sendAt)) return showError(errEl, 'Elige el día y la hora');
+  if (sendAt.getTime() < Date.now() - 60000) return showError(errEl, 'Elige un día y hora futuros');
+
+  btn.disabled = true; btn.innerHTML = '<span class="loading-spinner"></span> Guardando...';
+  const row = {
+    channel, message, send_at: sendAt.toISOString(),
+    patient_phone: channel === 'whatsapp' ? phone : (p.patient_phone || null),
+    patient_email: channel === 'email' ? email : (p.patient_email || null),
+  };
+  const { error } = fu.editingId
+    ? await sb.from('followups').update(row).eq('id', fu.editingId)
+    : await sb.from('followups').insert({ ...row, patient_name: p.patient_name || 'Paciente' });
+  if (error) {
+    btn.disabled = false; btn.textContent = fu.editingId ? 'Guardar cambios' : 'Programar seguimiento';
+    return showError(errEl, 'No se ha podido guardar. Inténtalo de nuevo.');
+  }
+  closePopup();
+  const fecha = sendAt.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+  showToast(`Seguimiento programado para el ${fecha} a las ${localTime(sendAt)} ✓`);
+}
+
+const FU_STATUS = { programado: 'Programado', enviando: 'Enviando', enviado: 'Enviado', cancelado: 'Cancelado', error: 'No enviado' };
+
+async function showFollowupsList() {
+  if (!state.user) { showLoginPopup(); return; }
+  if (!state.profile?.is_premium) { showPayPopup(); return; }
+  showPopup(`<h2>Seguimientos</h2><p>Cargando...</p>`);
+  const { data, error } = await sb.from('followups').select('*').order('send_at', { ascending: false }).limit(60);
+  if (error) { showPopup(`<h2>Seguimientos</h2><p>No se han podido cargar. Inténtalo de nuevo.</p><div class="popup-btns"><button class="btn-full outline" onclick="closePopup()">Cerrar</button></div>`); return; }
+  window._fuRows = data || [];
+  const upcoming = window._fuRows.filter((f) => f.status === 'programado').sort((a, b) => new Date(a.send_at) - new Date(b.send_at));
+  const past = window._fuRows.filter((f) => f.status !== 'programado');
+  const row = (f) => {
+    const d = new Date(f.send_at);
+    const when = d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) + ' · ' + localTime(d);
+    const actions = f.status === 'programado'
+      ? `<button class="fu-link" onclick="editFollowup('${f.id}')">Editar</button><button class="fu-link danger" onclick="cancelFollowup('${f.id}')">Cancelar</button>` : '';
+    return `<div class="fu-row">
+      <div class="fu-row-main"><strong>${escapeHtml(f.patient_name)}</strong><span>${f.channel === 'whatsapp' ? 'WhatsApp' : 'Email'} · ${when}</span>
+        ${f.status === 'error' && f.error ? `<span class="fu-err">${escapeHtml(f.error)}</span>` : ''}</div>
+      <span class="fu-pill fu-${f.status}">${FU_STATUS[f.status] || f.status}</span>
+      <div class="fu-row-actions">${actions}</div></div>`;
+  };
+  showPopup(`
+    <h2>Seguimientos</h2>
+    <p style="margin-bottom:10px;">Mensajes programados para preguntar a tus pacientes cómo están.</p>
+    ${upcoming.length ? `<div class="fu-section">Próximos</div>${upcoming.map(row).join('')}` : '<div class="fu-empty">No tienes seguimientos programados. Al enviar un plan te ofreceremos programar uno.</div>'}
+    ${past.length ? `<div class="fu-section">Anteriores</div>${past.slice(0, 20).map(row).join('')}` : ''}
+    <div class="popup-btns" style="margin-top:14px;">
+      ${state.patient?.name ? `<button class="btn-full primary" onclick="showFollowupPopup()">+ Nuevo para ${escapeHtml(state.patient.name)}</button>` : ''}
+      <button class="btn-full outline" onclick="closePopup()">Cerrar</button>
+    </div>`);
+}
+
+function editFollowup(id) {
+  const f = (window._fuRows || []).find((x) => x.id === id);
+  if (f) showFollowupPopup(f);
+}
+
+async function cancelFollowup(id) {
+  const { error } = await sb.from('followups').update({ status: 'cancelado' }).eq('id', id);
+  showToast(error ? 'No se ha podido cancelar' : 'Seguimiento cancelado');
+  showFollowupsList();
+}
+
 async function toggleFavorite(id) {
   if (!state.user) { showLoginPopup(); return; }
   if (!state.favorites) state.favorites = new Set();
@@ -1744,6 +1945,7 @@ async function handleAction(type) {
     sendWhatsApp();
     trackActivity('send_whatsapp');
   }
+  if (['download', 'email', 'whatsapp'].includes(type)) setTimeout(offerFollowup, 1500);
 }
 
 // ============================================
