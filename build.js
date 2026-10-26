@@ -16,4 +16,7 @@ fs.writeFileSync('./dist/index.html', html);
   }
 });
 
+// Páginas públicas de ejercicios (SEO), sitemap.xml y robots.txt
+require('./seo/generate')('./dist');
+
 console.log('Build completo ✓');
