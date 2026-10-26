@@ -164,7 +164,7 @@ module.exports = [
       { id: 17, s: 3, t: 15, nota: 'Cada lado. Puedes apoyar la rodilla de abajo' },
       { id: 62, s: 3, r: 10, nota: 'Lento y controlado' },
       { id: 19, s: 3, r: 8, nota: 'Cada lado. Sin girar la cadera' },
-      { id: 108, s: 3, r: 10, nota: 'Cada pierna. Zona lumbar pegada al suelo' },
+      { id: 10, s: 3, r: 10, nota: 'Cada pierna. Zona lumbar pegada al suelo' },
     ],
     notasPlan: 'No bloquees la respiración. Prioriza la técnica sobre el tiempo.',
     progresion: [
@@ -188,7 +188,7 @@ module.exports = [
     slug: 'hombro',
     zona: 'Hombro',
     title: 'Ejercicios para fortalecer el hombro: plan en PDF | FeasyPlan',
-    description: '4 ejercicios para fortalecer el hombro y la escápula sin material o con una mancuerna. Con ilustraciones, series y repeticiones. PDF gratis.',
+    description: '4 ejercicios para fortalecer el hombro y la escápula con tu propio peso y un par de mancuernas. Con ilustraciones, series y repeticiones. PDF gratis.',
     h1: 'Ejercicios para fortalecer el hombro y la escápula',
     lead: 'Un plan de fuerza para la fase en la que el hombro ya se mueve bien y toca recuperar fuerza y control de la escápula.',
     intro: [
@@ -202,15 +202,15 @@ module.exports = [
     ],
     frecuencia: '3 días por semana, en días alternos · 15–20 minutos',
     plan: [
-      { id: 81, s: 3, r: 10, nota: 'Espalda recta, codos a unos 45° del cuerpo' },
-      { id: 35, s: 3, r: 12, nota: 'Cada brazo. Lleva el codo hacia atrás, no hacia arriba' },
-      { id: 100, s: 3, t: 20, nota: 'Empuja el suelo: que la espalda no se hunda entre los omóplatos' },
-      { id: 105, s: 3, r: 8, nota: 'Sin balancear la cadera' },
+      { id: 81, s: 3, r: 10, nota: 'Tronco alineado, codos a unos 45° del cuerpo' },
+      { id: 42, s: 3, r: 10, nota: 'Cada lado. Empuja el suelo: que la espalda no se hunda entre los omóplatos' },
+      { id: 91, s: 3, r: 8, nota: 'Alterna el brazo que empieza' },
+      { id: 90, s: 3, r: 6, nota: 'Cada brazo. Mancuernas ligeras; si cuesta, haz solo el remo con las rodillas apoyadas' },
     ],
     notasPlan: 'Sin dolor agudo. Si una molestia dura más de 24 horas, reduce la carga.',
     progresion: [
       'Pasa de flexiones con las rodillas apoyadas a flexiones completas',
-      'Aumenta el peso en el remo',
+      'Aumenta el peso de las mancuernas en la flexión con remo',
       'Alarga la plancha alta',
     ],
     precauciones: [
@@ -220,7 +220,7 @@ module.exports = [
     ],
     faq: [
       { q: '¿Cuándo puedo empezar a fortalecer el hombro?', a: 'Cuando el movimiento sea casi completo y el dolor en reposo haya desaparecido. Tu fisioterapeuta te indicará el momento según la lesión.' },
-      { q: '¿Necesito material?', a: 'Solo una mancuerna, o una botella de agua, para el remo. El resto se hace con el propio peso.' },
+      { q: '¿Necesito material?', a: 'Solo un par de mancuernas ligeras para la flexión con remo. El resto se hace con el propio peso.' },
       FAQ_PERSONALIZAR,
     ],
     relacionadas: ['core', 'lumbalgia', 'equilibrio'],
@@ -229,7 +229,7 @@ module.exports = [
     slug: 'isquiotibiales',
     zona: 'Piernas',
     title: 'Estiramientos de isquiotibiales: 5 ejercicios en PDF | FeasyPlan',
-    description: '5 ejercicios para estirar y movilizar los isquiotibiales y la cadena posterior, con ilustraciones y tiempos. Plan gratis en PDF.',
+    description: '4 ejercicios para estirar y movilizar los isquiotibiales y la cadena posterior, con ilustraciones y tiempos. Plan gratis en PDF.',
     h1: 'Estiramientos y movilidad de isquiotibiales',
     lead: 'Ejercicios para ganar flexibilidad en la parte de atrás del muslo y moverte con más soltura al agacharte, correr o hacer deporte.',
     intro: [
@@ -243,16 +243,15 @@ module.exports = [
     ],
     frecuencia: 'A diario o después de entrenar · unos 10 minutos',
     plan: [
-      { id: 46, s: 3, r: 10, nota: 'Espalda recta, el movimiento sale de la cadera' },
       { id: 22, s: 3, t: 30, nota: 'Dobla un poco las rodillas si tira de la zona lumbar' },
-      { id: 104, s: 2, r: 10, nota: 'Vuelve despacio' },
+      { id: 46, s: 2, r: 8, nota: 'Espalda recta en la media elevación; el movimiento sale de la cadera' },
       { id: 25, s: 3, t: 30, nota: 'Talones hacia el suelo sin forzar' },
-      { id: 49, s: 2, r: 6, nota: 'Ritmo tranquilo' },
+      { id: 18, s: 2, r: 8, nota: 'Cada pierna. Baja despacio: trabaja la fuerza en estiramiento' },
     ],
     notasPlan: 'Estira hasta notar tensión, nunca dolor.',
     progresion: [
       'Aumenta los tiempos a 45–60 segundos',
-      'Añade fuerza con el peso muerto a una pierna',
+      'Haz el peso muerto a una pierna sujetando una mancuerna',
     ],
     precauciones: [
       'Si notas hormigueo o un tirón que baja por la pierna, para: puede ser tensión del nervio',
@@ -270,7 +269,7 @@ module.exports = [
     slug: 'equilibrio',
     zona: 'Propiocepción',
     title: 'Ejercicios de equilibrio y propiocepción en PDF | FeasyPlan',
-    description: '5 ejercicios de equilibrio y propiocepción para tobillo, rodilla y cadera, con ilustraciones, series y repeticiones. Descarga el plan gratis.',
+    description: '4 ejercicios de equilibrio y propiocepción para tobillo, rodilla y cadera, con ilustraciones, series y repeticiones. Descarga el plan gratis.',
     h1: 'Ejercicios de equilibrio y propiocepción',
     lead: 'La propiocepción es la capacidad de saber dónde está tu cuerpo sin mirarlo. Entrenarla reduce el riesgo de recaídas tras un esguince y mejora la estabilidad al caminar.',
     intro: [
@@ -284,11 +283,10 @@ module.exports = [
     ],
     frecuencia: '4–5 días por semana · unos 15 minutos',
     plan: [
-      { id: 77, s: 3, r: 8, nota: 'Cada pierna. Ten una pared cerca por si necesitas apoyarte' },
-      { id: 18, s: 3, r: 8, nota: 'Cada pierna. Espalda recta' },
+      { id: 51, s: 3, r: 8, nota: 'Cada pierna. Aguanta 2 segundos con la rodilla arriba antes de dar el paso' },
+      { id: 18, s: 3, r: 8, nota: 'Cada pierna. Ten una pared cerca por si necesitas apoyarte' },
       { id: 87, s: 3, r: 6, nota: 'Cada pierna. Poco recorrido al principio' },
-      { id: 9, s: 3, r: 10, nota: 'Rodilla de delante alineada con el pie' },
-      { id: 67, s: 3, r: 8, nota: 'Cada lado' },
+      { id: 76, s: 3, r: 10, nota: 'Solo cuando controles los anteriores. Aterriza suave y estable' },
     ],
     notasPlan: 'Hazlos siempre cerca de una pared o una silla.',
     progresion: [
