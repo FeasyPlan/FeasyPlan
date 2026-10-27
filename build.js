@@ -16,6 +16,9 @@ fs.writeFileSync('./dist/index.html', html);
   }
 });
 
+// Imágenes propias (ilustraciones de ejercicios nuevas)
+if (fs.existsSync('img')) fs.cpSync('img', './dist/img', { recursive: true });
+
 // Páginas públicas de ejercicios (SEO), sitemap.xml y robots.txt
 require('./seo/generate')('./dist');
 

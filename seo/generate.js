@@ -15,7 +15,7 @@ const TODAY = new Date().toISOString().slice(0, 10);
 const ejercicios = require('./ejercicios.json');
 const guias = require('./guias.js');
 
-const ZONAS = { Core: 'Core y abdomen', Cadera: 'Cadera y glúteos', Piernas: 'Piernas y rodilla', Hombros: 'Hombros, brazos y pecho', General: 'Cuerpo completo' };
+const ZONAS = { Core: 'Core y abdomen', Cadera: 'Cadera y glúteos', Piernas: 'Piernas y rodilla', Tobillo: 'Tobillo y pie', Hombros: 'Hombros, brazos y pecho', Cuello: 'Cuello', General: 'Cuerpo completo' };
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const slugify = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
