@@ -8,7 +8,8 @@ const fs = require('fs');
 const path = require('path');
 
 const SITE = 'https://feasyplan.pro';
-const LOGO = 'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/brand/logo-full.png';
+const LOGO = 'https://feasyplan.pro/img/brand/logo.png';
+const LOGO_OG = 'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/brand/logo-full.png'; // fondo blanco para vistas previas
 const SYMBOL = 'https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/brand/logo-symbol.png';
 const TODAY = new Date().toISOString().slice(0, 10);
 
@@ -190,7 +191,7 @@ function layout({ title, description, url, image, ld = [], body }) {
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(description)}">
 <meta property="og:url" content="${SITE}${url}">
-<meta property="og:image" content="${esc(image || LOGO)}">
+<meta property="og:image" content="${esc(image || LOGO_OG)}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0F172A">
 <link rel="icon" type="image/png" href="${SYMBOL}">
@@ -209,7 +210,8 @@ ${ld.map(jsonld).join('\n')}
 ${body}
 <footer><div class="wrap">
   <div class="cols"><b style="color:#fff">Guías de ejercicios:</b>${guias.map((g) => `<a href="/ejercicios/${g.slug}">${esc(g.h1.replace(/^Ejercicios (para|de) (la |el )?/i, '').replace(/^Estiramientos y movilidad de /, ''))}</a>`).join('')}</div>
-  <div class="cols"><a href="/">FeasyPlan</a><a href="/ejercicios">Biblioteca de ejercicios</a><a href="/terminos">Términos</a><a href="/privacidad">Privacidad</a><a href="/cookies">Cookies</a><a href="mailto:soporte@feasyplan.pro">soporte@feasyplan.pro</a></div>
+  <a href="/" aria-label="FeasyPlan, inicio"><img src="/img/brand/logo-blanco.png" alt="FeasyPlan" width="150" height="26" style="height:26px;width:auto"></a>
+  <div class="cols"><a href="/ejercicios">Biblioteca de ejercicios</a><a href="/terminos">Términos</a><a href="/privacidad">Privacidad</a><a href="/cookies">Cookies</a><a href="mailto:soporte@feasyplan.pro">soporte@feasyplan.pro</a></div>
   <div>La información de estas páginas es orientativa y no sustituye la valoración de un profesional sanitario. © ${new Date().getFullYear()} FeasyPlan.</div>
 </div></footer>
 </body>
@@ -218,7 +220,7 @@ ${body}
 
 function ctaHtml(campaign, titulo = '¿Eres fisioterapeuta? Envía este plan a tu paciente en 30 segundos') {
   return `<section class="no-print"><div class="wrap"><div class="cta">
-  <div><div class="kicker">FeasyPlan · Gratis</div><h2 style="margin:0">${esc(titulo)}</h2>
+  <div><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><img src="/img/brand/logo-blanco.png" alt="FeasyPlan" width="120" height="21" style="height:21px;width:auto"><span class="chip">Gratis</span></div><h2 style="margin:0">${esc(titulo)}</h2>
   <p>Cambia ejercicios, series y notas, añade tu logo y el nombre del paciente, y envíalo por WhatsApp o email. Más de 100 ejercicios ilustrados.</p></div>
   <a class="btn" href="${appUrl(campaign)}">Crear plan gratis</a>
 </div></div></section>`;
