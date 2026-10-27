@@ -2297,7 +2297,7 @@ function drawFooter(doc, pageW, isPremium) {
     doc.setFontSize(7.5);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(180, 180, 180);
-    doc.text('Generado con FeasyPlan · feasyplan.com', pageW / 2, 290, { align: 'center' });
+    doc.text('Generado con FeasyPlan · feasyplan.pro', pageW / 2, 290, { align: 'center' });
   }
   // Franja azul inferior
   doc.setFillColor(37, 99, 235);
@@ -3654,6 +3654,11 @@ async function sendEmail() {
   showToast('Generando y enviando PDF...');
 
   try {
+    // La función identifica al fisio por su sesión (remitente y «responder a»)
+    const { data: sessionData } = await sb.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) { showToast('Inicia sesión para enviar el plan por email'); return; }
+
     // Generar PDF en base64
     const pdfBase64 = await generatePDFBase64();
 
@@ -3664,7 +3669,7 @@ async function sendEmail() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Authorization': 'Bearer ' + token,
         },
         body: JSON.stringify({
           to: state.patient.email,
