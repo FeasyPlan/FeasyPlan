@@ -1324,5 +1324,83 @@
   "reps": "12",
   "duration": "",
   "img": "https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/ejercicios/Ejercicio%20(109).png"
+ },
+ {
+  "id": 114,
+  "name": "Péndulo de Codman",
+  "description": "De pie, inclina el tronco hacia delante y apoya una mano en una mesa. Deja el otro brazo colgando, totalmente relajado. Balancea suavemente el cuerpo para que el brazo dibuje pequeños círculos por sí solo, sin hacer fuerza con el hombro. Haz círculos en ambos sentidos.",
+  "tags": "hombro, movilidad, relajación",
+  "zona": "Hombros",
+  "tipo": "Movilidad",
+  "material": "Ninguno",
+  "series": "3",
+  "reps": "1",
+  "duration": "30",
+  "img": "https://feasyplan.pro/img/ejercicios/pendulo-de-codman.png"
+ },
+ {
+  "id": 115,
+  "name": "Retracción cervical",
+  "description": "Sentado con la espalda recta y la mirada al frente, lleva la cabeza hacia atrás en línea recta, como si te empujaran la barbilla con un dedo, hasta notar un doble mentón. Mantén 2–3 segundos y vuelve despacio. No inclines la cabeza hacia arriba ni hacia abajo.",
+  "tags": "cuello, postura, flexores profundos cervicales",
+  "zona": "Cuello",
+  "tipo": "Movilidad",
+  "material": "Ninguno",
+  "series": "3",
+  "reps": "10",
+  "duration": "",
+  "img": "https://feasyplan.pro/img/ejercicios/retraccion-cervical.png"
+ },
+ {
+  "id": 116,
+  "name": "Isométrico de cuádriceps con toalla",
+  "description": "Sentado en el suelo con las piernas estiradas y una toalla enrollada bajo la rodilla. Aprieta el muslo empujando la parte de atrás de la rodilla contra la toalla y lleva las puntas de los pies hacia ti. Mantén 5 segundos y relaja.",
+  "tags": "cuádriceps, rodilla, activación",
+  "zona": "Piernas",
+  "tipo": "Fuerza",
+  "material": "Ninguno",
+  "series": "3",
+  "reps": "10",
+  "duration": "",
+  "img": "https://feasyplan.pro/img/ejercicios/isometrico-de-cuadriceps-con-toalla.png"
+ },
+ {
+  "id": 117,
+  "name": "Rodilla al pecho tumbado",
+  "description": "Túmbate boca arriba con las piernas estiradas. Lleva una rodilla hacia el pecho y sujétala con las dos manos por debajo de la rodilla, con la otra pierna estirada en el suelo y la cabeza apoyada. Mantén 20 segundos notando el estiramiento en la zona lumbar y el glúteo, y cambia de pierna.",
+  "tags": "zona lumbar, glúteos, estiramiento",
+  "zona": "Core",
+  "tipo": "Estiramiento",
+  "material": "Ninguno",
+  "series": "3",
+  "reps": "1",
+  "duration": "20",
+  "img": "https://feasyplan.pro/img/ejercicios/rodilla-al-pecho-tumbado.png"
+ },
+ {
+  "id": 118,
+  "name": "Extensión lumbar en prono (McKenzie)",
+  "description": "Túmbate boca abajo con las manos apoyadas bajo los hombros. Estira los brazos para elevar el pecho mientras la cadera y las piernas se quedan apoyadas en el suelo y la zona lumbar relajada. Mantén 1–2 segundos arriba y baja despacio. Para si el dolor baja por la pierna.",
+  "tags": "zona lumbar, columna, movilidad",
+  "zona": "Core",
+  "tipo": "Movilidad",
+  "material": "Ninguno",
+  "series": "3",
+  "reps": "10",
+  "duration": "",
+  "img": "https://feasyplan.pro/img/ejercicios/extension-lumbar-en-prono-mckenzie.png"
+ },
+ {
+  "id": 119,
+  "name": "Sentadilla isométrica en pared",
+  "description": "Apoya toda la espalda en la pared y desliza el cuerpo hacia abajo hasta que caderas y rodillas formen 90 grados, con las rodillas encima de los tobillos y los pies bien apoyados. Mantén la espalda pegada a la pared durante todo el tiempo y sube despacio.",
+  "tags": "cuádriceps, glúteos, resistencia",
+  "zona": "Piernas",
+  "tipo": "Fuerza",
+  "material": "Ninguno",
+  "series": "3",
+  "reps": "1",
+  "duration": "30",
+  "img": "https://feasyplan.pro/img/ejercicios/sentadilla-isometrica-en-pared.png"
  }
 ]
