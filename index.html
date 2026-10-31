@@ -128,7 +128,12 @@
     /* ====== OVERLAY & POPUP ====== */
     .overlay { position: fixed; inset: 0; background: rgba(17,24,39,0.5); z-index: 100; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(2px); overflow: hidden; }
     .overlay.open { display: flex; overscroll-behavior: contain; }
-    .popup { background: var(--white); border-radius: var(--radius-lg); padding: 26px; max-width: 390px; width: 100%; box-shadow: var(--shadow-md); animation: popIn 0.18s ease; }
+    .popup { background: var(--white); border-radius: var(--radius-lg); padding: 26px; max-width: 390px; width: 100%; box-shadow: var(--shadow-md); animation: popIn 0.18s ease; max-height: calc(100vh - 40px); max-height: calc(100dvh - 40px); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+    /* Móvil: deja libre la barra fija de abajo (footer, z-index 200) para que no tape el final de la ventana */
+    @media (max-width: 700px) {
+      .overlay { padding: 16px 16px 56px; }
+      .popup { max-height: calc(100vh - 72px); max-height: calc(100dvh - 72px); padding: 22px; }
+    }
     @keyframes popIn { from { opacity:0; transform:scale(0.96) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
     .popup-icon { width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 14px; }
     .popup-icon.blue { background: var(--blue-light); }
