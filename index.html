@@ -633,9 +633,6 @@ async function doChangePassword() {
 }
 
 async function loadUserData() {
-  // Reset créditos si es un día nuevo
-  await sb.rpc('reset_daily_credits_if_needed', { p_user_id: state.user.id });
-
   // Guardar datos que el usuario haya escrito antes de loguearse
   const pendingName = state.physio.name;
   const pendingClinic = state.physio.clinic;
@@ -668,8 +665,8 @@ async function loadUserData() {
     }
   }
 
-  // Cargar créditos
-  const { data: credits } = await sb.from('credits').select('*').eq('user_id', state.user.id).single();
+  // Cargar créditos: los cuenta el servidor (3 por semana en el plan gratuito, se recargan cada lunes)
+  const { data: credits } = await sb.rpc('credits_state');
   state.credits = credits;
 
   // Cargar pacientes
@@ -733,7 +730,7 @@ function renderPricingCards() {
       <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:4px 7px;white-space:nowrap;">
         <div style="font-size:8px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.4px;">FREE</div>
         <div style="font-size:11px;font-weight:700;color:#fff;">0€</div>
-        <div style="font-size:7px;color:rgba(255,255,255,0.4);margin-top:1px;">2/día · 10/mes</div>
+        <div style="font-size:7px;color:rgba(255,255,255,0.4);margin-top:1px;">3 planes/semana</div>
       </div>
       <div style="background:${isPremium?'var(--blue)':'rgba(245,158,11,0.3)'};border:1px solid ${isPremium?'#60A5FA':'#F59E0B'};border-radius:6px;padding:4px 7px;cursor:pointer;white-space:nowrap;" onclick="showPayPopup()">
         <div style="font-size:8px;font-weight:700;color:${isPremium?'#BFDBFE':'#FCD34D'};letter-spacing:0.4px;">PRO ${isPremium?'✓':''}</div>
@@ -784,7 +781,7 @@ function renderHeader() {
       : state.credits
         ? `<div class="credits-badge" onclick="showCreditsInfo()" style="cursor:pointer;flex-direction:row;align-items:center;gap:5px;">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            <span style="font-weight:700;">${Math.max(0, state.credits.daily_limit - state.credits.daily_used)}/${state.credits.daily_limit}</span>
+            <span style="font-weight:700;">${state.credits.remaining}/${state.credits.limit}</span>
            </div>`
         : '';
     el.innerHTML = `
@@ -1915,50 +1912,34 @@ async function handleAction(type) {
     return;
   }
 
-  // Comprobar créditos
-  await sb.rpc('reset_daily_credits_if_needed', { p_user_id: state.user.id });
-  const { data: cr } = await sb.from('credits').select('*').eq('user_id', state.user.id).single();
-  state.credits = cr;
-
-  if (cr.daily_used >= cr.daily_limit && !state.profile?.is_premium) {
-    showCreditPopup(); return;
-  }
-
-  // Consumir crédito para todas las acciones (no premium)
-  async function consumeCredit() {
-    if (!state.profile?.is_premium) {
-      const newDailyUsed = cr.daily_used + 1;
-      await sb.from('credits').update({
-        daily_used: newDailyUsed,
-        monthly_used: cr.monthly_used + 1
-      }).eq('user_id', state.user.id);
-      state.credits.daily_used = newDailyUsed;
-      renderHeader();
-      // Si acaba de agotar los créditos diarios, enviar email (la función identifica al usuario por su sesión)
-      if (newDailyUsed >= (cr.daily_limit || 2)) {
-        sb.auth.getSession().then(({ data }) => {
-          const token = data.session?.access_token;
-          if (!token) return;
-          return fetch('https://hqofqaqlhknyxrazgwtc.supabase.co/functions/v1/credits-exhausted', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-            body: '{}'
-          });
-        }).catch(() => {}); // Fire and forget
-      }
+  // Gastar 1 crédito: el servidor comprueba y descuenta a la vez (Premium no gasta)
+  const { data: cr, error: crError } = await sb.rpc('use_credit');
+  if (crError || !cr) { showToast('No se ha podido comprobar tus créditos. Inténtalo de nuevo.'); return; }
+  if (!cr.premium) {
+    state.credits = { ...state.credits, ...cr };
+    renderHeader();
+    if (!cr.ok) { showCreditPopup(); return; }
+    // Si acaba de gastar el último crédito de la semana, enviar email (la función identifica al usuario por su sesión)
+    if (cr.remaining === 0) {
+      sb.auth.getSession().then(({ data }) => {
+        const token = data.session?.access_token;
+        if (!token) return;
+        return fetch('https://hqofqaqlhknyxrazgwtc.supabase.co/functions/v1/credits-exhausted', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: '{}'
+        });
+      }).catch(() => {}); // Fire and forget
     }
   }
 
   if (type === 'download') {
     await generatePDF();
-    await consumeCredit();
     trackActivity('pdf_download');
   } else if (type === 'email') {
-    await consumeCredit();
     sendEmail();
     trackActivity('send_email');
   } else if (type === 'whatsapp') {
-    await consumeCredit();
     sendWhatsApp();
     trackActivity('send_whatsapp');
   }
@@ -2385,7 +2366,7 @@ async function doForgot() {
 function showRegisterPopup() {
   showPopup(`
     <h2>Crear cuenta gratis</h2>
-    <p>Regístrate y obtén <strong>2 créditos diarios</strong> para generar planes en PDF.</p>
+    <p>Regístrate y obtén <strong>3 créditos cada semana</strong> para generar planes en PDF.</p>
     <div class="error-msg" id="regError"></div>
     ${googleButtonHtml('Registrarme con Google')}
     <div class="popup-form">
@@ -2624,32 +2605,29 @@ function showPayPopup() {
   `);
 }
 
+// «el lunes 2 de noviembre»: día en que se recargan los créditos semanales
+function creditsResetLabel() {
+  const d = state.credits?.resets_on ? new Date(state.credits.resets_on + 'T12:00:00') : null;
+  return d ? 'el ' + d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }) : 'el lunes';
+}
+
 function showCreditsInfo() {
   if (state.profile?.is_premium) return;
-  const remaining = Math.max(0, state.credits.daily_limit - state.credits.daily_used);
-  const monthlyLeft = Math.max(0, state.credits.monthly_limit - state.credits.monthly_used);
-  const used = state.credits.daily_used;
+  const remaining = state.credits.remaining;
+  const limit = state.credits.limit;
   showPopup(`
     <h2>Tus créditos</h2>
     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
       <div style="background:var(--gray-100);border-radius:10px;padding:13px;">
-        <div style="font-size:11px;font-weight:700;color:var(--gray-400);letter-spacing:0.6px;margin-bottom:6px;">HOY</div>
+        <div style="font-size:11px;font-weight:700;color:var(--gray-400);letter-spacing:0.6px;margin-bottom:6px;">ESTA SEMANA</div>
         <div style="display:flex;align-items:baseline;gap:6px;">
           <span style="font-size:26px;font-weight:700;color:var(--amber);">${remaining}</span>
-          <span style="font-size:13px;color:var(--gray-400);">de ${state.credits.daily_limit} créditos disponibles</span>
+          <span style="font-size:13px;color:var(--gray-400);">de ${limit} créditos disponibles</span>
         </div>
         <div style="margin-top:8px;height:5px;background:#FDE68A;border-radius:3px;">
-          <div style="width:${Math.round(remaining/state.credits.daily_limit*100)}%;height:5px;background:${remaining===0?'#DC2626':remaining===1?'#D97706':'#059669'};border-radius:3px;"></div>
+          <div style="width:${Math.round(remaining/limit*100)}%;height:5px;background:${remaining===0?'#DC2626':remaining===1?'#D97706':'#059669'};border-radius:3px;"></div>
         </div>
-        <div style="font-size:11px;color:var(--gray-400);margin-top:6px;">Se recargan automáticamente mañana a las 00:00</div>
-      </div>
-      <div style="background:var(--gray-100);border-radius:10px;padding:13px;">
-        <div style="font-size:11px;font-weight:700;color:var(--gray-400);letter-spacing:0.6px;margin-bottom:6px;">ESTE MES</div>
-        <div style="display:flex;align-items:baseline;gap:6px;">
-          <span style="font-size:26px;font-weight:700;color:var(--gray-900);">${monthlyLeft}</span>
-          <span style="font-size:13px;color:var(--gray-400);">de ${state.credits.monthly_limit} créditos restantes</span>
-        </div>
-        <div style="font-size:11px;color:var(--gray-400);margin-top:4px;">Máximo ${state.credits.monthly_limit} créditos al mes en el plan gratuito</div>
+        <div style="font-size:11px;color:var(--gray-400);margin-top:6px;">Se recargan ${creditsResetLabel()}</div>
       </div>
     </div>
     <div style="font-size:12px;color:var(--gray-400);text-align:center;margin-bottom:14px;">Cada descarga o envío de PDF consume 1 crédito</div>
@@ -2664,17 +2642,17 @@ function showCreditPopup() {
   showPopup(`
     <div class="popup-icon amber"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
     <h2>Créditos agotados</h2>
-    <p>Has usado tus <strong>${state.credits?.daily_limit || 2} créditos diarios</strong>. Se recargan automáticamente mañana, o actualiza a Premium para generación ilimitada.</p>
+    <p>Has usado tus <strong>${state.credits?.limit || 3} créditos de esta semana</strong>. Se recargan ${creditsResetLabel()}, o actualiza a Premium para generación ilimitada.</p>
     <div class="popup-btns">
       <button class="btn-full amber-btn" onclick="doSubscribe()"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Ir a Premium</button>
-      <button class="btn-full outline" onclick="closePopup()">Esperar a mañana</button>
+      <button class="btn-full outline" onclick="closePopup()">Esperar al lunes</button>
     </div>
   `);
 }
 
 function showProfilePopup() {
   const isPremium = state.profile?.is_premium || false;
-  const remaining = Math.max(0, (state.credits?.daily_limit||2) - (state.credits?.daily_used||0));
+  const remaining = state.credits?.remaining ?? 3;
   const name = state.profile?.name || state.user?.email || '';
 
   const logoHtml = state.physio.logo
@@ -2682,6 +2660,9 @@ function showProfilePopup() {
     : `<div class="popup-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>`;
 
   if (isPremium) {
+    // Cancelada pero aún dentro del periodo pagado: Premium hasta premium_ends_at, sin botón de cancelar
+    const endsAt = state.profile?.cancelled_at && state.profile?.premium_ends_at
+      ? new Date(state.profile.premium_ends_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }) : null;
     showPopup(`
       ${logoHtml}
       <h2>${name}</h2>
@@ -2689,11 +2670,11 @@ function showProfilePopup() {
       <div style="background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:10px;padding:13px;margin-bottom:14px;">
         <div style="font-size:11px;color:var(--blue);margin-bottom:3px;font-weight:700;">PLAN PREMIUM</div>
         <div style="font-size:18px;font-weight:700;color:var(--blue);">∞ Créditos ilimitados</div>
-        <div style="font-size:11px;color:var(--gray-400);margin-top:3px;">Acceso completo a todas las funciones</div>
+        <div style="font-size:11px;color:var(--gray-400);margin-top:3px;">${endsAt ? `Suscripción cancelada · Premium hasta el ${endsAt}` : 'Acceso completo a todas las funciones'}</div>
       </div>
       <div class="popup-btns">
         <button class="btn-full outline" onclick="doLogout()">Cerrar sesión</button>
-        <button class="btn-full outline" style="color:var(--red);border-color:var(--red);font-size:12px;" onclick="showCancelSubscriptionPopup()">Cancelar suscripción</button>
+        ${endsAt ? '' : '<button class="btn-full outline" style="color:var(--red);border-color:var(--red);font-size:12px;" onclick="showCancelSubscriptionPopup()">Cancelar suscripción</button>'}
       </div>
     `);
   } else {
@@ -2702,9 +2683,9 @@ function showProfilePopup() {
       <h2>${name}</h2>
       <p style="margin-bottom:10px;">${state.user?.email}</p>
       <div style="background:var(--gray-100);border-radius:10px;padding:13px;margin-bottom:14px;">
-        <div style="font-size:11px;color:var(--gray-600);margin-bottom:3px;font-weight:600;">CRÉDITOS HOY</div>
-        <div style="font-size:22px;font-weight:700;color:var(--amber);">${remaining}<span style="font-size:14px;color:var(--gray-400);font-weight:400;"> / ${state.credits?.daily_limit||2}</span></div>
-        <div style="font-size:11px;color:var(--gray-400);margin-top:3px;">Se recargan cada día a las 00:00</div>
+        <div style="font-size:11px;color:var(--gray-600);margin-bottom:3px;font-weight:600;">CRÉDITOS ESTA SEMANA</div>
+        <div style="font-size:22px;font-weight:700;color:var(--amber);">${remaining}<span style="font-size:14px;color:var(--gray-400);font-weight:400;"> / ${state.credits?.limit||3}</span></div>
+        <div style="font-size:11px;color:var(--gray-400);margin-top:3px;">Se recargan ${creditsResetLabel()}</div>
       </div>
       <div class="popup-btns">
         <button class="btn-full amber-btn" onclick="showPayPopup()"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Actualizar a Premium</button>
@@ -2714,13 +2695,21 @@ function showProfilePopup() {
   }
 }
 
+const CANCEL_REASONS = ['Es caro para mí', 'No lo uso lo suficiente', 'Me falta alguna función', 'Uso otra herramienta', 'Problemas técnicos', 'Solo lo necesitaba un tiempo', 'Otro motivo'];
+
 function showCancelSubscriptionPopup() {
   showPopup(`
     <div class="popup-icon" style="background:var(--red-light);">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
     </div>
     <h2 style="color:var(--red);">Cancelar suscripción</h2>
-    <p>Si cancelas tu suscripción Premium perderás acceso a:</p>
+    <p>¿Por qué cancelas? Nos ayuda mucho a mejorar.</p>
+    <div id="cancelReasons" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;text-align:left;">
+      ${CANCEL_REASONS.map(r => `<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--gray-600);border:1px solid var(--gray-200);border-radius:8px;padding:8px 10px;cursor:pointer;"><input type="radio" name="cancelReason" value="${r}" onchange="document.getElementById('cancelReasonError').style.display='none'"> ${r}</label>`).join('')}
+    </div>
+    <textarea class="input" id="cancelDetail" rows="2" maxlength="1000" placeholder="¿Algo más que quieras contarnos? (opcional)" style="background:white;margin-bottom:6px;resize:vertical;"></textarea>
+    <div id="cancelReasonError" style="display:none;font-size:12px;color:var(--red);margin-bottom:8px;">Elige un motivo para continuar.</div>
+    <p>Mantendrás Premium hasta el final del periodo que ya has pagado. Después perderás acceso a:</p>
     <div style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:9px;padding:12px;margin-bottom:10px;">
       <div style="font-size:12px;color:#92400E;line-height:1.6;">
         <strong>Tus datos estarán protegidos durante 2 meses.</strong> Si vuelves antes de ese plazo encontrarás todo intacto — pacientes, planes y ejercicios propios. Pasados los 2 meses, los datos se eliminarán permanentemente.
@@ -2730,7 +2719,7 @@ function showCancelSubscriptionPopup() {
       <div style="font-size:13px;color:var(--red);display:flex;flex-direction:column;gap:6px;">
         <div>✕ Perderás el acceso a <strong>Crear ejercicios</strong> propios</div>
         <div>✕ No podrás crear ni guardar <strong>nuevos planes</strong></div>
-        <div>✕ Volverás al límite de <strong>2 créditos diarios</strong></div>
+        <div>✕ Volverás al límite de <strong>3 créditos por semana</strong></div>
       </div>
     </div>
     <div class="popup-btns">
@@ -2741,8 +2730,14 @@ function showCancelSubscriptionPopup() {
 }
 
 async function doCancelSubscription() {
+  const reason = document.querySelector('input[name="cancelReason"]:checked')?.value;
+  if (!reason) {
+    document.getElementById('cancelReasonError').style.display = 'block';
+    return;
+  }
+  const detail = document.getElementById('cancelDetail')?.value.trim() || '';
   closePopup();
-  
+
   const subId = state.profile?.ls_subscription_id;
   if (!subId) {
     showToast('Contacta con soporte@feasyplan.pro para cancelar');
@@ -2764,19 +2759,22 @@ async function doCancelSubscription() {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + (await sb.auth.getSession()).data.session?.access_token
       },
-      body: JSON.stringify({ subscription_id: subId })
+      body: JSON.stringify({ subscription_id: subId, reason, detail })
     });
 
     if (res.ok) {
-      state.profile.is_premium = false;
-      state.profile.ls_subscription_id = null;
+      // Premium sigue hasta el final del periodo pagado: lo quita el webhook cuando caduca
+      const { ends_at } = await res.json().catch(() => ({}));
+      state.profile.cancelled_at = new Date().toISOString();
+      state.profile.premium_ends_at = ends_at || null;
+      const endsOn = ends_at ? new Date(ends_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }) : null;
       closePopup(true);
       render();
       showPopup(`
         <div style="text-align:center;padding:10px 0;">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px;"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/></svg>
           <div style="font-size:16px;font-weight:700;color:var(--gray-900);margin-bottom:8px;">Suscripción cancelada</div>
-          <div style="font-size:13px;color:var(--gray-500);line-height:1.6;">Recibirás un email de confirmación. Tus datos estarán guardados durante 2 meses.</div>
+          <div style="font-size:13px;color:var(--gray-500);line-height:1.6;">${endsOn ? `Sigues teniendo Premium hasta el ${endsOn}. ` : 'Sigues teniendo Premium hasta el final del periodo pagado. '}Recibirás un email de confirmación y tus datos se guardarán 2 meses más. Gracias por contarnos el motivo.</div>
         </div>
         <div class="popup-btns" style="margin-top:16px;">
           <button class="btn-full outline" onclick="closePopup(true)">Cerrar</button>
