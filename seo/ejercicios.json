@@ -1857,5 +1857,31 @@
   "reps": "1",
   "duration": "30",
   "img": "https://feasyplan.pro/img/ejercicios/estiramiento-de-flexor-de-cadera-de-rodillas.png"
+ },
+ {
+  "id": 155,
+  "name": "Extensión de cadera boca abajo",
+  "description": "Túmbate boca abajo con la cabeza apoyada sobre los antebrazos y las piernas estiradas. Con la rodilla recta, eleva una pierna hacia atrás sin despegar la cadera del suelo ni arquear la zona lumbar. Mantén un segundo arriba y baja despacio. Cambia de pierna al terminar.",
+  "tags": "glúteos, isquiotibiales, cadera",
+  "zona": "Cadera",
+  "tipo": "Fuerza",
+  "material": "Ninguno",
+  "series": "3",
+  "reps": "10",
+  "duration": "",
+  "img": "https://feasyplan.pro/img/ejercicios/extension-de-cadera-boca-abajo.png"
+ },
+ {
+  "id": 156,
+  "name": "Marcha en step con flexión de cadera",
+  "description": "De pie sobre un step bajo, con las manos en la cadera y el tronco recto. Sube una rodilla hacia delante hasta que el muslo quede horizontal, con la rodilla doblada a 90 grados, manteniendo el equilibrio sobre la otra pierna. Baja despacio y alterna las piernas.",
+  "tags": "flexores de cadera, equilibrio, cadera",
+  "zona": "Cadera",
+  "tipo": "Fuerza",
+  "material": "Step",
+  "series": "3",
+  "reps": "10",
+  "duration": "",
+  "img": "https://feasyplan.pro/img/ejercicios/marcha-en-step-con-flexion-de-cadera.png"
  }
 ]
