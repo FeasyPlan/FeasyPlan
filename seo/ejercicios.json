@@ -1831,5 +1831,31 @@
   "reps": "10",
   "duration": "",
   "img": "https://feasyplan.pro/img/ejercicios/rotacion-cervical-sentado.png"
+ },
+ {
+  "id": 153,
+  "name": "Equilibrio a una pierna",
+  "description": "De pie, con las manos en la cadera y el tronco recto. Levanta una rodilla hacia delante hasta la altura de la cadera y mantén el equilibrio sobre la otra pierna, sin apoyar el pie levantado. Cambia de pierna al terminar.",
+  "tags": "equilibrio, tobillo, propiocepción",
+  "zona": "Tobillo",
+  "tipo": "Propiocepción",
+  "material": "Ninguno",
+  "series": "3",
+  "reps": "1",
+  "duration": "30",
+  "img": "https://feasyplan.pro/img/ejercicios/equilibrio-a-una-pierna.png"
+ },
+ {
+  "id": 154,
+  "name": "Estiramiento de flexor de cadera de rodillas",
+  "description": "Ponte con una rodilla apoyada en el suelo y el otro pie delante, con la rodilla de delante doblada a 90 grados y las manos en la cadera. Con el tronco recto, lleva la cadera hacia delante hasta notar el estiramiento en la parte delantera de la cadera de la pierna de atrás. Mantén y cambia de lado.",
+  "tags": "psoas, flexores de cadera, estiramiento",
+  "zona": "Cadera",
+  "tipo": "Estiramiento",
+  "material": "Ninguno",
+  "series": "2",
+  "reps": "1",
+  "duration": "30",
+  "img": "https://feasyplan.pro/img/ejercicios/estiramiento-de-flexor-de-cadera-de-rodillas.png"
  }
 ]
