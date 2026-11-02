@@ -22,6 +22,8 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const slugify = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const appUrl = (campaign) => `/?utm_source=web&utm_medium=seo&utm_campaign=${campaign}`;
+// Fisio que llega desde Google: primero la landing, que explica la herramienta y lleva al registro
+const landingUrl = (campaign) => `/fisios?utm_source=web&utm_medium=seo&utm_campaign=${campaign}`;
 
 // Un slug por nombre: los ejercicios repetidos en la biblioteca comparten ficha (la del id más bajo)
 const porSlug = new Map();
@@ -221,8 +223,8 @@ ${body}
 function ctaHtml(campaign, titulo = '¿Eres fisioterapeuta? Envía este plan a tu paciente en 30 segundos') {
   return `<section class="no-print"><div class="wrap"><div class="cta">
   <div><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><img src="/img/brand/logo-blanco.png" alt="FeasyPlan" width="120" height="21" style="height:21px;width:auto"><span class="chip">Gratis</span></div><h2 style="margin:0">${esc(titulo)}</h2>
-  <p>Cambia ejercicios, series y notas, añade tu logo y el nombre del paciente, y envíalo por WhatsApp o email. Más de 100 ejercicios ilustrados.</p></div>
-  <a class="btn" href="${appUrl(campaign)}">Crear plan gratis</a>
+  <p>Cambia ejercicios, series y notas, añade tu logo y el nombre del paciente, y envíalo por WhatsApp o email. Más de 140 ejercicios ilustrados.</p></div>
+  <a class="btn" href="${landingUrl(campaign)}">Ver cómo funciona</a>
 </div></div></section>`;
 }
 
@@ -431,7 +433,7 @@ module.exports = function generate(outDir) {
   for (const e of fichas) write(`ejercicio/${e.slug}.html`, fichaPage(e));
 
   const urls = [
-    ['/', '1.0'], ['/ejercicios', '0.9'],
+    ['/', '1.0'], ['/fisios', '0.9'], ['/ejercicios', '0.9'],
     ...guias.map((g) => [`/ejercicios/${g.slug}`, '0.8']),
     ...fichas.map((e) => [`/ejercicio/${e.slug}`, '0.6']),
     ['/terminos', '0.2'], ['/privacidad', '0.2'], ['/cookies', '0.2'],
