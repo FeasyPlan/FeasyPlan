@@ -383,6 +383,82 @@ function trackActivity(event) {
 setInterval(() => { if (document.visibilityState === 'visible') trackActivity('heartbeat'); }, 5 * 60 * 1000);
 
 // ============================================
+// ORIGEN DEL REGISTRO Y PÍXEL DE META
+// ============================================
+// De dónde llega cada visita (utm_* del enlace del anuncio o la web que la trajo). Se guarda solo durante
+// la visita (sessionStorage) y, si la persona se registra, queda en su cuenta (user_metadata.origen).
+(function guardarOrigen() {
+  try {
+    if (sessionStorage.getItem('fp_origen')) return;
+    const q = new URLSearchParams(location.search);
+    const origen = {
+      source: q.get('utm_source') || '', medium: q.get('utm_medium') || '', campaign: q.get('utm_campaign') || '',
+      content: q.get('utm_content') || '', meta_click: q.has('fbclid'),
+      referrer: document.referrer && !document.referrer.startsWith(location.origin) ? new URL(document.referrer).hostname : '',
+      landing: location.pathname, fecha: new Date().toISOString(),
+    };
+    if (!origen.source && origen.meta_click) origen.source = 'meta';
+    sessionStorage.setItem('fp_origen', JSON.stringify(origen));
+  } catch (e) {}
+})();
+function getOrigen() {
+  try { return JSON.parse(sessionStorage.getItem('fp_origen') || 'null'); } catch (e) { return null; }
+}
+
+// Píxel de Meta: solo se carga si la persona acepta las cookies de medición (banner). Sin ID, no hace nada.
+const META_PIXEL_ID = '2327145204799147'; // conjunto de datos «FeasyPlan web» en Events Manager
+function cookiesAceptadas() {
+  try { return localStorage.getItem('fp_cookies') === 'si'; } catch (e) { return false; }
+}
+function cargarPixel() {
+  if (!META_PIXEL_ID || window.fbq) return;
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', META_PIXEL_ID);
+  fbq('track', 'PageView');
+}
+function pixelEvento(nombre) {
+  if (cookiesAceptadas() && window.fbq) fbq('track', nombre);
+}
+function decidirCookies(acepta) {
+  try { localStorage.setItem('fp_cookies', acepta ? 'si' : 'no'); } catch (e) {}
+  document.getElementById('cookieBanner')?.remove();
+  if (acepta) cargarPixel();
+}
+function mostrarBannerCookies() {
+  if (!META_PIXEL_ID || document.getElementById('cookieBanner')) return;
+  const b = document.createElement('div');
+  b.id = 'cookieBanner';
+  b.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;max-width:520px;margin:0 auto;background:#fff;border:1px solid var(--gray-200,#E5E7EB);border-radius:14px;box-shadow:0 10px 30px rgba(15,23,42,.15);padding:14px 16px;font-size:13px;color:#374151;line-height:1.45;';
+  b.innerHTML = `Usamos cookies de Meta para saber si nuestros anuncios funcionan. Son opcionales: la app funciona igual si las rechazas. <a href="/cookies" target="_blank" style="color:var(--blue,#2563EB);">Más información</a>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="btn-full outline" style="flex:1;padding:9px;" onclick="decidirCookies(false)">Rechazar</button>
+      <button class="btn-full primary" style="flex:1;padding:9px;" onclick="decidirCookies(true)">Aceptar</button>
+    </div>`;
+  document.body.appendChild(b);
+}
+(function iniciarCookies() {
+  let decision = null;
+  try { decision = localStorage.getItem('fp_cookies'); } catch (e) {}
+  if (decision === 'si') cargarPixel();
+  else if (!decision) document.addEventListener('DOMContentLoaded', mostrarBannerCookies);
+})();
+
+// Cuenta recién creada (email o Google): guarda el origen si aún no lo tiene y avisa al píxel una sola vez
+function registrarAlta(user) {
+  if (!user) return;
+  const nueva = Date.now() - new Date(user.created_at).getTime() < 30 * 60 * 1000;
+  if (!nueva) return;
+  const origen = getOrigen();
+  if (origen && !user.user_metadata?.origen) sb.auth.updateUser({ data: { origen } }).then(() => {}, () => {});
+  if (user.app_metadata?.provider === 'email') return; // con email el alta ya se contó al enviar el formulario
+  try {
+    if (localStorage.getItem('fp_alta_' + user.id)) return;
+    localStorage.setItem('fp_alta_' + user.id, '1');
+  } catch (e) {}
+  pixelEvento('CompleteRegistration');
+}
+
+// ============================================
 // EJERCICIOS (base de datos local inicial)
 // ============================================
 let EXERCISES = [];
@@ -527,6 +603,7 @@ async function init() {
     render();
     trackActivity('app_open');
     recordOAuthConsent(session.user);
+    registrarAlta(session.user);
     maybeStartTour();
 
     // Detectar si viene de un enlace de recuperación de contraseña
@@ -580,6 +657,7 @@ async function init() {
       render();
       trackActivity('app_open');
       recordOAuthConsent(session.user);
+      registrarAlta(session.user);
       maybeStartTour();
     }
   });
@@ -2513,7 +2591,7 @@ async function doRegister() {
   const { error } = await sb.auth.signUp({
     email, password: pass,
     options: { 
-      data: { name, terms_accepted_at: new Date().toISOString(), terms_version: '1.1' },
+      data: { name, terms_accepted_at: new Date().toISOString(), terms_version: '1.1', origen: getOrigen() },
       emailRedirectTo: window.location.href 
     }
   });
@@ -2536,6 +2614,7 @@ async function doRegister() {
     }
     return;
   }
+  pixelEvento('CompleteRegistration');
   // Mostrar popup de confirmación de email
   state.pendingConfirmEmail = email;
   showPopup(`

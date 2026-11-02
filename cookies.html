@@ -43,7 +43,7 @@
 <div class="container">
   <div class="badge">Legal</div>
   <h1>Política de Cookies</h1>
-  <p class="date">Última actualización: mayo de 2026 · Versión 1.0</p>
+  <p class="date">Última actualización: noviembre de 2026 · Versión 1.1</p>
 
   <p>Esta Política de Cookies explica qué son las cookies, qué tipos utilizamos en FeasyPlan y cómo puedes controlarlas.</p>
 
@@ -53,7 +53,7 @@
   <h2>¿Qué cookies usamos?</h2>
 
   <div class="highlight">
-    <strong>Resumen rápido:</strong> FeasyPlan solo usa cookies estrictamente necesarias para el funcionamiento del servicio. No usamos cookies de publicidad ni de seguimiento de terceros. No necesitas aceptar ninguna cookie adicional.
+    <strong>Resumen rápido:</strong> FeasyPlan usa cookies técnicas necesarias para que la app funcione y, <strong>solo si las aceptas</strong>, cookies de Meta (el píxel de Meta) para saber si nuestros anuncios en Instagram y Facebook funcionan. Si las rechazas, la app funciona exactamente igual.
   </div>
 
   <table>
@@ -75,21 +75,37 @@
       <td>Renueva tu sesión sin que tengas que volver a iniciar sesión</td>
       <td>30 días</td>
     </tr>
+    <tr>
+      <td><code>fp_cookies</code> (almacenamiento local)</td>
+      <td>Técnica necesaria</td>
+      <td>Recuerda si has aceptado o rechazado las cookies de medición, para no volver a preguntarte</td>
+      <td>Hasta que la borres</td>
+    </tr>
+    <tr>
+      <td><code>fp_origen</code> (almacenamiento de sesión)</td>
+      <td>Propia, sin terceros</td>
+      <td>Guarda de qué anuncio o web llegas (por ejemplo, utm_source=meta). Si creas una cuenta, ese dato se guarda en ella para saber qué canales nos traen fisioterapeutas. No se comparte con nadie</td>
+      <td>Hasta que cierras la pestaña</td>
+    </tr>
+    <tr>
+      <td><code>_fbp</code>, <code>_fbc</code></td>
+      <td>Medición publicitaria de terceros (Meta) — <strong>solo con tu consentimiento</strong></td>
+      <td>Permiten a Meta Platforms Ireland Ltd. medir si una visita o un registro viene de nuestros anuncios y mostrarlos a personas parecidas. Se envían a Meta tu visita y, si te registras, el evento de registro (nunca tu email ni los datos de tus pacientes)</td>
+      <td>Hasta 90 días</td>
+    </tr>
   </table>
 
   <p>Estas cookies son gestionadas por <strong>Supabase</strong>, nuestro proveedor de autenticación, y son imprescindibles para que puedas usar la aplicación de forma segura.</p>
 
   <h2>Cookies que NO usamos</h2>
   <ul>
-    <li>No usamos cookies de publicidad ni retargeting</li>
-    <li>No usamos cookies de redes sociales</li>
     <li>No usamos cookies de analítica de terceros (Google Analytics, etc.)</li>
-    <li>No compartimos información de cookies con terceros para fines publicitarios</li>
+    <li>No vendemos ni compartimos tus datos con terceros, salvo el píxel de Meta descrito arriba y solo si lo aceptas</li>
   </ul>
 
   <h2>¿Necesito aceptar las cookies?</h2>
-  <p>Las cookies que usamos son <strong>estrictamente necesarias</strong> para el funcionamiento del servicio. Según la normativa europea (Directiva ePrivacy y RGPD), las cookies técnicas necesarias no requieren consentimiento previo del usuario.</p>
-  <p>Por este motivo, FeasyPlan no muestra un banner de cookies — no es necesario legalmente para el tipo de cookies que utilizamos.</p>
+  <p>Las cookies técnicas son <strong>estrictamente necesarias</strong> y, según la normativa europea (Directiva ePrivacy, LSSI y RGPD), no requieren consentimiento.</p>
+  <p>Las cookies de Meta son <strong>opcionales</strong>: la primera vez que entras te preguntamos con un aviso y solo se activan si pulsas «Aceptar». Puedes cambiar tu decisión cuando quieras: <a href="#" onclick="try{localStorage.removeItem('fp_cookies')}catch(e){};alert('Hecho. La próxima vez que abras la app te volveremos a preguntar.');return false;">volver a elegir</a>.</p>
 
   <h2>¿Cómo puedo eliminar las cookies?</h2>
   <p>Puedes eliminar las cookies de FeasyPlan en cualquier momento desde la configuración de tu navegador. Ten en cuenta que al eliminarlas, cerrarás tu sesión y tendrás que volver a iniciarla.</p>
