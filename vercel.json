@@ -15,6 +15,10 @@
       "dest": "/cookies.html"
     },
     {
+      "src": "/fisios",
+      "dest": "/fisios.html"
+    },
+    {
       "src": "/ejercicios",
       "dest": "/ejercicios.html"
     },

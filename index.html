@@ -597,6 +597,11 @@ async function init() {
   render();
   // Recuperar sesión guardada en el navegador
   const { data: { session } } = await sb.auth.getSession();
+  // Desde la landing (/fisios): «Crear cuenta gratis» abre el registro directamente
+  if (new URLSearchParams(location.search).has('registro')) {
+    window.history.replaceState(null, '', window.location.pathname);
+    if (!session?.user) showRegisterPopup();
+  }
   if (session?.user) {
     state.user = session.user;
     await loadUserData();

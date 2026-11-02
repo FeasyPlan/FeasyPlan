@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ejercicios ilustrados para tus pacientes, gratis | FeasyPlan</title>
+  <meta name="description" content="+140 ejercicios ilustrados listos para tus pacientes. Crea el plan en 1 minuto, con tu logo, y envíalo por WhatsApp. Gratis para fisioterapeutas, sin tarjeta.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="es_ES">
+  <meta property="og:title" content="+140 ejercicios ilustrados para tus pacientes, gratis">
+  <meta property="og:description" content="Crea el plan en 1 minuto, con tu logo, y envíalo por WhatsApp.">
+  <meta property="og:url" content="https://feasyplan.pro/fisios">
+  <meta property="og:image" content="https://hqofqaqlhknyxrazgwtc.supabase.co/storage/v1/object/public/brand/logo-full.png">
+  <meta name="theme-color" content="#0B1430">
+  <link rel="icon" href="/img/brand/icono.png">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root { --azul: #2563EB; --azul-claro: #93C5FD; --noche: #0B1430; --amarillo: #FBBF24; --gris: #64748B; --borde: #E2E8F0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; color: #0F172A; background: #fff; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+    a { color: inherit; }
+    img { max-width: 100%; display: block; }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+    /* Cabecera */
+    .top { position: sticky; top: 0; z-index: 20; background: rgba(11,20,48,.92); backdrop-filter: blur(8px); }
+    .top .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; }
+    .top img { height: 28px; }
+    .top a.mini { background: var(--azul); color: #fff; text-decoration: none; font-weight: 700; font-size: 14px; padding: 9px 16px; border-radius: 10px; }
+
+    /* Botón principal */
+    .cta { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--azul); color: #fff; text-decoration: none; font-weight: 700; font-size: 17px; padding: 16px 28px; border-radius: 14px; box-shadow: 0 10px 30px rgba(37,99,235,.35); transition: transform .15s; }
+    .cta:hover { transform: translateY(-1px); }
+    .cta-nota { font-size: 13px; color: var(--azul-claro); margin-top: 10px; }
+
+    /* Portada */
+    .hero { background: radial-gradient(ellipse 70% 60% at 70% 0%, #1D4ED8 0%, var(--noche) 65%); color: #fff; padding: 56px 0 72px; overflow: hidden; }
+    .hero .wrap { display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: center; }
+    .etiqueta { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 1.6px; color: var(--azul-claro); border: 1px solid rgba(147,197,253,.35); border-radius: 999px; padding: 6px 14px; margin-bottom: 18px; }
+    .hero h1 { font-size: clamp(32px, 5vw, 50px); line-height: 1.08; font-weight: 800; letter-spacing: -1px; }
+    .hero h1 em { font-style: normal; color: var(--amarillo); }
+    .hero p.sub { font-size: 18px; color: #CBD5E1; margin: 18px 0 26px; max-width: 520px; }
+    .hero ul { list-style: none; display: grid; gap: 8px; margin-bottom: 28px; font-size: 15px; color: #E2E8F0; }
+    .hero li::before { content: '✓'; color: #4ADE80; font-weight: 800; margin-right: 10px; }
+    .movil { position: relative; justify-self: center; width: 280px; }
+    .movil .marco { border-radius: 38px; background: #0B1226; padding: 10px; box-shadow: 0 40px 80px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08) inset; }
+    .movil .marco { height: 540px; overflow: hidden; }
+    .movil .marco img { border-radius: 30px; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+    .movil .pildora { position: absolute; background: #fff; color: #0F172A; font-size: 13px; font-weight: 700; padding: 8px 14px; border-radius: 999px; box-shadow: 0 10px 25px rgba(0,0,0,.3); white-space: nowrap; }
+    .movil .p1 { top: 70px; left: -70px; }
+    .movil .p2 { bottom: 90px; right: -60px; }
+    .movil .p2 span { color: #16A34A; }
+
+    /* Cifras */
+    .cifras { background: var(--noche); color: #fff; border-top: 1px solid rgba(255,255,255,.08); }
+    .cifras .wrap { display: grid; grid-template-columns: repeat(4, 1fr); text-align: center; padding: 26px 20px; gap: 12px; }
+    .cifras b { display: block; font-size: 28px; font-weight: 800; color: var(--amarillo); }
+    .cifras span { font-size: 13px; color: #94A3B8; }
+
+    /* Secciones */
+    section { padding: 72px 0; }
+    .titulo { text-align: center; max-width: 680px; margin: 0 auto 40px; }
+    .titulo small { font-size: 12px; font-weight: 700; letter-spacing: 1.6px; color: var(--azul); }
+    .titulo h2 { font-size: clamp(26px, 3.6vw, 36px); line-height: 1.15; font-weight: 800; letter-spacing: -.5px; margin: 8px 0 12px; }
+    .titulo p { color: var(--gris); font-size: 16px; }
+    .gris { background: #F6F8FC; }
+
+    /* Galería de ejercicios */
+    .galeria { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .galeria figure { background: #fff; border: 1px solid var(--borde); border-radius: 16px; padding: 10px; }
+    .galeria img { aspect-ratio: 1; object-fit: contain; }
+    .galeria figcaption { font-size: 13px; font-weight: 600; text-align: center; margin-top: 6px; }
+    .centro { text-align: center; margin-top: 30px; }
+    .enlace { color: var(--azul); font-weight: 700; text-decoration: none; }
+
+    /* Pasos */
+    .pasos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+    .paso { background: #fff; border: 1px solid var(--borde); border-radius: 20px; padding: 22px; text-align: center; }
+    .paso .num { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--azul); color: #fff; font-weight: 800; margin-bottom: 10px; }
+    .paso h3 { font-size: 18px; margin-bottom: 6px; }
+    .paso p { font-size: 14px; color: var(--gris); margin-bottom: 14px; }
+    .paso img { width: 190px; height: 330px; object-fit: cover; object-position: top; margin: 0 auto; border-radius: 18px; box-shadow: 0 14px 30px rgba(15,23,42,.15); }
+
+    /* Dos columnas */
+    .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; align-items: center; }
+    .duo h2 { font-size: clamp(24px, 3.2vw, 32px); line-height: 1.15; font-weight: 800; margin: 8px 0 14px; }
+    .duo p { color: var(--gris); margin-bottom: 16px; }
+    .duo ul { list-style: none; display: grid; gap: 10px; }
+    .duo li { padding-left: 28px; position: relative; }
+    .duo li::before { content: '✓'; position: absolute; left: 0; color: var(--azul); font-weight: 800; }
+    .pdf { border-radius: 14px; box-shadow: 0 30px 60px rgba(15,23,42,.18); border: 1px solid var(--borde); }
+
+    /* Planes */
+    .planes { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; max-width: 820px; margin: 0 auto; }
+    .plan { border: 1px solid var(--borde); border-radius: 22px; padding: 28px; background: #fff; }
+    .plan.pro { background: var(--noche); color: #fff; border: 2px solid var(--azul); position: relative; }
+    .plan .sello { position: absolute; top: -12px; left: 28px; background: var(--amarillo); color: #422006; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 999px; }
+    .plan h3 { font-size: 15px; letter-spacing: 1px; font-weight: 800; }
+    .plan .precio { font-size: 40px; font-weight: 800; margin: 8px 0 2px; }
+    .plan .precio small { font-size: 15px; font-weight: 500; opacity: .7; }
+    .plan .nota { font-size: 13px; opacity: .75; margin-bottom: 18px; }
+    .plan ul { list-style: none; display: grid; gap: 9px; font-size: 15px; margin-bottom: 24px; }
+    .plan li::before { content: '✓'; color: #22C55E; font-weight: 800; margin-right: 10px; }
+    .plan .cta { width: 100%; }
+    .plan:not(.pro) .cta { background: #fff; color: var(--azul); border: 2px solid var(--azul); box-shadow: none; }
+
+    /* Preguntas */
+    .faq { max-width: 760px; margin: 0 auto; }
+    details { border-bottom: 1px solid var(--borde); padding: 18px 0; }
+    summary { font-weight: 700; cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+    summary::after { content: '+'; color: var(--azul); font-size: 22px; line-height: 1; }
+    details[open] summary::after { content: '–'; }
+    details p { color: var(--gris); margin-top: 10px; }
+
+    /* Cierre */
+    .final { background: radial-gradient(ellipse 70% 80% at 50% 100%, #1D4ED8 0%, var(--noche) 70%); color: #fff; text-align: center; }
+    .final h2 { font-size: clamp(28px, 4vw, 40px); font-weight: 800; line-height: 1.1; margin-bottom: 14px; }
+    .final h2 em { font-style: normal; color: var(--amarillo); }
+    .final p { color: #CBD5E1; margin-bottom: 26px; }
+    footer { background: var(--noche); color: #64748B; font-size: 13px; text-align: center; padding: 24px 20px 90px; }
+    footer a { color: #94A3B8; margin: 0 6px; }
+
+    /* Botón fijo en móvil */
+    .fijo { display: none; position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 30; }
+    .fijo .cta { width: 100%; }
+
+    @media (max-width: 860px) {
+      .hero { padding: 36px 0 56px; }
+      .hero .wrap, .duo { grid-template-columns: 1fr; }
+      .movil { width: 230px; margin-top: 10px; }
+      .movil .marco { height: 440px; }
+      .movil .p1 { left: -40px; } .movil .p2 { right: -40px; }
+      .cifras .wrap { grid-template-columns: repeat(2, 1fr); }
+      .galeria { grid-template-columns: repeat(2, 1fr); }
+      .pasos, .planes { grid-template-columns: 1fr; }
+      section { padding: 56px 0; }
+      .fijo { display: block; }
+      .top a.mini { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a href="/fisios"><img src="/img/brand/logo-blanco.png" alt="FeasyPlan"></a>
+    <a class="mini" href="/?registro=1" data-cta="cabecera">Crear cuenta gratis</a>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <div>
+      <span class="etiqueta">PARA FISIOTERAPEUTAS</span>
+      <h1>+140 ejercicios ilustrados, <em>listos</em> para tus pacientes</h1>
+      <p class="sub">Deja de buscar dibujos y fotocopiar hojas. Eliges los ejercicios, ajustas series y repeticiones y se lo mandas al paciente por WhatsApp en 1 minuto.</p>
+      <ul>
+        <li>Biblioteca gratis, sin tarjeta</li>
+        <li>PDF claro, con dibujos y tus indicaciones</li>
+        <li>Desde el móvil o el ordenador, sin instalar nada</li>
+      </ul>
+      <a class="cta" href="/?registro=1" data-cta="portada">Crear cuenta gratis →</a>
+      <div class="cta-nota">Gratis para siempre: 3 planes en PDF cada semana</div>
+    </div>
+    <div class="movil">
+      <div class="marco"><img src="/img/landing/app-plan.webp" alt="Plan de ejercicios en FeasyPlan" width="640" height="1385"></div>
+      <div class="pildora p1">📋 Plan listo en 1 min</div>
+      <div class="pildora p2">Enviado por WhatsApp <span>✓✓</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="cifras">
+  <div class="wrap">
+    <div><b>+140</b><span>ejercicios ilustrados</span></div>
+    <div><b>1 min</b><span>para crear un plan</span></div>
+    <div><b>0 €</b><span>para empezar</span></div>
+    <div><b>Día 7</b><span>seguimiento automático</span></div>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <div class="titulo">
+      <small>LA BIBLIOTECA</small>
+      <h2>Ejercicios de rehabilitación listos para usar</h2>
+      <p>Organizados por zona (cuello, hombro, core, cadera, rodilla, tobillo…), por tipo y por material. Cada uno con su dibujo, la explicación para el paciente y la dosis por defecto.</p>
+    </div>
+    <div class="galeria">
+      <figure><img src="/img/ejercicios/retraccion-cervical.png" alt="" loading="lazy"><figcaption>Retracción cervical</figcaption></figure>
+      <figure><img src="/img/ejercicios/pendulo-de-codman.png" alt="" loading="lazy"><figcaption>Péndulo de Codman</figcaption></figure>
+      <figure><img src="/img/ejercicios/estiramiento-de-flexor-de-cadera-de-rodillas.png" alt="" loading="lazy"><figcaption>Flexor de cadera</figcaption></figure>
+      <figure><img src="/img/ejercicios/equilibrio-a-una-pierna.png" alt="" loading="lazy"><figcaption>Equilibrio a una pierna</figcaption></figure>
+      <figure><img src="/img/ejercicios/isometrico-de-cuadriceps-con-toalla.png" alt="" loading="lazy"><figcaption>Isométrico de cuádriceps</figcaption></figure>
+      <figure><img src="/img/ejercicios/extension-de-cadera-boca-abajo.png" alt="" loading="lazy"><figcaption>Extensión de cadera</figcaption></figure>
+      <figure><img src="/img/ejercicios/rodilla-al-pecho-tumbado.png" alt="" loading="lazy"><figcaption>Rodilla al pecho</figcaption></figure>
+      <figure><img src="/img/ejercicios/sentadilla-isometrica-en-pared.png" alt="" loading="lazy"><figcaption>Sentadilla en pared</figcaption></figure>
+    </div>
+    <div class="centro"><a class="enlace" href="/ejercicios">Ver todos los ejercicios →</a></div>
+  </div>
+</section>
+
+<section class="gris">
+  <div class="wrap">
+    <div class="titulo">
+      <small>CÓMO FUNCIONA</small>
+      <h2>Del ejercicio al móvil del paciente en 3 pasos</h2>
+    </div>
+    <div class="pasos">
+      <div class="paso"><div class="num">1</div><h3>Elige</h3><p>Busca por zona o nombre, o parte de una plantilla por patología.</p><img src="/img/landing/app-biblioteca.webp" alt="Biblioteca de ejercicios" loading="lazy"></div>
+      <div class="paso"><div class="num">2</div><h3>Ajusta</h3><p>Series, repeticiones, tiempo y tus notas para el paciente.</p><img src="/img/landing/app-plan.webp" alt="Ajustar el plan" loading="lazy"></div>
+      <div class="paso"><div class="num">3</div><h3>Envía</h3><p>Por WhatsApp, por email o en PDF para imprimir.</p><img src="/img/landing/app-enviar.webp" alt="Enviar el plan" loading="lazy" style="object-position:bottom;"></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap duo">
+    <div>
+      <div class="titulo" style="text-align:left;margin:0;"><small>EL PLAN QUE RECIBE TU PACIENTE</small></div>
+      <h2>Un PDF profesional, con tu imagen</h2>
+      <p>Tu paciente sale de la consulta sabiendo exactamente qué hacer en casa. Y tu clínica queda en su móvil.</p>
+      <ul>
+        <li>Dibujo, explicación y dosis de cada ejercicio</li>
+        <li>Tus notas generales y tus datos de contacto</li>
+        <li>Con el logo de tu clínica (Premium)</li>
+      </ul>
+    </div>
+    <img class="pdf" src="/img/landing/pdf-ejemplo.webp" alt="Ejemplo de plan en PDF" loading="lazy">
+  </div>
+</section>
+
+<section class="gris">
+  <div class="wrap duo">
+    <div class="movil" style="width:240px;"><div class="marco"><img src="/img/landing/app-enviar.webp" alt="Enviar el plan y programar el seguimiento" loading="lazy" style="object-position:bottom;"></div></div>
+    <div>
+      <div class="titulo" style="text-align:left;margin:0;"><small>Y DESPUÉS DE LA CONSULTA</small></div>
+      <h2>Que tus pacientes no abandonen los ejercicios</h2>
+      <p>Al enviar el plan, programa un seguimiento: a los 7 días te recordamos preguntarle cómo va, o le escribimos por email en tu nombre.</p>
+      <ul>
+        <li>Seguimientos programados (Premium)</li>
+        <li>Pacientes y planes guardados para repetir en segundos</li>
+        <li>Tus propios ejercicios, con tu foto o dibujo</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="planes">
+  <div class="wrap">
+    <div class="titulo">
+      <small>PRECIOS</small>
+      <h2>Empieza gratis. Pasa a Premium si lo usas a diario.</h2>
+      <p>Sin permanencia: cancelas cuando quieras desde tu perfil.</p>
+    </div>
+    <div class="planes">
+      <div class="plan">
+        <h3>GRATIS</h3>
+        <div class="precio">0 €</div>
+        <div class="nota">Para siempre, sin tarjeta</div>
+        <ul>
+          <li>Toda la biblioteca de ejercicios</li>
+          <li>Plantillas por patología</li>
+          <li>3 planes en PDF cada semana</li>
+        </ul>
+        <a class="cta" href="/?registro=1" data-cta="plan_gratis">Crear cuenta gratis</a>
+      </div>
+      <div class="plan pro">
+        <span class="sello">1 € EL PRIMER MES</span>
+        <h3>PREMIUM</h3>
+        <div class="precio">9,99 € <small>/mes</small></div>
+        <div class="nota">o 99 €/año (8,25 €/mes)</div>
+        <ul>
+          <li>Planes en PDF ilimitados con tu logo</li>
+          <li>Envío por WhatsApp y email</li>
+          <li>Seguimientos de pacientes</li>
+          <li>Pacientes y planes guardados</li>
+          <li>Ejercicios propios</li>
+        </ul>
+        <a class="cta" href="/?registro=1" data-cta="plan_premium">Empezar gratis</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="gris">
+  <div class="wrap faq">
+    <div class="titulo"><small>PREGUNTAS FRECUENTES</small><h2>Lo que nos suelen preguntar</h2></div>
+    <details><summary>¿De verdad es gratis?</summary><p>Sí. Te registras sin tarjeta y puedes usar toda la biblioteca y crear 3 planes en PDF cada semana, para siempre. Premium solo hace falta si haces muchos planes o quieres tu logo y los seguimientos.</p></details>
+    <details><summary>¿Tengo que instalar algo?</summary><p>No. Funciona en el navegador del móvil, la tablet o el ordenador.</p></details>
+    <details><summary>¿Mi paciente necesita descargarse una app?</summary><p>No. Recibe un PDF por WhatsApp o email que abre en su móvil o imprime.</p></details>
+    <details><summary>¿Puedo añadir mis propios ejercicios?</summary><p>Sí, con Premium puedes crear ejercicios con tu propia foto o dibujo y usarlos en tus planes.</p></details>
+    <details><summary>¿Y los datos de mis pacientes?</summary><p>Se guardan en servidores de la Unión Europea y solo los ves tú. Más detalle en la <a href="/privacidad">política de privacidad</a>.</p></details>
+    <details><summary>¿Puedo cancelar Premium?</summary><p>Cuando quieras, desde tu perfil. Sigues teniendo Premium hasta el final del periodo que ya has pagado.</p></details>
+  </div>
+</section>
+
+<section class="final">
+  <div class="wrap">
+    <h2>Tu próximo plan, <em>en 1 minuto</em></h2>
+    <p>Crea tu cuenta gratis y prepara el plan de tu próximo paciente hoy.</p>
+    <a class="cta" href="/?registro=1" data-cta="cierre">Crear cuenta gratis →</a>
+    <div class="cta-nota">Sin tarjeta · Sin instalar nada</div>
+  </div>
+</section>
+
+<footer>
+  © 2026 FeasyPlan ·
+  <a href="/terminos">Términos</a><a href="/privacidad">Privacidad</a><a href="/cookies">Cookies</a><a href="mailto:soporte@feasyplan.pro">soporte@feasyplan.pro</a>
+</footer>
+
+<div class="fijo"><a class="cta" href="/?registro=1" data-cta="fijo_movil">Crear cuenta gratis →</a></div>
+
+<script>
+// Origen de la visita (mismo formato que la app): pasa a la cuenta si la persona se registra
+(function () {
+  try {
+    if (sessionStorage.getItem('fp_origen')) return;
+    const q = new URLSearchParams(location.search);
+    const origen = {
+      source: q.get('utm_source') || '', medium: q.get('utm_medium') || '', campaign: q.get('utm_campaign') || '',
+      content: q.get('utm_content') || '', meta_click: q.has('fbclid'),
+      referrer: document.referrer && !document.referrer.startsWith(location.origin) ? new URL(document.referrer).hostname : '',
+      landing: location.pathname, fecha: new Date().toISOString(),
+    };
+    if (!origen.source && origen.meta_click) origen.source = 'meta';
+    sessionStorage.setItem('fp_origen', JSON.stringify(origen));
+  } catch (e) {}
+})();
+
+// Píxel de Meta: solo con consentimiento (misma decisión que en la app: localStorage fp_cookies)
+const META_PIXEL_ID = '2327145204799147';
+function cargarPixel() {
+  if (window.fbq) return;
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', META_PIXEL_ID);
+  fbq('track', 'PageView');
+}
+function decidirCookies(acepta) {
+  try { localStorage.setItem('fp_cookies', acepta ? 'si' : 'no'); } catch (e) {}
+  document.getElementById('cookieBanner')?.remove();
+  if (acepta) cargarPixel();
+}
+(function () {
+  let decision = null;
+  try { decision = localStorage.getItem('fp_cookies'); } catch (e) {}
+  if (decision === 'si') return cargarPixel();
+  if (decision) return;
+  const b = document.createElement('div');
+  b.id = 'cookieBanner';
+  b.style.cssText = 'position:fixed;left:12px;right:12px;bottom:84px;z-index:40;max-width:520px;margin:0 auto;background:#fff;border:1px solid #E2E8F0;border-radius:14px;box-shadow:0 10px 30px rgba(15,23,42,.2);padding:14px 16px;font-size:13px;color:#374151;line-height:1.45;';
+  b.innerHTML = 'Usamos cookies de Meta para saber si nuestros anuncios funcionan. Son opcionales: la web funciona igual si las rechazas. <a href="/cookies" target="_blank" style="color:#2563EB;">Más información</a>'
+    + '<div style="display:flex;gap:8px;margin-top:10px;"><button onclick="decidirCookies(false)" style="flex:1;padding:9px;border-radius:10px;border:1px solid #CBD5E1;background:#fff;font:600 14px DM Sans,sans-serif;cursor:pointer;">Rechazar</button>'
+    + '<button onclick="decidirCookies(true)" style="flex:1;padding:9px;border-radius:10px;border:0;background:#2563EB;color:#fff;font:600 14px DM Sans,sans-serif;cursor:pointer;">Aceptar</button></div>';
+  document.body.appendChild(b);
+})();
+
+// Clic en «Crear cuenta»: aviso al píxel (si se aceptó) antes de ir a la app
+document.querySelectorAll('[data-cta]').forEach((a) => a.addEventListener('click', () => {
+  if (window.fbq) fbq('trackCustom', 'ClicRegistro', { boton: a.dataset.cta });
+}));
+</script>
+</body>
+</html>
