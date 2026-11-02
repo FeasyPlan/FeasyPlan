@@ -387,17 +387,24 @@ setInterval(() => { if (document.visibilityState === 'visible') trackActivity('h
 // ============================================
 // De dónde llega cada visita (utm_* del enlace del anuncio o la web que la trajo). Se guarda solo durante
 // la visita (sessionStorage) y, si la persona se registra, queda en su cuenta (user_metadata.origen).
+// aff = código de afiliado de Lemon Squeezy (?aff=XXXX): se añade al enlace de pago para que la venta cuente.
 (function guardarOrigen() {
   try {
-    if (sessionStorage.getItem('fp_origen')) return;
     const q = new URLSearchParams(location.search);
+    const aff = (q.get('aff') || '').replace(/[^\w-]/g, '').slice(0, 40);
+    const previo = sessionStorage.getItem('fp_origen');
+    if (previo) {
+      if (aff) sessionStorage.setItem('fp_origen', JSON.stringify({ ...JSON.parse(previo), aff }));
+      return;
+    }
     const origen = {
       source: q.get('utm_source') || '', medium: q.get('utm_medium') || '', campaign: q.get('utm_campaign') || '',
-      content: q.get('utm_content') || '', meta_click: q.has('fbclid'),
+      content: q.get('utm_content') || '', meta_click: q.has('fbclid'), aff,
       referrer: document.referrer && !document.referrer.startsWith(location.origin) ? new URL(document.referrer).hostname : '',
       landing: location.pathname, fecha: new Date().toISOString(),
     };
     if (!origen.source && origen.meta_click) origen.source = 'meta';
+    if (!origen.source && aff) origen.source = 'afiliado';
     sessionStorage.setItem('fp_origen', JSON.stringify(origen));
   } catch (e) {}
 })();
@@ -3495,7 +3502,9 @@ function doSubscribe(plan) {
     monthly: 'https://feasyplan.lemonsqueezy.com/checkout/buy/a100889b-1d72-47fd-b2eb-d6366ac9a98b?checkout[discount_code]=LAUNCH1&checkout[email]=' + email,
     annual: 'https://feasyplan.lemonsqueezy.com/checkout/buy/10d01e49-751b-4a53-9ce7-13c4094b65b2?checkout[email]=' + email,
   };
-  const url = (urls[plan] || urls.monthly) + '&embed=1';
+  // Si llegó por el enlace de un afiliado (guardado en su cuenta al registrarse), la venta se le atribuye
+  const aff = state.user?.user_metadata?.origen?.aff || getOrigen()?.aff;
+  const url = (urls[plan] || urls.monthly) + (aff ? '&aff=' + encodeURIComponent(aff) : '') + '&embed=1';
   // Use location.href for iOS PWA (window.open blocked in standalone mode)
   const isIOSPWA = window.navigator.standalone === true;
   if (isIOSPWA) {

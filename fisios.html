@@ -329,15 +329,21 @@
 // Origen de la visita (mismo formato que la app): pasa a la cuenta si la persona se registra
 (function () {
   try {
-    if (sessionStorage.getItem('fp_origen')) return;
     const q = new URLSearchParams(location.search);
+    const aff = (q.get('aff') || '').replace(/[^\w-]/g, '').slice(0, 40); // código de afiliado de Lemon Squeezy
+    const previo = sessionStorage.getItem('fp_origen');
+    if (previo) {
+      if (aff) sessionStorage.setItem('fp_origen', JSON.stringify({ ...JSON.parse(previo), aff }));
+      return;
+    }
     const origen = {
       source: q.get('utm_source') || '', medium: q.get('utm_medium') || '', campaign: q.get('utm_campaign') || '',
-      content: q.get('utm_content') || '', meta_click: q.has('fbclid'),
+      content: q.get('utm_content') || '', meta_click: q.has('fbclid'), aff,
       referrer: document.referrer && !document.referrer.startsWith(location.origin) ? new URL(document.referrer).hostname : '',
       landing: location.pathname, fecha: new Date().toISOString(),
     };
     if (!origen.source && origen.meta_click) origen.source = 'meta';
+    if (!origen.source && aff) origen.source = 'afiliado';
     sessionStorage.setItem('fp_origen', JSON.stringify(origen));
   } catch (e) {}
 })();
